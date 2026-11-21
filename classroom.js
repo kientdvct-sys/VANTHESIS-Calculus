@@ -12,7 +12,7 @@
 
   const STYLE_ID = 'vanthesis-classroom-styles';
   const MODAL_ID = 'vtClassroomModal';
-  const EXPECTED_BACKEND_VERSION = '5.0';
+  const EXPECTED_BACKEND_VERSION = '6.0';
   const MAX_BULK_IMPORT = 60;
   const HEARTBEAT_MS = 8000;
   const PERM_META = [
@@ -3235,6 +3235,26 @@
 
       ${renderTrendSparklineSvg(p.trendSeries)}
 
+      ${(function () {
+        const lc = p.lcmsStats;
+        if (!lc) return '';
+        const mastPills = (lc.masteryByChapter || []).map(function (m) {
+          return '<span class="vt-cr-id-pill" style="font-size:11px;">✦ ' + escapeHtml(m.chapter) + ': <b>' + escapeHtml(m.tier) + ' (' + m.masteryPct + '%)</b></span>';
+        }).join(' ');
+        const examRows = (lc.examSubmissions || []).slice(0, 5).map(function (ex) {
+          return '<div class="vt-audit-item"><div class="vt-audit-meta"><span class="vt-audit-action-pill">' + escapeHtml(ex.score + '/' + ex.maxScore) + '</span><span>' + (ex.isRushedAttempt ? '⚠ Làm bài quá nhanh' : '✓ Hợp lệ') + ' • ' + escapeHtml(String(ex.submittedAt || '').replace('T', ' ').slice(0, 16)) + '</span></div><div class="vt-audit-summary">' + escapeHtml(ex.examTitle) + '</div></div>';
+        }).join('') || '<div style="font-size:12px;color:var(--cr-soft);">Chưa có lượt làm bài trên Đấu trường Đề.</div>';
+
+        return '<div style="background:var(--cr-surface-soft);border:1px solid var(--cr-border);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;">' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">' +
+            '<b style="font-size:13.5px;">✦ Tiến độ Chòm sao &amp; Đấu trường Đề</b>' +
+            '<span class="vt-cr-mono" style="font-size:12px;color:var(--cr-cobalt);font-weight:700;">' + lc.completionPct + '% hoàn thành • ' + lc.totalStarDust + '★ Bụi Sao</span>' +
+          '</div>' +
+          (mastPills ? '<div style="display:flex;flex-wrap:wrap;gap:6px;">' + mastPills + '</div>' : '') +
+          examRows +
+        '</div>';
+      })()}
+
       <div class="vt-cr-tabs" role="tablist">
         <button type="button" class="vt-cr-tab ${state.profile360Tab === 'grades' ? 'active' : ''}" data-p360tab="grades">📊 Điểm số</button>
         <button type="button" class="vt-cr-tab ${state.profile360Tab === 'timeline' ? 'active' : ''}" data-p360tab="timeline">⚡ Hành vi &amp; Chuyên cần</button>
@@ -3797,7 +3817,7 @@
         <tr>
           <td class="vt-cr-mono" style="color:var(--cr-soft);">${rIdx + 1}</td>
           <td class="vt-col-id"><span class="vt-cr-id-pill">◉ ${escapeHtml(st.studentId)}</span></td>
-          <td class="vt-col-name" style="font-weight:700;white-space:nowrap;">${escapeHtml(st.fullName)}</td>
+          <td class="vt-col-name" style="font-weight:700;white-space:nowrap;">${escapeHtml(st.fullName)} ${st.warningLevel && st.warningLevel !== 'GREEN' ? renderWarningLampHtml(st.warningLevel, st.warningReasons) : ''}</td>
           ${cells}
           <td class="vt-avg-cell ${avgColorClass(avg)}" id="vtTrkAvg_${esc(st.studentId)}">${avg !== '' ? Number(avg).toFixed(1) : '—'}</td>
         </tr>`;
