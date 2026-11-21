@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="light">
 <title>VANTHESIS Calculus — Interactive Calculus, 3D Visualization &amp; Astronomy Lab</title>
 <meta name="application-name" content="VANTHESIS Calculus" />
 <meta name="description" content="VANTHESIS Calculus is an interactive mathematics and calculus web application for high school and university students and teachers, featuring function graphing, symbolic derivatives, variation tables, 3D surfaces of revolution, and Google Drive lesson sync." />
@@ -10,7 +11,7 @@
 <meta property="og:title" content="VANTHESIS Calculus" />
 <meta property="og:url" content="https://vanthesis-calculus.vercel.app" />
 <meta name="robots" content="index, follow" />
-<meta name="theme-color" content="#1D4ED8">
+<meta name="theme-color" content="#FAF9F6" id="metaThemeColor">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%231D4ED8'/%3E%3Cstop offset='100%25' stop-color='%232563EB'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='34' height='34' rx='9' fill='url(%23g)'/%3E%3Crect x='1' y='1' width='32' height='32' rx='8' fill='none' stroke='rgba(255,255,255,0.22)' stroke-width='1'/%3E%3Cpath d='M8.5 11.5 L15.2 24.2 C16.3 26.1 18.2 25.8 19.2 23.6 C20.8 20.1 21.8 14.2 25.5 11.2' fill='none' stroke='%23FFFFFF' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='25.5' cy='11.2' r='2.3' fill='%23FFFFFF'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -123,28 +124,561 @@
   .app-shell {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: 100dvh;
+    min-height: 100dvh;
     width: 100vw;
   }
 
-  /* Top Academic Toolbar */
+  /* Top Academic Toolbar — 3-Zone Professional Header */
   .topbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
-    padding: 9px 16px;
+    gap: 12px;
+    padding: 8px 16px;
     background: var(--surface);
     border-bottom: 1px solid var(--border);
     box-shadow: var(--shadow);
     z-index: 20;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    min-height: 58px;
   }
-  .brand {
+  .header-left, .brand {
     display: flex;
     align-items: center;
     gap: 9px;
     white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .header-center {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 2px 0;
+  }
+  .header-center::-webkit-scrollbar { display: none; }
+  .header-center > * { flex-shrink: 0; }
+  .header-right {
+    margin-left: auto;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* Premium Right-Corner User Account Card Button (#userAccountCardBtn) */
+  .user-account-card-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 12px 5px 6px;
+    border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    box-shadow: 0 3px 12px -4px rgba(15, 23, 42, 0.10);
+    transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease, transform 0.14s ease;
+    max-width: 268px;
+    text-align: left;
+  }
+  .user-account-card-btn:hover {
+    border-color: var(--primary);
+    background: var(--surface-alt);
+    box-shadow: 0 6px 18px -6px rgba(29, 78, 216, 0.22);
+    transform: translateY(-1px);
+  }
+  .uac-avatar-wrap {
+    position: relative;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 2px solid #1D4ED8;
+    background: linear-gradient(135deg, #1D4ED8, #2563EB);
+    color: #FFFFFF;
+    font-size: 12.5px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .uac-avatar-wrap img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+  }
+  .uac-online-dot {
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #10B981;
+    border: 2px solid var(--surface);
+    box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.35);
+  }
+  .uac-online-dot.syncing { background: #F59E0B; }
+  .uac-online-dot.offline { background: #94A3B8; }
+  .uac-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.22;
+  }
+  .uac-name {
+    font-size: 12.6px;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 148px;
+  }
+  .uac-sub-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 2px;
+  }
+  .uac-role-chip {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .uac-role-chip.admin { background: rgba(217, 119, 6, 0.16); color: #B45309; border: 1px solid rgba(217, 119, 6, 0.32); }
+  .uac-role-chip.homeroom, .uac-role-chip.teacher { background: rgba(29, 78, 216, 0.12); color: #1D4ED8; border: 1px solid rgba(29, 78, 216, 0.28); }
+  .uac-role-chip.subject { background: rgba(67, 56, 202, 0.12); color: #4338CA; border: 1px solid rgba(67, 56, 202, 0.28); }
+  .uac-role-chip.student { background: rgba(16, 185, 129, 0.14); color: #047857; border: 1px solid rgba(16, 185, 129, 0.28); }
+  [data-theme="dark"] .uac-role-chip.admin { color: #FCD34D; }
+  [data-theme="dark"] .uac-role-chip.homeroom, [data-theme="dark"] .uac-role-chip.teacher { color: #93C5FD; }
+  [data-theme="dark"] .uac-role-chip.subject { color: #A5B4FC; }
+  [data-theme="dark"] .uac-role-chip.student { color: #6EE7B7; }
+
+  .admin-pending-badge {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    margin-left: 6px;
+    border-radius: 999px;
+    background: #DC2626;
+    color: #FFFFFF;
+    font-size: 10.5px;
+    font-weight: 800;
+    line-height: 1;
+    box-shadow: 0 2px 6px rgba(220, 38, 38, 0.45);
+  }
+  .admin-pending-badge.visible { display: inline-flex; }
+
+  #registrationOnboardingModal, #rejectedApprovalOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 215;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    background: rgba(5, 9, 20, 0.80);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    overflow-y: auto;
+  }
+  #registrationOnboardingModal.open, #rejectedApprovalOverlay.open { display: flex; }
+  .reg-card {
+    width: 100%;
+    max-width: 600px;
+    max-height: 92vh;
+    overflow-y: auto;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+    border-radius: 18px;
+    padding: 22px 24px 20px;
+    box-shadow: 0 28px 64px rgba(2, 6, 23, 0.48);
+  }
+  .reg-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .reg-user-strip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 12px;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .reg-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid #1D4ED8;
+    background: #1D4ED8;
+    color: #FFFFFF;
+    font-weight: 700;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .reg-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .reg-role-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .reg-role-card {
+    appearance: none;
+    border: 1.5px solid var(--border-strong);
+    background: var(--surface-alt);
+    color: var(--text);
+    border-radius: 12px;
+    padding: 11px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease, transform 0.14s ease;
+  }
+  .reg-role-card:hover { border-color: var(--primary); transform: translateY(-1px); }
+  .reg-role-card.active {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+    box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.16);
+  }
+  .reg-role-card .rc-ico { font-size: 20px; display: block; margin-bottom: 4px; }
+  .reg-role-card .rc-title { font-size: 12.2px; font-weight: 700; display: block; line-height: 1.25; }
+  .reg-role-card .rc-code { font-family: var(--font-mono); font-size: 9.8px; color: var(--text-soft); display: block; margin-top: 2px; }
+  .reg-subject-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 8px;
+    align-items: end;
+    margin-bottom: 8px;
+  }
+  .reg-subject-row.single { grid-template-columns: 1fr 1fr; }
+  .reg-del-row-btn {
+    height: 36px;
+    width: 34px;
+    border-radius: 8px;
+    border: 1px solid rgba(220, 38, 38, 0.28);
+    background: rgba(220, 38, 38, 0.08);
+    color: #DC2626;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .reg-del-row-btn:hover { background: rgba(220, 38, 38, 0.16); }
+  .reg-err-box {
+    display: none;
+    padding: 9px 12px;
+    border-radius: 9px;
+    background: rgba(220, 38, 38, 0.09);
+    border: 1px solid rgba(220, 38, 38, 0.30);
+    color: #B91C1C;
+    font-size: 12.2px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .reg-err-box.visible { display: block; }
+  @keyframes pendingPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.07); opacity: 0.85; }
+  }
+  .pending-shield-ico {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(29, 78, 216, 0.14), rgba(217, 119, 6, 0.16));
+    border: 1px solid rgba(29, 78, 216, 0.24);
+    font-size: 28px;
+    margin-bottom: 10px;
+    animation: pendingPulse 2.4s ease-in-out infinite;
+  }
+  .rbac-stats-bar {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .rbac-stat-box {
+    padding: 9px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface-alt);
+  }
+  .rbac-stat-box span { font-size: 11px; color: var(--text-soft); display: block; }
+  .rbac-stat-box b { font-size: 18px; font-weight: 800; color: var(--text); font-family: var(--font-mono); }
+  .rbac-stat-box.st-pending b { color: #D97706; }
+  .rbac-stat-box.st-approved b { color: #059669; }
+  .rbac-stat-box.st-rejected b { color: #DC2626; }
+  .rbac-subtabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+  }
+  .rbac-subtab-btn {
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text-muted);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12.2px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .rbac-subtab-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #FFFFFF;
+  }
+  .rbac-user-card {
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    background: var(--surface);
+    padding: 13px 14px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 12px -6px rgba(15, 23, 42, 0.08);
+  }
+  .rbac-user-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .rbac-user-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px 12px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--surface-alt);
+    font-size: 12px;
+    margin-bottom: 10px;
+  }
+  .rbac-user-meta span { color: var(--text-soft); }
+  .rbac-user-meta b { color: var(--text); }
+  .rbac-action-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .rbac-role-select {
+    height: 34px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1.5px solid var(--primary);
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 11.6px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .rbac-reject-box {
+    display: none;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border-strong);
+    gap: 6px;
+    align-items: center;
+  }
+  .rbac-reject-box.open { display: flex; }
+  .rbac-reject-box input {
+    flex: 1;
+    height: 32px;
+    padding: 0 9px;
+    border-radius: 7px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 12px;
+  }
+  @media (max-width: 640px) {
+    .reg-role-grid { grid-template-columns: 1fr; }
+    .rbac-stats-bar { grid-template-columns: repeat(2, 1fr); }
+    .rbac-user-meta { grid-template-columns: 1fr; }
+  }
+  .uac-settings-hint {
+    font-size: 10.4px;
+    color: var(--text-soft);
+    font-weight: 500;
+  }
+  .uac-chevron {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    color: var(--text-soft);
+    font-size: 12px;
+    margin-left: 2px;
+    flex-shrink: 0;
+  }
+
+  /* 3-Tab Account Settings Center (#accountHubModal) */
+  .hub-modal-card {
+    max-width: 660px !important;
+    width: 96% !important;
+    padding: 0 !important;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+  }
+  .hub-banner {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, rgba(29, 78, 216, 0.08) 0%, rgba(217, 119, 6, 0.06) 100%);
+    border-bottom: 1px solid var(--border);
+  }
+  .hub-tabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 18px 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    overflow-x: auto;
+  }
+  .hub-tab-btn {
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+    font-size: 12.6px;
+    font-weight: 600;
+    padding: 9px 14px;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  }
+  .hub-tab-btn:hover { color: var(--text); background: var(--surface-alt); }
+  .hub-tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); background: var(--primary-soft); }
+  .hub-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px 18px;
+  }
+  .hub-pane { display: none; }
+  .hub-pane.active { display: block; }
+  .hub-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .hub-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .hub-field.full { grid-column: 1 / -1; }
+  .hub-field label {
+    font-size: 11.8px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+  .hub-field input, .hub-field select {
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    outline: none;
+  }
+  .hub-field input:focus, .hub-field select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-soft);
+  }
+  .hub-field input[readonly] {
+    background: var(--surface-alt);
+    color: var(--text-muted);
+    cursor: not-allowed;
+  }
+  .hub-pref-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface-alt);
+    margin-bottom: 10px;
+  }
+  .hub-pref-row b { font-size: 13px; color: var(--text); display: block; }
+  .hub-pref-row span { font-size: 11.6px; color: var(--text-soft); }
+  .hub-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--surface-alt);
+  }
+  #appToast {
+    position: fixed;
+    right: 20px;
+    bottom: 22px;
+    z-index: 300;
+    padding: 10px 16px;
+    border-radius: 12px;
+    background: #0F172A;
+    color: #F8FAFC;
+    font-size: 12.8px;
+    font-weight: 600;
+    box-shadow: 0 14px 32px rgba(2, 6, 23, 0.35);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    opacity: 0;
+    transform: translateY(12px);
+    pointer-events: none;
+    transition: opacity 0.22s ease, transform 0.22s ease;
+  }
+  #appToast.visible { opacity: 1; transform: translateY(0); }
+  @media (max-width: 640px) {
+    .hub-form-grid { grid-template-columns: 1fr; }
+    .uac-info { display: none; }
+    .user-account-card-btn { padding: 4px 8px 4px 4px; gap: 5px; }
   }
   .brand-logo-svg {
     width: 34px;
@@ -3852,13 +4386,715 @@
     .landing-brand-badge { display: none; }
     .portal-back-btn { top: 12px; left: 12px; padding: 7px 11px; font-size: 12px; }
   }
+
+  /* =====================================================================
+   * GLOBAL DAY/NIGHT THEME LOCK (iOS/iPadOS SAFARI WEBKIT ANTI-DARKENING)
+   * & RESPONSIVE ARCHITECTURAL SUITE (iPad 768-1180px & Mobile < 768px)
+   * ===================================================================== */
+  html[data-theme="light"],
+  html[data-theme="light"] :root,
+  html[data-theme="light"] body {
+    color-scheme: light !important;
+    --bg: #FAF9F6;
+    --surface: #FFFFFF;
+    --surface-alt: #F3F4F6;
+    --surface-glass: rgba(255, 255, 255, 0.86);
+    --border: rgba(15, 23, 42, 0.10);
+    --border-strong: rgba(15, 23, 42, 0.18);
+    --text: #0F172A;
+    --text-muted: #475569;
+    --text-soft: #64748B;
+    --canvas-bg: #FFFFFF;
+    background-color: #FAF9F6 !important;
+    color: #0F172A !important;
+  }
+
+  /* Explicit Safari WebKit light-glass fallback opacity so dark canvases never dim light text */
+  html[data-theme="light"] #publicLandingView,
+  html[data-theme="light"] #publicLandingView[data-cosmic="day"] {
+    color-scheme: light !important;
+    background-color: #FAF9F6 !important;
+    color: #0F172A !important;
+  }
+  html[data-theme="light"] #publicLandingView .landing-header {
+    background: rgba(255, 255, 255, 0.88) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    backdrop-filter: blur(18px) saturate(150%);
+    border-color: rgba(15, 23, 42, 0.10) !important;
+    color: #0F172A !important;
+  }
+  html[data-theme="light"] #publicLandingView .bento-card {
+    background: rgba(255, 255, 255, 0.86) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    backdrop-filter: blur(16px) saturate(140%);
+    border-color: rgba(15, 23, 42, 0.10) !important;
+    color: #0F172A !important;
+  }
+  html[data-theme="light"] #publicLandingView .landing-footer,
+  html[data-theme="light"] #publicLandingView .telemetry-pill,
+  html[data-theme="light"] #publicLandingView .landing-cta-secondary {
+    background: rgba(255, 255, 255, 0.86) !important;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border-color: rgba(15, 23, 42, 0.10) !important;
+    color: #0F172A !important;
+  }
+  html[data-theme="light"] #appShell {
+    background-color: #FAF9F6 !important;
+    color: #0F172A !important;
+  }
+  html[data-theme="light"] #appShell .topbar,
+  html[data-theme="light"] #appShell .panel-card,
+  html[data-theme="light"] #appShell .analysis-drawer,
+  html[data-theme="light"] #appShell .bbt-container,
+  html[data-theme="light"] #appShell .summary-block,
+  html[data-theme="light"] .mobile-bottom-nav,
+  html[data-theme="light"] .mobile-tools-menu,
+  html[data-theme="light"] .ipad-portrait-tabs {
+    background-color: rgba(255, 255, 255, 0.90) !important;
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    color: #0F172A !important;
+    border-color: rgba(15, 23, 42, 0.10) !important;
+  }
+  html[data-theme="light"] #appShell .sidebar {
+    background-color: #FAF9F6 !important;
+    color: #0F172A !important;
+  }
+  html[data-theme="light"] .modal-card,
+  html[data-theme="light"] .reg-card,
+  html[data-theme="light"] .gate-card,
+  html[data-theme="light"] .legal-modal-card {
+    background: rgba(255, 255, 255, 0.96) !important;
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border-color: rgba(15, 23, 42, 0.12) !important;
+    color: #0F172A !important;
+  }
+
+  /* Explicit Cosmic Night Mode (data-theme="dark") */
+  html[data-theme="dark"],
+  html[data-theme="dark"] :root,
+  html[data-theme="dark"] body {
+    color-scheme: dark !important;
+    --bg: #060B19;
+    --surface: #0F172A;
+    --surface-alt: #1E293B;
+    --surface-glass: rgba(15, 23, 42, 0.86);
+    --border: rgba(56, 189, 248, 0.22);
+    --border-strong: rgba(56, 189, 248, 0.36);
+    --text: #F8FAFC;
+    --text-muted: #CBD5E1;
+    --text-soft: #94A3B8;
+    --canvas-bg: #0B1120;
+    background-color: #060B19 !important;
+    color: #F8FAFC !important;
+  }
+  html[data-theme="dark"] #appShell .topbar,
+  html[data-theme="dark"] #appShell .panel-card,
+  html[data-theme="dark"] #appShell .analysis-drawer,
+  html[data-theme="dark"] #appShell .bbt-container,
+  html[data-theme="dark"] #appShell .summary-block,
+  html[data-theme="dark"] .mobile-bottom-nav,
+  html[data-theme="dark"] .mobile-tools-menu,
+  html[data-theme="dark"] .ipad-portrait-tabs {
+    background-color: rgba(15, 23, 42, 0.88) !important;
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+    color: #F8FAFC !important;
+    border-color: rgba(56, 189, 248, 0.22) !important;
+  }
+  html[data-theme="dark"] #appShell .sidebar {
+    background-color: #060B19 !important;
+    color: #F8FAFC !important;
+  }
+  html[data-theme="dark"] .modal-card,
+  html[data-theme="dark"] .reg-card,
+  html[data-theme="dark"] .gate-card,
+  html[data-theme="dark"] .legal-modal-card {
+    background: rgba(15, 23, 42, 0.94) !important;
+    -webkit-backdrop-filter: blur(22px);
+    backdrop-filter: blur(22px);
+    border-color: rgba(56, 189, 248, 0.28) !important;
+    color: #F8FAFC !important;
+  }
+
+  /* Safe-area & 100dvh Viewport Normalization */
+  html, body {
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+  #publicLandingView {
+    min-height: 100dvh;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  #authPortalOverlay {
+    min-height: 100dvh;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .topbar {
+    padding-top: max(8px, env(safe-area-inset-top, 8px));
+  }
+
+  /* Touch & Apple Pencil Canvas Protection */
+  #mathCanvas,
+  #trigCanvas,
+  #miniTrigCanvas,
+  #annotCanvas,
+  #landingHeroCanvas,
+  #solid3dMount,
+  #solid3dMount canvas {
+    touch-action: none !important;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  /* Auto-scaling Variation Table SVG */
+  #bbtSvgContainer svg,
+  #bbtSvgContainer2 svg {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* iPad Portrait Quick Switcher Bar (hidden by default, shown 768px-899px) */
+  .ipad-portrait-tabs {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .ipad-ptab-btn {
+    flex: 1;
+    min-height: 40px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface-alt);
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.16s ease;
+  }
+  .ipad-ptab-btn.active {
+    background: var(--primary);
+    color: #FFFFFF;
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(29, 78, 216, 0.22);
+  }
+
+  /* Disable 3D hover tilt on touch screens */
+  @media (hover: none), (pointer: coarse) {
+    .bento-card:hover {
+      transform: none !important;
+    }
+    .landing-cta-primary:hover {
+      transform: none !important;
+    }
+  }
+
+  /* =====================================================================
+   * IPAD HEADER 3-ZONE SCROLLABLE CENTER (768px - 1180px)
+   * ===================================================================== */
+  @media (min-width: 768px) and (max-width: 1180px) {
+    .topbar {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      flex-wrap: nowrap !important;
+      gap: 10px !important;
+      padding: max(8px, env(safe-area-inset-top, 8px)) 12px 8px !important;
+    }
+    .header-left {
+      flex-shrink: 0 !important;
+    }
+    .header-center {
+      flex: 1 1 auto !important;
+      min-width: 0 !important;
+      display: flex !important;
+      flex-wrap: nowrap !important;
+      align-items: center !important;
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      gap: 6px !important;
+      padding-bottom: 2px;
+    }
+    .header-center::-webkit-scrollbar {
+      display: none;
+    }
+    .header-center > * {
+      flex-shrink: 0 !important;
+    }
+    .header-right {
+      flex-shrink: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+    }
+  }
+
+  /* =====================================================================
+   * IPAD LANDSCAPE (900px - 1180px): Balanced 2-Column (340px + Stage)
+   * ===================================================================== */
+  @media (min-width: 900px) and (max-width: 1180px) {
+    .tablet-drawer-btn,
+    .ipad-portrait-tabs {
+      display: none !important;
+    }
+    .workspace {
+      display: flex !important;
+      flex-direction: row !important;
+      flex: 1 !important;
+      min-height: 0 !important;
+    }
+    .sidebar {
+      position: static !important;
+      transform: none !important;
+      width: 340px !important;
+      min-width: 340px !important;
+      max-width: 340px !important;
+      height: 100% !important;
+      display: flex !important;
+      box-shadow: none !important;
+    }
+    .stage-column {
+      flex: 1 1 auto !important;
+      min-width: 0 !important;
+    }
+  }
+
+  /* =====================================================================
+   * IPAD PORTRAIT (768px - 899px): Smart Vertical Stack (44dvh Graph + Tabs)
+   * ===================================================================== */
+  @media (min-width: 768px) and (max-width: 899px) {
+    .tablet-drawer-btn,
+    .tablet-backdrop {
+      display: none !important;
+    }
+    .workspace {
+      display: flex !important;
+      flex-direction: column !important;
+      flex: 1 !important;
+      min-height: 0 !important;
+      overflow: hidden !important;
+    }
+    .stage-column {
+      order: 1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      width: 100% !important;
+      min-height: 0 !important;
+    }
+    .stage-split {
+      flex: 0 0 44dvh !important;
+      height: 44dvh !important;
+      min-height: 44dvh !important;
+      max-height: 44dvh !important;
+    }
+    .ipad-portrait-tabs {
+      display: flex !important;
+    }
+    /* Tab 1: Expression List active */
+    .app-shell[data-ipad-tab="funcs"] .stage-column {
+      flex: 0 0 auto !important;
+    }
+    .app-shell[data-ipad-tab="funcs"] .analysis-drawer {
+      display: none !important;
+    }
+    .app-shell[data-ipad-tab="funcs"] .sidebar {
+      order: 2 !important;
+      position: static !important;
+      transform: none !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      flex: 1 1 auto !important;
+      height: auto !important;
+      min-height: 0 !important;
+      overflow-y: auto !important;
+      border-right: none !important;
+      box-shadow: none !important;
+      padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+    /* Tab 2: Variation Table & Derivatives active */
+    .app-shell[data-ipad-tab="bbt"] .stage-column {
+      flex: 1 1 auto !important;
+      height: auto !important;
+    }
+    .app-shell[data-ipad-tab="bbt"] .sidebar {
+      display: none !important;
+    }
+    .app-shell[data-ipad-tab="bbt"] .analysis-drawer {
+      display: flex !important;
+      position: static !important;
+      flex: 1 1 auto !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      border-top: none !important;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .app-shell[data-ipad-tab="bbt"] .drawer-body {
+      overflow-y: auto !important;
+    }
+  }
+
+  /* =====================================================================
+   * MOBILE (< 768px): PUBLIC LANDING + 3-TAB FULLSCREEN WORKSPACE SWITCHER
+   * ===================================================================== */
+  @media (max-width: 767px) {
+    /* 1. Anti-Auto-Zoom iOS on all form controls */
+    input, select, textarea {
+      font-size: 16px !important;
+    }
+
+    /* 2. Minimum 42x42px touch targets */
+    button:not(.pen-swatch):not(.expr-del-btn):not(.expr-kb-btn),
+    .btn,
+    .mb-nav-btn,
+    .stage-tab-btn,
+    .landing-theme-btn,
+    .landing-signin-btn {
+      min-height: 42px;
+      min-width: 42px;
+    }
+
+    /* 3. Public Landing Page Mobile Optimization */
+    .landing-header-wrap {
+      top: max(8px, env(safe-area-inset-top, 8px)) !important;
+      padding: 0 10px !important;
+    }
+    .landing-header {
+      flex-wrap: nowrap !important;
+      padding: 8px 12px !important;
+      border-radius: 18px !important;
+      gap: 8px !important;
+    }
+    .landing-nav,
+    .landing-brand-badge {
+      display: none !important;
+    }
+    .landing-brand {
+      gap: 8px !important;
+      min-width: 0;
+    }
+    .landing-brand-name {
+      font-size: 14.5px !important;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .landing-header-actions {
+      display: flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      flex-shrink: 0 !important;
+    }
+    .landing-theme-btn {
+      padding: 6px 10px !important;
+      font-size: 12px !important;
+      border-radius: 999px !important;
+    }
+    .landing-theme-btn #landingThemeLabel {
+      display: none;
+    }
+    .landing-signin-btn {
+      padding: 8px 14px !important;
+      font-size: 12.5px !important;
+      border-radius: 999px !important;
+      white-space: nowrap;
+    }
+    .landing-main {
+      padding: 20px 14px 36px !important;
+    }
+    .landing-hero-grid {
+      grid-template-columns: 1fr !important;
+      gap: 22px !important;
+    }
+    .landing-hero-copy h1 {
+      font-size: clamp(1.85rem, 6vw, 3.2rem) !important;
+      line-height: 1.15 !important;
+    }
+    .landing-hero-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .landing-cta-primary,
+    .landing-cta-secondary {
+      width: 100%;
+      justify-content: center;
+      min-height: 46px;
+    }
+    .landing-stage-chrome {
+      flex-wrap: wrap !important;
+      gap: 6px !important;
+      padding: 8px 10px !important;
+    }
+    .landing-stage-dots {
+      display: none !important;
+    }
+    .landing-stage-tabs {
+      width: 100%;
+      display: grid !important;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px !important;
+    }
+    .stage-tab-btn {
+      font-size: 11px !important;
+      padding: 6px 4px !important;
+      min-height: 38px !important;
+      text-align: center;
+      white-space: normal !important;
+      line-height: 1.2 !important;
+    }
+    .landing-stage-live {
+      display: none !important;
+    }
+    .landing-canvas-wrap {
+      height: 310px !important;
+      min-height: 310px !important;
+    }
+    .landing-bento-grid {
+      grid-template-columns: 1fr !important;
+      gap: 14px !important;
+    }
+    .bento-span-7,
+    .bento-span-5 {
+      grid-column: span 1 !important;
+    }
+    .landing-footer {
+      padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+
+    /* 4. Compact Mobile Topbar inside #appShell */
+    .topbar {
+      padding: max(6px, env(safe-area-inset-top, 6px)) 8px 6px !important;
+      gap: 6px !important;
+      min-height: 52px !important;
+    }
+    .header-left {
+      gap: 6px !important;
+      flex-shrink: 0 !important;
+    }
+    .brand-title {
+      font-size: 13.5px !important;
+    }
+    .brand-sub,
+    .tablet-drawer-btn,
+    #btnBlankPage,
+    #btnAutoFit,
+    #btnShareQr {
+      display: none !important;
+    }
+    .header-center {
+      flex: 1 1 auto !important;
+      min-width: 0 !important;
+      justify-content: flex-start !important;
+    }
+    #presetSelect {
+      width: 100% !important;
+      max-width: 140px !important;
+      min-height: 40px !important;
+      padding: 4px 6px !important;
+      font-size: 16px !important;
+    }
+    .header-right {
+      flex-shrink: 0 !important;
+      gap: 5px !important;
+    }
+    #btnOpenClassroomHub {
+      padding: 6px 9px !important;
+      font-size: 11.5px !important;
+      white-space: nowrap;
+    }
+    #btnOpenAdminStudio {
+      padding: 6px 8px !important;
+      font-size: 11px !important;
+    }
+    .user-account-card-btn {
+      padding: 4px 6px !important;
+      min-height: 42px !important;
+    }
+    .user-account-card-btn .uac-info {
+      display: none !important;
+    }
+    .mobile-tools-btn {
+      display: inline-flex !important;
+      padding: 6px 10px !important;
+      font-size: 12px !important;
+      white-space: nowrap;
+    }
+    .mobile-tools-menu {
+      top: calc(56px + env(safe-area-inset-top, 0px)) !important;
+      right: 8px !important;
+      min-width: 220px !important;
+      border-radius: 16px !important;
+      padding: 10px !important;
+      gap: 8px !important;
+      box-shadow: 0 18px 42px rgba(15, 23, 42, 0.24) !important;
+    }
+
+    /* 5. Mobile Full-Screen 3-Tab Workspace Switcher */
+    .workspace {
+      flex: 1 1 auto !important;
+      min-height: 0 !important;
+      padding-bottom: calc(62px + env(safe-area-inset-bottom, 0px)) !important;
+      position: relative;
+    }
+    .mobile-sheet-handle {
+      display: none !important;
+    }
+
+    /* Tab 1: Biểu thức f(x) */
+    .app-shell[data-mobile-view="funcs"] .stage-column {
+      display: none !important;
+    }
+    .app-shell[data-mobile-view="funcs"] .sidebar {
+      display: flex !important;
+      flex: 1 1 100% !important;
+      height: 100% !important;
+      width: 100% !important;
+      border-top: none !important;
+      padding: 10px 12px 24px !important;
+      overflow-y: auto !important;
+    }
+    .app-shell[data-mobile-view="funcs"] .sidebar .panel-card[data-msection="funcs"],
+    .app-shell[data-mobile-view="funcs"] .sidebar .panel-card[data-msection="modes"] {
+      display: block !important;
+    }
+    .app-shell[data-mobile-view="funcs"] .analysis-drawer {
+      display: none !important;
+    }
+
+    /* Tab 2: Đồ thị & 3D (Full-screen Canvas) */
+    .app-shell[data-mobile-view="graph"] .sidebar {
+      display: none !important;
+    }
+    .app-shell[data-mobile-view="graph"] .stage-column {
+      display: flex !important;
+      flex: 1 1 100% !important;
+      height: 100% !important;
+      width: 100% !important;
+    }
+    .app-shell[data-mobile-view="graph"] .stage-split {
+      flex: 1 1 100% !important;
+      height: 100% !important;
+    }
+    .app-shell[data-mobile-view="graph"] .analysis-drawer {
+      display: none !important;
+    }
+
+    /* Tab 3: Bảng biến thiên (Full-screen Variation Table & Derivatives) */
+    .app-shell[data-mobile-view="bbt"] .sidebar {
+      display: none !important;
+    }
+    .app-shell[data-mobile-view="bbt"] .stage-column {
+      display: flex !important;
+      flex: 1 1 100% !important;
+      height: 100% !important;
+      width: 100% !important;
+    }
+    .app-shell[data-mobile-view="bbt"] .stage-split {
+      display: none !important;
+    }
+    .app-shell[data-mobile-view="bbt"] .analysis-drawer {
+      display: flex !important;
+      position: static !important;
+      flex: 1 1 100% !important;
+      height: 100% !important;
+      max-height: none !important;
+      border-top: none !important;
+      box-shadow: none !important;
+    }
+    .app-shell[data-mobile-view="bbt"] .drawer-body {
+      flex: 1 1 auto !important;
+      overflow-y: auto !important;
+      padding: 10px 12px 24px !important;
+    }
+
+    /* Compact Virtual Math Keyboard on Mobile */
+    .keypad-grid {
+      gap: 5px !important;
+    }
+    .key-btn {
+      height: 42px !important;
+      min-height: 42px !important;
+      font-size: 14px !important;
+    }
+
+    /* iOS-Style Mobile Bottom Navigation Bar */
+    .mobile-bottom-nav {
+      display: flex !important;
+      position: fixed !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      height: calc(62px + env(safe-area-inset-bottom, 0px)) !important;
+      padding: 4px 8px env(safe-area-inset-bottom, 0px) !important;
+      z-index: 80 !important;
+      gap: 6px;
+      align-items: center;
+    }
+    .mb-nav-btn {
+      flex: 1;
+      height: 50px !important;
+      min-height: 48px !important;
+      border-radius: 14px !important;
+      font-size: 11.5px !important;
+      font-weight: 700 !important;
+      gap: 3px !important;
+    }
+    .mb-nav-btn span:first-child {
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    /* 6. iOS Bottom-Sheet Modals on Mobile */
+    .modal-backdrop,
+    #registrationOnboardingModal,
+    #pendingApprovalOverlay,
+    #rejectedApprovalOverlay,
+    #legalPolicyModal {
+      align-items: flex-end !important;
+      justify-content: center !important;
+      padding: 0 !important;
+    }
+    .modal-card,
+    .hub-modal-card,
+    .admin-modal-card,
+    .reg-card,
+    .gate-card,
+    .legal-modal-card {
+      width: 100% !important;
+      max-width: 100% !important;
+      margin: 0 !important;
+      border-radius: 24px 24px 0 0 !important;
+      max-height: 92dvh !important;
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+  }
 </style>
 </head>
 <body data-theme="light" data-projector="false">
-<div class="app-shell" id="appShell" hidden inert aria-hidden="true">
+<div class="app-shell" id="appShell" data-ipad-tab="funcs" data-mobile-view="graph" hidden inert aria-hidden="true">
   <!-- TOP CLASSROOM TOOLBAR -->
   <header class="topbar">
-    <div class="brand">
+    <!-- Zone 1: Left Brand -->
+    <div class="header-left brand">
       <button id="btnTabletDrawer" class="btn btn-sm tablet-drawer-btn" title="Mở/Đóng danh sách hàm">☰ Danh sách hàm</button>
       <svg class="brand-logo-svg" viewBox="0 0 34 34" xmlns="http://www.w3.org/2000/svg" aria-label="VANTHESIS Logo">
         <defs>
@@ -3876,7 +5112,8 @@
       <span class="brand-sub">Calculus</span>
     </div>
 
-    <div class="toolbar-group">
+    <!-- Zone 2: Center Tools (horizontally scrollable on narrow screens so right zone never wraps) -->
+    <div class="header-center toolbar-group">
       <select id="presetSelect" class="select-ctrl" title="Thư viện bài toán mẫu (Cơ bản, THPT &amp; Đại học)">
         <option value="" disabled hidden>-- Thư viện Bài toán Mẫu --</option>
         <option value="__blank__">+ Trang trắng (Khởi tạo mới)</option>
@@ -3909,10 +5146,29 @@
       <button id="btnExportPng" class="btn btn-sm desktop-only-tool" title="Tải ảnh PNG độ phân giải cao 2x kèm công thức">Tải ảnh PNG</button>
       <button id="btnExportSvg" class="btn btn-sm desktop-only-tool" title="Tải ảnh Vector SVG chuẩn Edge/Chrome kèm công thức">Tải ảnh Vector (SVG)</button>
       <button id="btnShareQr" class="btn btn-sm btn-primary" title="Chia sẻ đồ thị &amp; bài toán qua Link và Mã QR">🔗 Chia sẻ &amp; QR</button>
+    </div>
+
+    <!-- Zone 3: Right Admin & Account Settings Card -->
+    <div class="header-right">
+      <button id="btnOpenClassroomHub" class="btn btn-sm btn-primary" type="button" hidden style="display: none;" title="Mở Trung tâm Lớp học &amp; Sổ điểm">🏫 Lớp học &amp; Sổ điểm</button>
+      <button id="btnOpenAdminStudio" class="btn btn-sm btn-admin-gold" type="button" hidden style="display: none;" title="Mở Bảng Quản trị Hệ thống VANTHESIS (Chỉ Super Admin)">⚙ Quản trị Hệ thống<span id="adminPendingBadge" class="admin-pending-badge" title="Số đơn đang chờ duyệt">0</span></button>
       <div id="topbarAccountSlot" style="display:inline-flex;align-items:center;">
-        <button id="btnTopbarLogin" class="btn btn-sm" title="Mở Cổng Đăng nhập Giáo viên / Đồng bộ Google Drive">Đăng nhập</button>
+        <button id="userAccountCardBtn" class="user-account-card-btn" type="button" title="Mở Trung tâm Cài đặt Tài khoản &amp; Hồ sơ Cá nhân">
+          <span class="uac-avatar-wrap" id="headerUserAvatar">
+            <span id="headerUserInitials">U</span>
+            <span class="uac-online-dot" id="headerOnlineDot" title="Đã đồng bộ Google Drive"></span>
+          </span>
+          <span class="uac-info">
+            <span class="uac-name" id="headerUserFullName">Tài khoản Google</span>
+            <span class="uac-sub-row">
+              <span class="uac-role-chip student" id="headerUserRoleBadge">Thành viên</span>
+              <span class="uac-settings-hint">Cài đặt</span>
+            </span>
+          </span>
+          <span class="uac-chevron" aria-hidden="true">⚙ ▾</span>
+        </button>
       </div>
-      <button id="btnMobileTools" class="btn btn-sm mobile-tools-btn" title="Mở menu công cụ">⋮ Công cụ</button>
+      <button id="btnMobileTools" class="btn btn-sm mobile-tools-btn" title="Mở menu công cụ">Công cụ ▾</button>
     </div>
   </header>
   <div id="tokenRefreshBanner" class="token-refresh-bar">
@@ -4444,6 +5700,11 @@
       </div><!-- end .stage-split -->
 
       <!-- BOTTOM DRAWER WITH VERTICAL SPLIT-PANE RESIZER -->
+      <!-- iPad Portrait (768px-899px) Quick Switcher -->
+      <div class="ipad-portrait-tabs" id="ipadPortraitTabs" role="tablist" aria-label="Chuyển đổi khung làm việc trên iPad">
+        <button class="ipad-ptab-btn active" type="button" data-ipad-tab="funcs" role="tab" aria-selected="true">𝑓(𝑥) Danh sách Biểu thức</button>
+        <button class="ipad-ptab-btn" type="button" data-ipad-tab="bbt" role="tab" aria-selected="false">📊 Bảng biến thiên &amp; Đạo hàm</button>
+      </div>
       <section class="analysis-drawer" id="analysisDrawer">
         <div class="drawer-resizer" id="drawerResizer" title="Kéo lên/xuống để thay đổi kích thước khung phân tích">
           <span class="resizer-grip">═══</span>
@@ -4511,15 +5772,18 @@
   </div>
   <button id="mToolProjector" class="btn btn-sm toggle-btn">📽 Chế độ Máy chiếu</button>
   <button id="mToolTheme" class="btn btn-sm toggle-btn">◑ Chế độ Tối</button>
+  <button id="mToolAutoFit" class="btn btn-sm">⌖ Căn khung đồ thị</button>
+  <button id="mToolBlank" class="btn btn-sm">+ Trang trắng mới</button>
+  <button id="mToolShareQr" class="btn btn-sm btn-primary">🔗 Chia sẻ &amp; Mã QR</button>
   <button id="mToolPng" class="btn btn-sm">🖼 Tải ảnh PNG</button>
   <button id="mToolSvg" class="btn btn-sm">📐 Tải ảnh Vector (SVG)</button>
 </div>
 
-<!-- MOBILE 3-TAB BOTTOM NAVIGATION -->
-<nav class="mobile-bottom-nav" id="mobileBottomNav">
-  <button class="mb-nav-btn active" data-mtab="funcs"><span>𝑓(𝑥)</span><span>Hàm số &amp; Phím toán</span></button>
-  <button class="mb-nav-btn" data-mtab="modes"><span>🎛</span><span>Chế độ &amp; Tham số</span></button>
-  <button class="mb-nav-btn" data-mtab="bbt"><span>📊</span><span>Bảng biến thiên</span></button>
+<!-- MOBILE 3-TAB BOTTOM NAVIGATION (< 768px) -->
+<nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="Điều hướng không gian làm việc di động">
+  <button class="mb-nav-btn" type="button" data-mtab="funcs"><span>𝑓(𝑥)</span><span>Biểu thức f(x)</span></button>
+  <button class="mb-nav-btn active" type="button" data-mtab="graph"><span>📈</span><span>Đồ thị &amp; 3D</span></button>
+  <button class="mb-nav-btn" type="button" data-mtab="bbt"><span>📊</span><span>Bảng biến thiên</span></button>
 </nav>
 
 <!-- SHARE & QR CODE MODAL -->
@@ -4876,90 +6140,159 @@
   </div>
 </div>
 
-<!-- ACCOUNT HUB MODAL (#accountHubModal) -->
-<div class="modal-backdrop" id="accountHubModal">
+<!-- ACCOUNT HUB & PERSONAL SETTINGS CENTER MODAL (#accountHubModal) -->
+<div class="modal-backdrop" id="accountHubModal" role="dialog" aria-modal="true" aria-label="Trung tâm Cài đặt Tài khoản và Hồ sơ Cá nhân">
   <div class="modal-card hub-modal-card">
-    <div class="modal-head">
-      <span class="modal-title">Quản lý Tài khoản &amp; Đám mây • VANTHESIS</span>
-      <button id="btnCloseAccountHub" class="btn btn-sm" type="button">×</button>
+    <div class="modal-head" style="padding:14px 20px;margin:0;border-bottom:1px solid var(--border);">
+      <span class="modal-title">Trung tâm Tài khoản &amp; Cài đặt Cá nhân • VANTHESIS</span>
+      <button id="btnCloseAccountHub" class="btn btn-sm" type="button" aria-label="Đóng">×</button>
     </div>
 
-    <!-- Super Admin Quick Navigation Card (only visible when isAdmin === true) -->
-    <div id="hubAdminQuickBlock" class="hub-admin-banner">
+    <!-- Profile Header Banner -->
+    <div class="hub-banner">
+      <div id="hubAvatarWrap" class="hub-avatar-lg" style="width:52px;height:52px;font-size:18px;border:2px solid #1D4ED8;flex-shrink:0;">U</div>
+      <div style="min-width:0;flex:1;">
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
+          <b id="hubUserName" style="font-size:15.5px;color:var(--text);">—</b>
+          <span id="hubRoleBadge" class="uac-role-chip teacher">Thành viên</span>
+          <span id="hubApprovalChip" class="hub-verified-chip">✓ Đã xác minh &amp; Phê duyệt</span>
+        </div>
+        <div id="hubUserEmail" style="font-size:12px;color:var(--text-muted);font-family:var(--font-mono);margin-top:2px;overflow:hidden;text-overflow:ellipsis;">—</div>
+        <div id="hubModePill" style="font-size:11px;color:var(--text-soft);margin-top:3px;">Google Drive Cloud (drive.file)</div>
+      </div>
+    </div>
+
+    <!-- Super Admin Quick Banner (strictly visible ONLY to kientdvct@gmail.com) -->
+    <div id="hubAdminQuickBlock" class="hub-admin-banner" style="margin:10px 20px 0;">
       <div>
         <div style="font-size:12.5px;font-weight:700;color:var(--text);">👑 Quyền Super Admin đã mở khóa</div>
-        <div style="font-size:11.5px;color:var(--text-muted);">Quản trị thông báo, chế độ bảo trì và kho học liệu gốc toàn hệ thống.</div>
+        <div style="font-size:11.5px;color:var(--text-muted);">Quản trị thông báo, chế độ bảo trì, kho bài học và duyệt thành viên.</div>
       </div>
       <button id="btnHubOpenAdmin" class="btn btn-sm btn-admin-gold" type="button">Quản trị Hệ thống</button>
     </div>
 
-    <!-- Profile Block -->
-    <div class="hub-section">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <div class="hub-section-title" style="margin-bottom:0;">Hồ sơ Cá nhân</div>
-        <button id="btnHubEditProfile" class="btn btn-sm" type="button">✎ Cập nhật thông tin cá nhân</button>
-      </div>
-      <div class="hub-profile-row">
-        <div id="hubAvatarWrap" class="hub-avatar-lg">U</div>
-        <div style="min-width:0;flex:1;">
-          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-            <b id="hubUserName" style="font-size:14.5px;color:var(--text);">—</b>
-            <span class="hub-verified-chip">✓ Đã xác minh</span>
+    <!-- 3 Navigation Tabs -->
+    <div class="hub-tabs" role="tablist" aria-label="Các mục cài đặt tài khoản">
+      <button class="hub-tab-btn active" data-hubtab="profile" role="tab" aria-selected="true" type="button">1. Hồ sơ Cá nhân</button>
+      <button class="hub-tab-btn" data-hubtab="workspace" role="tab" aria-selected="false" type="button">2. Tùy chỉnh Không gian</button>
+      <button class="hub-tab-btn" data-hubtab="security" role="tab" aria-selected="false" type="button">3. Google Drive &amp; Bảo mật</button>
+    </div>
+
+    <div class="hub-body">
+      <!-- TAB 1: Personal Profile Editor -->
+      <div class="hub-pane active" id="hubPaneProfile" role="tabpanel">
+        <form id="hubProfileForm" class="hub-form-grid" novalidate>
+          <div class="hub-field full">
+            <label for="hubEditFullName">Họ và tên hiển thị</label>
+            <input id="hubEditFullName" type="text" placeholder="Ví dụ: Nguyễn Trung Kiên" required>
           </div>
-          <div id="hubUserEmail" style="font-size:12px;color:var(--text-muted);font-family:var(--font-mono);overflow:hidden;text-overflow:ellipsis;">—</div>
-          <div style="margin-top:4px;">
-            <span id="hubModePill" class="role-badge">Google Drive Cloud</span>
+          <div class="hub-field">
+            <label for="hubEditRoleDisplay">Vai trò học thuật</label>
+            <input id="hubEditRoleDisplay" type="text" readonly>
+          </div>
+          <div class="hub-field">
+            <label for="hubEditSchool">Trường / Cơ sở giáo dục</label>
+            <input id="hubEditSchool" type="text" placeholder="Ví dụ: Đại học Giáo dục — ĐHQGHN">
+          </div>
+          <div class="hub-field">
+            <label id="hubEditUnitLabel" for="hubEditUnit">Lớp / Bộ môn giảng dạy</label>
+            <input id="hubEditUnit" type="text" placeholder="Ví dụ: Sư phạm Toán / Lớp 12A1">
+          </div>
+          <div class="hub-field">
+            <label for="hubEditDob">Ngày sinh</label>
+            <input id="hubEditDob" type="date">
+          </div>
+          <div class="hub-field full">
+            <label for="hubEditGender">Giới tính</label>
+            <select id="hubEditGender">
+              <option value="Nam">Nam</option>
+              <option value="Nữ">Nữ</option>
+              <option value="Khác">Khác</option>
+            </select>
+          </div>
+          <div class="hub-field full" style="margin-top:4px;">
+            <button id="btnHubSaveProfile" class="btn btn-primary" type="submit" style="height:40px;font-weight:700;">
+              💾 Lưu Hồ sơ &amp; Đồng bộ Google Drive
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- TAB 2: Workspace Settings -->
+      <div class="hub-pane" id="hubPaneWorkspace" role="tabpanel">
+        <div class="hub-pref-row">
+          <div>
+            <b>Tự động đồng bộ bài học &amp; đồ thị lên Google Drive (Auto-Sync Drive)</b>
+            <span>Tự động sao lưu mọi thay đổi vào tệp vanthesis_workspace_v1.json trên Drive cá nhân.</span>
+          </div>
+          <input id="prefAutoSyncDrive" type="checkbox" checked style="width:18px;height:18px;cursor:pointer;flex-shrink:0;">
+        </div>
+
+        <div class="hub-pref-row">
+          <div>
+            <b>Đơn vị góc lượng giác mặc định khi mở xưởng</b>
+            <span>Áp dụng cho hiển thị góc lượng giác và vòng tròn lượng giác.</span>
+          </div>
+          <select id="prefAngleUnit" style="height:34px;padding:0 10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);font-size:12.5px;font-weight:600;">
+            <option value="rad">Radian (rad)</option>
+            <option value="deg">Độ (°)</option>
+          </select>
+        </div>
+
+        <div class="hub-pref-row">
+          <div>
+            <b>Hiển thị lưới tọa độ phụ và nhãn cực trị trên đồ thị</b>
+            <span>Tự động gắn nhãn tọa độ cực đại, cực tiểu và điểm uốn trên mặt phẳng Oxy.</span>
+          </div>
+          <input id="prefGridExtrema" type="checkbox" checked style="width:18px;height:18px;cursor:pointer;flex-shrink:0;">
+        </div>
+
+        <button id="btnHubSavePrefs" class="btn btn-primary" type="button" style="width:100%;height:38px;font-weight:700;margin-top:4px;">
+          ✓ Lưu Tùy chỉnh Không gian lên Google Drive
+        </button>
+      </div>
+
+      <!-- TAB 3: Google Drive & Account Security -->
+      <div class="hub-pane" id="hubPaneSecurity" role="tabpanel">
+        <div class="hub-section" style="margin-bottom:12px;">
+          <div class="hub-section-title">Trạng thái Google Drive (drive.file)</div>
+          <div class="hub-meta-grid">
+            <div class="hub-meta-item"><span>Tệp lưu trữ</span><b id="hubDriveFile">vanthesis_workspace_v1.json</b></div>
+            <div class="hub-meta-item"><span>Đồng bộ gần nhất</span><b id="hubLastSaved">Chưa đồng bộ</b></div>
+            <div class="hub-meta-item"><span>Dung lượng ước tính</span><b id="hubEstSize">0 KB</b></div>
+            <div class="hub-meta-item"><span>Hàm số &amp; Điểm</span><b id="hubItemCounts">0 hàm • 0 điểm</b></div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button id="btnHubSyncNow" class="btn btn-sm btn-primary" style="flex:1;height:36px;" type="button">☁ Đồng bộ dữ liệu ngay</button>
+            <button id="btnHubCreateBackup" class="btn btn-sm" style="flex:1;height:36px;" type="button">📌 Tạo điểm sao lưu</button>
           </div>
         </div>
-      </div>
-      <div class="hub-personal-grid" id="hubPersonalGrid">
-        <div><span>Vai trò</span><b id="hubProfRole">—</b></div>
-        <div><span id="hubProfUnitLabel">Lớp / Bộ môn</span><b id="hubProfUnit">—</b></div>
-        <div><span>Trường / Đơn vị</span><b id="hubProfSchool">—</b></div>
-        <div><span>Ngày sinh • Giới tính</span><b id="hubProfDobGender">—</b></div>
+
+        <div class="hub-section" style="margin-bottom:12px;">
+          <div class="hub-section-title">Lịch sử Khôi phục (3 bản gần nhất)</div>
+          <div id="hubBackupList" class="hub-backup-list">
+            <div style="font-size:12px;color:var(--text-soft);">Chưa có điểm sao lưu nào.</div>
+          </div>
+        </div>
+
+        <div class="hub-legal-footer" style="margin-top:8px;margin-bottom:6px;">
+          <a href="https://vanthesis-calculus.vercel.app/privacy.html" id="hubLinkPrivacy" class="hub-legal-link" target="_blank" rel="noopener">Chính sách Quyền riêng tư (Privacy Policy)</a>
+          <span aria-hidden="true">•</span>
+          <a href="https://vanthesis-calculus.vercel.app/terms.html" id="hubLinkTerms" class="hub-legal-link" target="_blank" rel="noopener">Điều khoản Sử dụng (Terms of Service)</a>
+        </div>
+        <div id="hubStatusMsg" style="margin-top:8px;font-size:11.8px;color:var(--secondary);display:none;"></div>
       </div>
     </div>
 
-    <!-- Cloud Sync Block -->
-    <div class="hub-section">
-      <div class="hub-section-title">Đồng bộ Đám mây (drive.file)</div>
-      <div class="hub-meta-grid">
-        <div class="hub-meta-item"><span>Tệp học liệu</span><b id="hubDriveFile">vanthesis_workspace_v1.json</b></div>
-        <div class="hub-meta-item"><span>Lưu gần nhất</span><b id="hubLastSaved">Chưa đồng bộ</b></div>
-        <div class="hub-meta-item"><span>Dung lượng ước tính</span><b id="hubEstSize">0 KB</b></div>
-        <div class="hub-meta-item"><span>Hàm số &amp; Điểm</span><b id="hubItemCounts">0 hàm • 0 điểm</b></div>
-      </div>
-      <div style="display:flex;gap:8px;">
-        <button id="btnHubSyncNow" class="btn btn-sm btn-primary" style="flex:1;" type="button">☁ Đồng bộ ngay</button>
-        <button id="btnHubCreateBackup" class="btn btn-sm" style="flex:1;" type="button">📌 Tạo điểm sao lưu</button>
-      </div>
-    </div>
-
-    <!-- 3-Version Backup History Block -->
-    <div class="hub-section">
-      <div class="hub-section-title">Lịch sử Khôi phục (3 bản gần nhất)</div>
-      <div id="hubBackupList" class="hub-backup-list">
-        <div style="font-size:12px;color:var(--text-soft);">Chưa có điểm sao lưu nào.</div>
-      </div>
-    </div>
-
-    <!-- Session Security Block -->
-    <div class="hub-section">
-      <div class="hub-section-title">Bảo mật Phiên làm việc</div>
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        <button id="btnHubSignOut" class="btn btn-sm" style="width:100%;" type="button">Đăng xuất (Giữ bộ nhớ đệm máy cá nhân)</button>
-        <button id="btnHubPublicWipe" class="btn btn-sm hub-danger-btn" type="button">Đăng xuất &amp; Xóa dấu vết máy công cộng</button>
-      </div>
-      <div id="hubStatusMsg" style="margin-top:8px;font-size:11.8px;color:var(--secondary);display:none;"></div>
-    </div>
-
-    <div class="hub-legal-footer">
-      <a href="https://vanthesis-calculus.vercel.app/privacy.html" id="hubLinkPrivacy" class="hub-legal-link" target="_blank" rel="noopener">Chính sách quyền riêng tư</a>
-      <span aria-hidden="true">•</span>
-      <a href="https://vanthesis-calculus.vercel.app/terms.html" id="hubLinkTerms" class="hub-legal-link" target="_blank" rel="noopener">Điều khoản sử dụng</a>
+    <!-- Modal Footer with Prominent Sign-Out -->
+    <div class="hub-modal-footer">
+      <button id="btnHubPublicWipe" class="btn btn-sm" type="button" title="Đăng xuất và xóa toàn bộ bộ nhớ đệm trên máy công cộng">Đăng xuất &amp; Xóa máy công cộng</button>
+      <button id="btnHubSignOut" class="btn btn-sm hub-danger-btn" type="button" style="font-weight:700;padding:0 16px;height:36px;">Đăng xuất khỏi VANTHESIS Calculus</button>
     </div>
   </div>
 </div>
+
+<div id="appToast" role="status" aria-live="polite"></div>
 
 <!-- SYSTEM MAINTENANCE OVERLAY (for Guest & regular Teachers when maintenanceMode === true) -->
 <div id="maintenanceOverlay" role="dialog" aria-modal="true" aria-label="Hệ thống đang bảo trì">
@@ -4990,7 +6323,7 @@
       <button class="admin-tab-btn active" data-admtab="ops" type="button">1. Vận hành &amp; Thông báo</button>
       <button class="admin-tab-btn" data-admtab="chapters" type="button">2. Chương &amp; Bài học Quỹ đạo</button>
       <button class="admin-tab-btn" data-admtab="publish" type="button">3. Xuất bản &amp; Mã Kho gốc</button>
-      <button class="admin-tab-btn" data-admtab="access" type="button">4. Duyệt Thành viên</button>
+      <button class="admin-tab-btn" data-admtab="access" type="button">4. Duyệt &amp; Phân quyền RBAC</button>
     </div>
 
     <div class="admin-body">
@@ -5128,190 +6461,182 @@
         </div>
       </div>
 
-      <!-- TAB 4: Access Control & Member Approval -->
+      <!-- TAB 4: RBAC Member Approval Queue & User Directory -->
       <div class="admin-pane" id="adminPaneAccess">
-        <div class="hub-section">
-          <div class="hub-section-title">Chính sách Kiểm duyệt Thành viên</div>
-          <div class="admin-toggle-row">
-            <label for="admReqTeacher" style="cursor:pointer;"><b>Bắt buộc Admin duyệt tài khoản Giáo viên mới</b> (requireApprovalForTeachers)</label>
-            <input id="admReqTeacher" type="checkbox" style="width:17px;height:17px;cursor:pointer;">
-          </div>
-          <div class="admin-toggle-row">
-            <label for="admReqStudent" style="cursor:pointer;"><b>Bắt buộc Admin duyệt tài khoản Học sinh mới</b> (requireApprovalForStudents)</label>
-            <input id="admReqStudent" type="checkbox" style="width:17px;height:17px;cursor:pointer;">
+        <div class="rbac-stats-bar">
+          <div class="rbac-stat-box st-pending"><span>Đang chờ duyệt (Pending)</span><b id="rbacStatPending">0</b></div>
+          <div class="rbac-stat-box st-approved"><span>Đã phê duyệt (Approved)</span><b id="rbacStatApproved">0</b></div>
+          <div class="rbac-stat-box st-rejected"><span>Đã từ chối (Rejected)</span><b id="rbacStatRejected">0</b></div>
+          <button id="btnAdminRbacRefresh" class="btn btn-sm btn-primary" type="button" style="height:40px;">↻ Làm mới danh sách</button>
+        </div>
+
+        <div class="rbac-subtabs" role="tablist">
+          <button class="rbac-subtab-btn active" data-rbactab="pending" type="button">1. Hàng đợi Chờ xác nhận (<span id="rbacTabPendingCnt">0</span>)</button>
+          <button class="rbac-subtab-btn" data-rbactab="directory" type="button">2. Thành viên Đã duyệt &amp; Đã từ chối (<span id="rbacTabDirCnt">0</span>)</button>
+        </div>
+
+        <div id="rbacAdminStatusMsg" style="display:none;font-size:12px;padding:8px 10px;border-radius:8px;margin-bottom:10px;background:var(--primary-soft);color:var(--primary);"></div>
+
+        <div id="rbacSubPanePending">
+          <div id="rbacPendingList">
+            <div style="font-size:12.5px;color:var(--text-soft);padding:14px;text-align:center;">Đang tải danh sách đơn chờ duyệt...</div>
           </div>
         </div>
 
-        <div class="admin-field" style="margin-bottom:10px;">
-          <input id="admAccessSearch" class="mono" type="text" placeholder="🔍 Tìm kiếm nhanh theo địa chỉ email trong cả 3 danh sách...">
-        </div>
-        <div id="admAccessConflictMsg" style="display:none;font-size:11.8px;padding:7px 10px;border-radius:8px;background:#FFFBEB;border:1px solid #FCD34D;color:#92400E;margin-bottom:10px;"></div>
-
-        <div class="hub-section">
-          <div class="hub-section-title">Giáo viên đã duyệt (<span id="admCountTeachers">0</span>)</div>
-          <div class="adm-bulk-row">
-            <textarea id="admInputTeachers" placeholder="Dán 1 hoặc nhiều Gmail (ngăn cách bằng dấu phẩy, chấm phẩy, khoảng trắng hoặc xuống dòng)..."></textarea>
-            <button id="btnAdmAddTeachers" class="btn btn-sm btn-primary" type="button">+ Thêm</button>
+        <div id="rbacSubPaneDirectory" style="display:none;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+            <input id="rbacDirSearch" type="text" placeholder="🔍 Tìm theo tên, email hoặc lớp..." style="flex:1;min-width:180px;height:34px;padding:0 10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);font-size:12.5px;">
+            <select id="rbacDirFilter" style="height:34px;padding:0 10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);font-size:12.5px;font-weight:600;">
+              <option value="ALL">Tất cả</option>
+              <option value="HOMEROOM_TEACHER">HOMEROOM TEACHER</option>
+              <option value="SUBJECT_TEACHER">SUBJECT TEACHER</option>
+              <option value="STUDENT">STUDENT</option>
+              <option value="REJECTED">Đã từ chối</option>
+            </select>
           </div>
-          <div id="admChipsTeachers" class="adm-email-chips"></div>
-        </div>
-
-        <div class="hub-section">
-          <div class="hub-section-title">Học sinh đã duyệt (<span id="admCountStudents">0</span>)</div>
-          <div class="adm-bulk-row">
-            <textarea id="admInputStudents" placeholder="Dán 1 hoặc nhiều Gmail học sinh..."></textarea>
-            <button id="btnAdmAddStudents" class="btn btn-sm btn-primary" type="button">+ Thêm</button>
+          <div id="rbacDirectoryList">
+            <div style="font-size:12.5px;color:var(--text-soft);padding:14px;text-align:center;">Chưa có dữ liệu thành viên.</div>
           </div>
-          <div id="admChipsStudents" class="adm-email-chips"></div>
         </div>
-
-        <div class="hub-section">
-          <div class="hub-section-title" style="color:var(--danger);">Danh sách Tài khoản bị khóa (<span id="admCountBanned">0</span>)</div>
-          <div class="adm-bulk-row">
-            <textarea id="admInputBanned" placeholder="Dán Gmail cần tạm khóa quyền truy cập..."></textarea>
-            <button id="btnAdmAddBanned" class="btn btn-sm btn-danger-soft" type="button">+ Khóa</button>
-          </div>
-          <div id="admChipsBanned" class="adm-email-chips"></div>
-        </div>
-
-        <button id="btnAdmPublishAccess" class="btn btn-primary" style="width:100%;height:40px;font-size:13.5px;" type="button">
-          ☁ Lưu &amp; Xuất bản phân quyền lên Google Drive
-        </button>
-        <div id="admAccessPubStatus" style="display:none;font-size:12px;padding:8px 10px;border-radius:8px;margin-top:8px;"></div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- MANDATORY FIRST-LOGIN ONBOARDING MODAL (#onboardingProfileModal) -->
-<div id="onboardingProfileModal" role="dialog" aria-modal="true" aria-label="Hoàn thiện Hồ sơ Cá nhân">
-  <div class="ob-card">
-    <div class="ob-header">
+<!-- MANDATORY 3-ROLE REGISTRATION ONBOARDING MODAL (#registrationOnboardingModal) -->
+<div id="registrationOnboardingModal" role="dialog" aria-modal="true" aria-label="Khai báo Hồ sơ Thành viên VANTHESIS Calculus">
+  <div class="reg-card">
+    <div class="reg-head">
       <div>
-        <div id="obModalTitle" style="font-family:var(--font-math);font-size:19px;font-weight:700;color:var(--text);">Hoàn thiện Hồ sơ Cá nhân</div>
-        <div id="obModalSub" style="font-size:12px;color:var(--text-muted);">Khai báo 1 lần duy nhất — hồ sơ được lưu an toàn trên Google Drive cá nhân của bạn.</div>
+        <div id="regModalTitle" style="font-family:var(--font-math);font-size:20px;font-weight:700;color:var(--text);">Khai báo Hồ sơ Thành viên</div>
+        <div style="font-size:12.2px;color:var(--text-muted);margin-top:2px;">Vui lòng hoàn tất thông tin học vụ để Quản trị viên xác nhận và cấp quyền truy cập.</div>
       </div>
-      <button id="btnObCancelEdit" class="btn btn-sm" type="button" style="display:none;">Đóng</button>
+      <button id="btnRegLogout" class="btn btn-sm btn-danger-soft" type="button">Đăng xuất</button>
     </div>
 
-    <div class="ob-user-strip">
-      <div id="obAvatarWrap" class="hub-avatar-lg" style="width:42px;height:42px;font-size:16px;">U</div>
+    <div class="reg-user-strip">
+      <div id="regAvatarWrap" class="reg-avatar">U</div>
       <div style="min-width:0;flex:1;">
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-          <b id="obGoogleName" style="font-size:13.5px;">—</b>
-          <span class="hub-verified-chip">✓ Đã xác minh</span>
-        </div>
-        <div id="obGoogleEmail" style="font-size:12px;color:var(--text-muted);font-family:var(--font-mono);overflow:hidden;text-overflow:ellipsis;">—</div>
+        <div id="regGoogleName" style="font-size:13px;font-weight:700;color:var(--text);">—</div>
+        <div id="regGoogleEmail" style="font-size:11.8px;color:var(--text-muted);font-family:var(--font-mono);overflow:hidden;text-overflow:ellipsis;">—</div>
       </div>
+      <span class="hub-verified-chip">✓ Google OAuth</span>
     </div>
 
-    <form id="onboardingForm" novalidate>
-      <div id="obRoleSection">
-        <div style="font-size:11.8px;font-weight:700;margin-bottom:6px;">Chọn Vai trò của bạn <span class="ob-req">*</span></div>
-        <div class="ob-role-grid">
-          <button type="button" class="ob-role-card active" data-obrole="student">
-            <div class="ob-role-title"><span>🎓</span><span>Học sinh</span></div>
-            <div class="ob-role-desc">Học tập, tương tác đồ thị giải tích &amp; theo dõi bài học.</div>
-          </button>
-          <button type="button" class="ob-role-card" data-obrole="teacher">
-            <div class="ob-role-title"><span>📘</span><span>Giáo viên</span></div>
-            <div class="ob-role-desc">Soạn giáo án trực quan, đồng bộ Drive &amp; quản lý bài giảng.</div>
-          </button>
-        </div>
-        <div id="obRoleErr" class="ob-err" style="margin-top:-8px;margin-bottom:10px;">Vui lòng chọn vai trò Học sinh hoặc Giáo viên.</div>
+    <div id="regErrorBox" class="reg-err-box" role="alert"></div>
+
+    <form id="registrationForm" novalidate>
+      <div style="font-size:11.8px;font-weight:700;color:var(--text-muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:0.04em;">Chọn vai trò của bạn</div>
+      <div class="reg-role-grid" role="radiogroup" aria-label="Chọn vai trò học vụ">
+        <button type="button" class="reg-role-card active" data-regrole="HOMEROOM_TEACHER" aria-checked="true">
+          <span class="rc-ico" aria-hidden="true">🎓</span>
+          <span class="rc-title">Giáo viên chủ nhiệm</span>
+          <span class="rc-code">HOMEROOM_TEACHER</span>
+        </button>
+        <button type="button" class="reg-role-card" data-regrole="SUBJECT_TEACHER" aria-checked="false">
+          <span class="rc-ico" aria-hidden="true">📐</span>
+          <span class="rc-title">Giáo viên bộ môn</span>
+          <span class="rc-code">SUBJECT_TEACHER</span>
+        </button>
+        <button type="button" class="reg-role-card" data-regrole="STUDENT" aria-checked="false">
+          <span class="rc-ico" aria-hidden="true">📚</span>
+          <span class="rc-title">Học sinh</span>
+          <span class="rc-code">STUDENT</span>
+        </button>
       </div>
 
-      <div class="ob-grid">
-        <div class="ob-field full" id="obFieldFullName">
-          <label for="obFullName">Họ và tên đầy đủ <span class="ob-req">*</span></label>
-          <input id="obFullName" type="text" placeholder="Ví dụ: Nguyễn Minh Anh" autocomplete="name">
-          <div class="ob-err" id="obErrFullName">Vui lòng nhập họ tên đầy đủ (tối thiểu 2 từ và 4 ký tự).</div>
+      <div class="hub-form-grid" style="margin-bottom:12px;">
+        <div class="hub-field">
+          <label for="regFullName">Họ và tên <span style="color:#DC2626;">*</span></label>
+          <input id="regFullName" type="text" placeholder="VD: Nguyễn Văn An" required>
         </div>
-
-        <div class="ob-field" id="obFieldDob">
-          <label for="obDob">Ngày tháng năm sinh <span class="ob-req">*</span></label>
-          <input id="obDob" type="date">
-          <div class="ob-err" id="obErrDob">Vui lòng chọn ngày sinh hợp lệ (từ năm 1945 đến trước 5 tuổi).</div>
+        <div class="hub-field">
+          <label for="regDob">Ngày tháng năm sinh <span style="color:#DC2626;">*</span></label>
+          <input id="regDob" type="date" required>
         </div>
+      </div>
 
-        <div class="ob-field" id="obFieldGender">
-          <label for="obGender">Giới tính <span class="ob-req">*</span></label>
-          <select id="obGender">
-            <option value="">-- Chọn giới tính --</option>
+      <div id="regSecHomeroom" class="hub-field" style="margin-bottom:14px;">
+        <label for="regHomeroomClass">Tên lớp chủ nhiệm <span style="color:#DC2626;">*</span></label>
+        <input id="regHomeroomClass" type="text" placeholder="VD: 12A1">
+      </div>
+
+      <div id="regSecSubject" style="display:none;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;">
+          <span style="font-size:12.2px;font-weight:700;color:var(--text);">Bộ môn &amp; Lớp giảng dạy <span style="color:#DC2626;">*</span></span>
+          <button id="btnRegAddSubjectRow" class="btn btn-sm" type="button">+ Thêm bộ môn / lớp</button>
+        </div>
+        <div id="regSubjectRows"></div>
+      </div>
+
+      <div id="regSecStudent" class="hub-form-grid" style="display:none;margin-bottom:14px;">
+        <div class="hub-field">
+          <label for="regGender">Giới tính <span style="color:#DC2626;">*</span></label>
+          <select id="regGender">
             <option value="Nam">Nam</option>
             <option value="Nữ">Nữ</option>
             <option value="Khác">Khác</option>
           </select>
-          <div class="ob-err" id="obErrGender">Vui lòng chọn giới tính.</div>
         </div>
-
-        <div class="ob-field full" id="obFieldSchool">
-          <label for="obSchoolName" id="obSchoolLabel">Trường học <span class="ob-req">*</span></label>
-          <input id="obSchoolName" type="text" placeholder="Ví dụ: THPT Chuyên Khoa học Tự nhiên">
-          <div class="ob-err" id="obErrSchool">Vui lòng nhập tên trường / đơn vị công tác (tối thiểu 3 ký tự).</div>
-        </div>
-
-        <div class="ob-field full" id="obFieldClass">
-          <label for="obClassName">Tên lớp <span class="ob-req">*</span></label>
-          <input id="obClassName" type="text" placeholder="Ví dụ: 12A1, 11 Chuyên Toán">
-          <div class="ob-err" id="obErrClass">Vui lòng nhập tên lớp (tối thiểu 2 ký tự).</div>
-        </div>
-
-        <div class="ob-field full" id="obFieldSubject" style="display:none;">
-          <label for="obSubject">Bộ môn / Khối lớp phụ trách <span class="ob-req">*</span></label>
-          <input id="obSubject" type="text" placeholder="Ví dụ: Toán học — Khối 12">
-          <div class="ob-err" id="obErrSubject">Vui lòng nhập bộ môn / khối lớp phụ trách (tối thiểu 2 ký tự).</div>
+        <div class="hub-field">
+          <label for="regStudentClass">Lớp học <span style="color:#DC2626;">*</span></label>
+          <input id="regStudentClass" type="text" placeholder="VD: 12A1">
         </div>
       </div>
 
-      <div id="obSubmitErr" class="ob-submit-err"></div>
-
-      <div class="ob-footer">
-        <button id="btnObSubmit" type="submit" class="btn btn-primary" style="width:100%;height:42px;font-size:13.5px;font-weight:700;">
-          Lưu hồ sơ lên Google Drive &amp; Tiếp tục →
-        </button>
-        <button id="btnObSwitchAccount" type="button" class="btn btn-sm" style="width:100%;color:var(--text-muted);">
-          Đăng xuất / Đổi tài khoản Gmail khác
-        </button>
-      </div>
+      <button id="btnRegSubmit" class="btn btn-primary" type="submit" style="width:100%;height:42px;font-size:13.8px;font-weight:700;">
+        Gửi hồ sơ xác nhận →
+      </button>
     </form>
   </div>
 </div>
 
 <!-- PENDING APPROVAL OVERLAY (#pendingApprovalOverlay) -->
-<div id="pendingApprovalOverlay" role="dialog" aria-modal="true" aria-label="Tài khoản đang chờ Quản trị viên phê duyệt">
-  <div class="gate-card">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-      <span style="font-size:26px;">⏳</span>
-      <div>
-        <div style="font-family:var(--font-math);font-size:19px;font-weight:700;color:var(--text);">Tài khoản đang chờ Quản trị viên phê duyệt</div>
-        <div style="font-size:12px;color:var(--text-muted);">Hồ sơ của bạn đã được lưu an toàn trên Google Drive cá nhân. Hãy gửi phiếu đăng ký cho Quản trị viên để mở khóa quyền truy cập.</div>
-      </div>
+<div id="pendingApprovalOverlay" role="dialog" aria-modal="true" aria-label="Hồ sơ đang chờ Quản trị viên xác nhận">
+  <div class="gate-card" style="max-width:540px;">
+    <div style="text-align:center;margin-bottom:14px;">
+      <div class="pending-shield-ico" aria-hidden="true">⏳</div>
+      <h2 style="font-family:var(--font-math);font-size:21px;font-weight:700;color:var(--text);margin-bottom:6px;">Hồ sơ của bạn đang chờ Quản trị viên xác nhận</h2>
+      <p style="font-size:12.6px;color:var(--text-muted);line-height:1.55;">
+        Hệ thống tự động kiểm tra trạng thái mỗi 20 giây và sẽ mở khóa Xưởng Giải tích ngay khi Quản trị viên phê duyệt.
+      </p>
     </div>
 
-    <table class="gate-summary-table" aria-label="Tóm tắt hồ sơ đăng ký">
-      <tbody>
-        <tr><th>Địa chỉ Gmail</th><td id="pendEmail" style="font-family:var(--font-mono);">—</td></tr>
-        <tr><th>Vai trò đăng ký</th><td id="pendRole">—</td></tr>
-        <tr><th>Họ và tên</th><td id="pendFullName">—</td></tr>
-        <tr><th id="pendUnitLabel">Lớp / Bộ môn</th><td id="pendUnit">—</td></tr>
-        <tr><th>Trường / Đơn vị</th><td id="pendSchool">—</td></tr>
-        <tr><th>Ngày sinh</th><td id="pendDob">—</td></tr>
-        <tr><th>Giới tính</th><td id="pendGender">—</td></tr>
-      </tbody>
-    </table>
+    <div class="gate-summary-table" id="pendingSummaryTable">
+      <div><span>Email Google</span><b id="pendEmail">—</b></div>
+      <div><span>Vai trò đăng ký</span><b id="pendRole">—</b></div>
+      <div><span>Họ và tên</span><b id="pendName">—</b></div>
+      <div><span>Ngày sinh</span><b id="pendDob">—</b></div>
+      <div><span id="pendDetailLabel">Chi tiết học vụ</span><b id="pendDetailVal">—</b></div>
+      <div><span>Thời gian gửi</span><b id="pendSubmittedAt">—</b></div>
+    </div>
 
-    <div id="pendCheckMsg" style="display:none;font-size:12px;padding:8px 10px;border-radius:8px;margin-bottom:10px;"></div>
+    <div id="pendingCheckStatusMsg" style="display:none;font-size:12px;padding:8px 10px;border-radius:8px;margin-bottom:10px;background:var(--primary-soft);color:var(--primary);text-align:center;"></div>
 
     <div class="gate-actions-stack">
-      <a id="btnPendMailAdmin" class="btn btn-primary" style="height:40px;text-decoration:none;" href="#">✉ Gửi yêu cầu duyệt qua Email tới Admin</a>
-      <button id="btnPendCopySlip" class="btn" style="height:38px;" type="button">📋 Sao chép Phiếu đăng ký (Gửi Zalo / Nhóm lớp)</button>
-      <button id="btnPendRecheck" class="btn" style="height:38px;border-color:var(--primary);color:var(--primary);font-weight:700;" type="button">🔄 Kiểm tra lại trạng thái duyệt</button>
+      <button id="btnPendingRecheckNow" class="btn btn-primary" style="height:40px;font-weight:700;" type="button">🔄 Kiểm tra trạng thái duyệt ngay</button>
+      <div style="display:flex;gap:8px;">
+        <button id="btnPendingEditInfo" class="btn btn-sm" style="flex:1;height:36px;" type="button">✎ Chỉnh sửa lại thông tin</button>
+        <button id="btnPendingSignOut" class="btn btn-sm btn-danger-soft" style="flex:1;height:36px;" type="button">Đăng xuất / Đổi tài khoản</button>
+      </div>
     </div>
+  </div>
+</div>
 
-    <div class="gate-secondary-row">
-      <button id="btnPendEditProfile" class="btn btn-sm" style="flex:1;" type="button">✎ Chỉnh sửa hồ sơ</button>
-      <button id="btnPendLogout" class="btn btn-sm btn-danger-soft" style="flex:1;" type="button">Đăng xuất / Đổi tài khoản Gmail</button>
+<!-- REJECTED APPROVAL OVERLAY (#rejectedApprovalOverlay) -->
+<div id="rejectedApprovalOverlay" role="dialog" aria-modal="true" aria-label="Hồ sơ chưa được phê duyệt">
+  <div class="gate-card" style="max-width:500px;text-align:center;">
+    <div style="font-size:40px;margin-bottom:10px;">⚠️</div>
+    <h2 style="font-family:var(--font-math);font-size:21px;font-weight:700;color:var(--danger);margin-bottom:8px;">Hồ sơ chưa được phê duyệt</h2>
+    <p style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:12px;">
+      Tài khoản <b id="rejEmailText" style="font-family:var(--font-mono);color:var(--text);">—</b> chưa được Quản trị viên phê duyệt quyền truy cập.
+    </p>
+    <div id="rejReasonBox" style="display:none;padding:10px 12px;border-radius:10px;background:rgba(220,38,38,0.08);border:1px solid rgba(220,38,38,0.25);color:#B91C1C;font-size:12.5px;text-align:left;margin-bottom:14px;">
+      <b>Lý do từ Quản trị viên:</b> <span id="rejReasonText"></span>
+    </div>
+    <div class="gate-actions-stack">
+      <button id="btnRejectedResubmit" class="btn btn-primary" style="height:40px;font-weight:700;" type="button">✎ Khai báo lại &amp; Gửi xác nhận</button>
+      <button id="btnRejectedSignOut" class="btn btn-sm btn-danger-soft" style="height:36px;" type="button">Đăng xuất</button>
     </div>
   </div>
 </div>
@@ -5469,7 +6794,9 @@
    * 0. AUTH & GOOGLE DRIVE SYNC CONFIGURATION (ZERO-DATABASE)
    * ========================================================================= */
   const AUTH_CONFIG = Object.freeze({
+    SUPER_ADMIN_EMAIL: 'kientdvct@gmail.com',
     ADMIN_EMAIL: 'kientdvct@gmail.com',
+    APPROVAL_BRIDGE_URL: 'https://script.google.com/macros/s/AKfycbyg5qIxzWGJSaVOnCUGcbtHdO01MSyFuLVNh7f25Nu0yMbC3zFya5RaK5bniq3Zojp-/exec',
     GOOGLE_CLIENT_ID: '116435135041-hlq4oivhv0gibvlb1v59kbvpbci2jiih.apps.googleusercontent.com',
     GOOGLE_PUBLIC_API_KEY: 'AIzaSyD7l4u0smloxDT1bE3mvyIQNMHU1vEkeQ8',
     SCOPES: 'openid email profile https://www.googleapis.com/auth/drive.file',
@@ -5477,6 +6804,91 @@
     DRIVE_FILENAME: 'vanthesis_workspace_v1.json',
     SYSTEM_MASTER_FILENAME: 'vanthesis_system_master.json',
     SYSTEM_MASTER_FILE_ID: ''
+  });
+
+  const RBAC_ROLE_REGISTRY = Object.freeze({
+    SUPER_ADMIN: Object.freeze({
+      key: 'SUPER_ADMIN',
+      label: 'Super Admin',
+      subtitle: 'Quản trị viên Hệ thống',
+      badgeClass: 'admin',
+      color: '#B45309',
+      canAccessCalculusLab: true,
+      canOpenAdminStudio: true,
+      permissions: Object.freeze({ manageHomeroomClass: true, manageSubjects: true, manageAllUsers: true })
+    }),
+    HOMEROOM_TEACHER: Object.freeze({
+      key: 'HOMEROOM_TEACHER',
+      label: 'HOMEROOM TEACHER',
+      subtitle: 'Giáo viên chủ nhiệm',
+      badgeClass: 'homeroom',
+      color: '#1D4ED8',
+      canAccessCalculusLab: true,
+      canOpenAdminStudio: false,
+      permissions: Object.freeze({ manageHomeroomClass: true, manageSubjects: false })
+    }),
+    SUBJECT_TEACHER: Object.freeze({
+      key: 'SUBJECT_TEACHER',
+      label: 'SUBJECT TEACHER',
+      subtitle: 'Giáo viên bộ môn',
+      badgeClass: 'subject',
+      color: '#4338CA',
+      canAccessCalculusLab: true,
+      canOpenAdminStudio: false,
+      permissions: Object.freeze({ manageHomeroomClass: false, manageSubjects: true })
+    }),
+    STUDENT: Object.freeze({
+      key: 'STUDENT',
+      label: 'STUDENT',
+      subtitle: 'Học sinh',
+      badgeClass: 'student',
+      color: '#047857',
+      canAccessCalculusLab: true,
+      canOpenAdminStudio: false,
+      permissions: Object.freeze({ manageHomeroomClass: false, manageSubjects: false })
+    })
+  });
+
+  function normalizeRbacRole(rawRole) {
+    const r = String(rawRole || '').trim().toUpperCase();
+    if (r === 'SUPER_ADMIN' || r === 'ADMIN') return 'SUPER_ADMIN';
+    if (r === 'HOMEROOM_TEACHER') return 'HOMEROOM_TEACHER';
+    if (r === 'SUBJECT_TEACHER' || r === 'TEACHER') return 'SUBJECT_TEACHER';
+    return 'STUDENT';
+  }
+
+  function getRbacRoleMeta(rawRole) {
+    return RBAC_ROLE_REGISTRY[normalizeRbacRole(rawRole)] || RBAC_ROLE_REGISTRY.STUDENT;
+  }
+
+  const ApprovalBridgeClient = Object.freeze({
+    async _post(bodyObj) {
+      try {
+        const res = await fetch(AUTH_CONFIG.APPROVAL_BRIDGE_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(bodyObj)
+        });
+        const text = await res.text();
+        let data = null;
+        try { data = JSON.parse(text); } catch { data = { ok: false, error: 'Phản hồi máy chủ không hợp lệ.' }; }
+        return data;
+      } catch {
+        return { ok: false, networkError: true, error: 'Không thể kết nối cầu nối phê duyệt. Vui lòng thử lại.' };
+      }
+    },
+    checkStatus(accessToken) {
+      return this._post({ action: 'checkStatus', accessToken });
+    },
+    submitRegistration(accessToken, payload) {
+      return this._post({ action: 'submitRegistration', accessToken, payload });
+    },
+    adminListUsers(accessToken) {
+      return this._post({ action: 'adminListUsers', accessToken });
+    },
+    adminDecideUser(accessToken, { targetEmail, decision, assignedRole, rejectReason = '' }) {
+      return this._post({ action: 'adminDecideUser', accessToken, targetEmail, decision, assignedRole, rejectReason });
+    }
   });
 
   /* =========================================================================
@@ -6928,6 +8340,7 @@
     activeFuncIndex: 0,
     customPoints: [],
     layers: { extrema: true, inflections: true, intercepts: true, asymptotes: true, labels: true, tracer: true },
+    userPrefs: { autoSyncDrive: true, angleUnit: 'rad', showGridExtrema: true },
     tracerHit: null,
     curvePointX: Math.PI / 3,
     curvePointFuncId: null,
@@ -9898,7 +11311,8 @@
       gt3Tool: state.gt3Tool, vecPStr: state.vecPStr, vecQStr: state.vecQStr,
       odeStr: state.odeStr, odeX0: state.odeX0, odeY0: state.odeY0,
       mmA: state.mmA, mmB: state.mmB, intA: state.intA, intB: state.intB,
-      calcX0: state.calcX0, view: state.view
+      calcX0: state.calcX0, view: state.view,
+      userPrefs: state.userPrefs
     };
   }
 
@@ -9918,6 +11332,11 @@
     }
     if (Array.isArray(d.customPoints)) state.customPoints = d.customPoints;
     if (d.layers) state.layers = { ...state.layers, ...d.layers };
+    if (d.userPrefs && typeof d.userPrefs === 'object') {
+      state.userPrefs = { ...state.userPrefs, ...d.userPrefs };
+      state.layers.labels = state.userPrefs.showGridExtrema !== false;
+      state.layers.extrema = state.userPrefs.showGridExtrema !== false;
+    }
     if (typeof d.uStr === 'string') { state.uStr = d.uStr; $('inputU').value = d.uStr; }
     if (typeof d.fxyStr === 'string') { state.fxyStr = d.fxyStr; $('inputFxy').value = d.fxyStr; }
     if (typeof d.vecPStr === 'string') { state.vecPStr = d.vecPStr; $('inputVecP').value = d.vecPStr; }
@@ -9952,7 +11371,7 @@
       try {
         localStorage.setItem('giai_tich_studio_v3', JSON.stringify(collectWorkspaceSnapshot()));
       } catch {}
-      if (typeof DriveSyncManager !== 'undefined' && AuthManager.isAuthorized()) {
+      if (typeof DriveSyncManager !== 'undefined' && AuthManager.isAuthorized() && state.userPrefs.autoSyncDrive !== false) {
         DriveSyncManager.scheduleAutoSync();
       }
     }, 350);
@@ -10431,11 +11850,46 @@
     redrawAll(); renderVariationTableAndCards();
     showToast(state.projector ? 'Đã bật Chế độ Máy chiếu (nét 3.5px)' : 'Đã tắt Chế độ Máy chiếu');
   });
+  function applyGlobalTheme(nextMode, persist = true) {
+    const mode = nextMode === 'dark' ? 'dark' : 'light';
+    state.theme = mode;
+    document.documentElement.setAttribute('data-theme', mode);
+    document.body.setAttribute('data-theme', mode);
+    const landingEl = $('publicLandingView');
+    if (landingEl) landingEl.setAttribute('data-cosmic', mode === 'dark' ? 'night' : 'day');
+    const metaScheme = document.querySelector('meta[name="color-scheme"]');
+    if (metaScheme) metaScheme.setAttribute('content', mode);
+    const metaThemeColor = $('metaThemeColor');
+    if (metaThemeColor) metaThemeColor.setAttribute('content', mode === 'dark' ? '#060B19' : '#FAF9F6');
+    const btnT = $('btnTheme');
+    if (btnT) {
+      btnT.classList.toggle('active', mode === 'dark');
+      btnT.textContent = mode === 'dark' ? 'Sáng' : 'Tối';
+    }
+    const mToolT = $('mToolTheme');
+    if (mToolT) {
+      mToolT.classList.toggle('active', mode === 'dark');
+      mToolT.textContent = mode === 'dark' ? '☀ Chế độ Sáng' : '◑ Chế độ Tối';
+    }
+    const icoT = $('landingThemeIcon');
+    const lblT = $('landingThemeLabel');
+    if (icoT) icoT.textContent = mode === 'dark' ? '☀️' : '🌙';
+    if (lblT) lblT.textContent = mode === 'dark' ? 'Ban ngày' : 'Đêm Vũ trụ';
+    if (persist) {
+      try { localStorage.setItem('vanthesis_theme_v1', mode); } catch {}
+    }
+    window.dispatchEvent(new CustomEvent('vanthesis:themechange', { detail: { theme: mode } }));
+    try { redrawAll(); renderVariationTableAndCards(); } catch {}
+  }
+  window.VANTHESIS_THEME = {
+    get: () => state.theme || 'light',
+    set: (mode) => applyGlobalTheme(mode, true),
+    toggle: () => applyGlobalTheme(state.theme === 'dark' ? 'light' : 'dark', true)
+  };
+  applyGlobalTheme('light', false);
+
   $('btnTheme').addEventListener('click', () => {
-    state.theme = state.theme === 'light' ? 'dark' : 'light';
-    document.body.setAttribute('data-theme', state.theme);
-    $('btnTheme').classList.toggle('active', state.theme === 'dark');
-    redrawAll(); renderVariationTableAndCards();
+    window.VANTHESIS_THEME.toggle();
   });
 
   // Whiteboard buttons
@@ -10510,15 +11964,48 @@
     tGroup = new THREE.Group();
     tScene.add(tGroup);
 
-    // 360° Orbit drag & wheel zoom
-    mount.addEventListener('pointerdown', e => { sDrag = true; sStart = { x: e.clientX, y: e.clientY, yaw: sYaw, pitch: sPitch }; mount.setPointerCapture(e.pointerId); });
+    // 360° Orbit drag, 2-finger pinch-to-zoom & wheel zoom (Touch / Apple Pencil ready)
+    const solidPointers = new Map();
+    let solidPinchDist = null;
+    let solidPinchStartDist = sDist;
+    mount.addEventListener('pointerdown', e => {
+      solidPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      try { mount.setPointerCapture(e.pointerId); } catch {}
+      if (solidPointers.size === 2) {
+        const pts = Array.from(solidPointers.values());
+        solidPinchDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+        solidPinchStartDist = sDist;
+        sDrag = false;
+      } else {
+        sDrag = true;
+        sStart = { x: e.clientX, y: e.clientY, yaw: sYaw, pitch: sPitch };
+      }
+    });
     mount.addEventListener('pointermove', e => {
+      if (!solidPointers.has(e.pointerId)) return;
+      solidPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (solidPointers.size >= 2 && solidPinchDist) {
+        const pts = Array.from(solidPointers.values());
+        const curDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+        if (curDist > 10) {
+          sDist = Math.max(2.5, Math.min(22, solidPinchStartDist * (solidPinchDist / curDist)));
+          renderSolid3D();
+        }
+        return;
+      }
       if (!sDrag || !sStart) return;
       sYaw = sStart.yaw - (e.clientX - sStart.x) * 0.01;
       sPitch = Math.max(-1.4, Math.min(1.4, sStart.pitch + (e.clientY - sStart.y) * 0.01));
       renderSolid3D();
     });
-    mount.addEventListener('pointerup', e => { sDrag = false; try { mount.releasePointerCapture(e.pointerId); } catch {} });
+    const endSolidPointer = e => {
+      solidPointers.delete(e.pointerId);
+      if (solidPointers.size < 2) solidPinchDist = null;
+      if (solidPointers.size === 0) sDrag = false;
+      try { mount.releasePointerCapture(e.pointerId); } catch {}
+    };
+    mount.addEventListener('pointerup', endSolidPointer);
+    mount.addEventListener('pointercancel', endSolidPointer);
     mount.addEventListener('wheel', e => { e.preventDefault(); sDist = Math.max(2.5, Math.min(22, sDist * (e.deltaY > 0 ? 1.1 : 0.9))); renderSolid3D(); }, { passive: false });
   }
 
@@ -11253,15 +12740,32 @@
   /* =========================================================================
    * 17. MOBILE 3-TAB BOTTOM-SHEET, SWIPE RESIZER, TOOLS MENU & IPAD DRAWER
    * ========================================================================= */
-  // Mobile 3-Tab Bottom Navigation
+  // Mobile 3-Tab Full-Screen Workspace Switcher (< 768px)
   $('mobileBottomNav').addEventListener('click', e => {
     const btn = e.target.closest('.mb-nav-btn'); if (!btn) return;
     const tab = btn.dataset.mtab;
     document.querySelectorAll('.mb-nav-btn').forEach(b => b.classList.toggle('active', b.dataset.mtab === tab));
+    $('appShell').setAttribute('data-mobile-view', tab);
     $('mainSidebar').setAttribute('data-mtab', tab);
     $('analysisDrawer').classList.toggle('mobile-active', tab === 'bbt');
-    setTimeout(resizeCanvases, 40);
+    setTimeout(() => { resizeCanvases(); if (tab === 'bbt') renderVariationTableAndCards(); }, 45);
   });
+
+  // iPad Portrait (768px-899px) 2-Tab Quick Switcher
+  const ipadTabsEl = $('ipadPortraitTabs');
+  if (ipadTabsEl) {
+    ipadTabsEl.addEventListener('click', e => {
+      const btn = e.target.closest('.ipad-ptab-btn'); if (!btn) return;
+      const tab = btn.getAttribute('data-ipad-tab');
+      ipadTabsEl.querySelectorAll('.ipad-ptab-btn').forEach(b => {
+        const isAct = b.getAttribute('data-ipad-tab') === tab;
+        b.classList.toggle('active', isAct);
+        b.setAttribute('aria-selected', String(isAct));
+      });
+      $('appShell').setAttribute('data-ipad-tab', tab);
+      setTimeout(() => { resizeCanvases(); if (tab === 'bbt') renderVariationTableAndCards(); }, 45);
+    });
+  }
 
   // Mobile Bottom-Sheet Vertical Swipe Handle (25% / 46% / 75%)
   const sheetHandle = $('mobileSheetHandle');
@@ -11302,7 +12806,10 @@
   $('mToolPen').addEventListener('click', () => { $('btnPenToggle').click(); $('mToolPen').classList.toggle('active', state.penActive && state.penTool === 'pen'); $('mToolEraser').classList.remove('active'); mobileMenu.classList.remove('open'); });
   $('mToolEraser').addEventListener('click', () => { $('btnEraserToggle').click(); $('mToolEraser').classList.toggle('active', state.penActive && state.penTool === 'eraser'); $('mToolPen').classList.remove('active'); mobileMenu.classList.remove('open'); });
   $('mToolProjector').addEventListener('click', () => { $('btnProjector').click(); $('mToolProjector').classList.toggle('active', state.projector); mobileMenu.classList.remove('open'); });
-  $('mToolTheme').addEventListener('click', () => { $('btnTheme').click(); $('mToolTheme').classList.toggle('active', state.theme === 'dark'); mobileMenu.classList.remove('open'); });
+  $('mToolTheme').addEventListener('click', () => { window.VANTHESIS_THEME.toggle(); mobileMenu.classList.remove('open'); });
+  if ($('mToolAutoFit')) $('mToolAutoFit').addEventListener('click', () => { $('btnAutoFit').click(); mobileMenu.classList.remove('open'); });
+  if ($('mToolBlank')) $('mToolBlank').addEventListener('click', () => { $('btnBlankPage').click(); mobileMenu.classList.remove('open'); });
+  if ($('mToolShareQr')) $('mToolShareQr').addEventListener('click', () => { $('btnShareQr').click(); mobileMenu.classList.remove('open'); });
   $('mToolPng').addEventListener('click', () => { exportPng2x(); mobileMenu.classList.remove('open'); });
   $('mToolSvg').addEventListener('click', () => { exportSvgVector(); mobileMenu.classList.remove('open'); });
 
@@ -11548,7 +13055,8 @@
           name: profile.name || profile.email,
           email: profile.email,
           picture: profile.picture || '',
-          email_verified: true
+          email_verified: true,
+          verified: true
         });
         _isAdmin = profile.email.toLowerCase() === AUTH_CONFIG.ADMIN_EMAIL.toLowerCase();
         _authorized = true;
@@ -11558,26 +13066,47 @@
 
         // Silent token refresh / 401 re-auth while already working: keep canvas untouched!
         if (wasAlreadyUnlocked) {
+          if (window.VANTHESIS_SESSION_CONTEXT) {
+            window.VANTHESIS_SESSION_CONTEXT = Object.freeze({
+              ...window.VANTHESIS_SESSION_CONTEXT,
+              accessToken: _accessToken
+            });
+          }
           setBtnLoading(false);
           DriveSyncManager.setSyncStatus('synced');
           return true;
         }
 
-        // Branch 1 — Super Admin: skip mandatory onboarding, always ALLOWED
+        // Branch 1 — Super Admin (kientdvct@gmail.com): direct unlock + background pending count badge
         if (_isAdmin) {
           _onboarded = true;
           _accessDecision = 'ALLOWED';
           const driveLoaded = await DriveSyncManager.loadUserProfile();
           if (driveLoaded && driveLoaded.userProfile) {
-            _userProfile = Object.freeze({ ...driveLoaded.userProfile, role: 'admin', email: _profile.email });
+            _userProfile = Object.freeze({ ...driveLoaded.userProfile, role: 'SUPER_ADMIN', assignedRole: 'SUPER_ADMIN', email: _profile.email });
           } else {
             _userProfile = Object.freeze({
               email: _profile.email,
-              role: 'admin',
+              role: 'SUPER_ADMIN',
+              assignedRole: 'SUPER_ADMIN',
               fullName: _profile.name,
               onboardingCompleted: true
             });
           }
+          window.VANTHESIS_ACTIVE_USER = Object.freeze({
+            ..._userProfile,
+            picture: _profile.picture,
+            roleMeta: RBAC_ROLE_REGISTRY.SUPER_ADMIN
+          });
+          window.VANTHESIS_SESSION_CONTEXT = Object.freeze({
+            bridgeUrl: AUTH_CONFIG.APPROVAL_BRIDGE_URL,
+            accessToken: _accessToken,
+            email: _profile.email,
+            role: 'SUPER_ADMIN',
+            fullName: _userProfile.fullName || _profile.name,
+            avatar: _profile.picture || '',
+            status: 'APPROVED'
+          });
           clearPortalNotice();
           setBtnLoading(false);
           unlockAppShell();
@@ -11587,35 +13116,25 @@
           renderTopbarAccount();
           resizeCanvases();
           SystemMasterManager.applySystemState();
+          AdminRbacController.refreshPendingBadge();
           return true;
         }
 
-        // Branch 2 — Student / Teacher: check Google Drive as Source of Truth
+        // Branch 2 — All other Gmail accounts: strict RBAC ApprovalBridgeClient state machine
         _onboarded = false;
         _userProfile = null;
+        _accessDecision = 'NONE';
+        window.VANTHESIS_ACTIVE_USER = null;
+        window.VANTHESIS_SESSION_CONTEXT = null;
         lockAppShell();
-        setBtnLoading(true, 'Đang kiểm tra hồ sơ tài khoản trên Google Drive...');
-        const driveRes = await DriveSyncManager.loadUserProfile();
+        renderTopbarAccount();
+        setBtnLoading(true, 'Đang kiểm tra trạng thái phê duyệt tài khoản...');
+        const bridgeRes = await ApprovalBridgeClient.checkStatus(_accessToken);
         setBtnLoading(false);
 
-        if (driveRes && driveRes.unauthorized) {
-          return false;
-        }
-
-        const driveProf = driveRes ? driveRes.userProfile : null;
-        if (driveProf && OnboardingController.isValidUserProfile(driveProf, _profile.email)) {
-          _userProfile = Object.freeze({ ...driveProf, email: _profile.email });
-          _onboarded = true;
-          try { localStorage.setItem('vanthesis_profile_v1_' + _profile.email.toLowerCase(), JSON.stringify(_userProfile)); } catch {}
-          clearPortalNotice();
-          await evaluateAndApplyAccess();
-          return true;
-        }
-
-        // First-time login or incomplete profile: keep #appShell locked & force #onboardingProfileModal
         clearPortalNotice();
         AuthPortalController.closeForOnboarding();
-        OnboardingController.open(false);
+        await applyBridgeStatusResult(bridgeRes);
         return true;
       } catch {
         clearSessionStorageOnly();
@@ -11701,6 +13220,11 @@
       _expiresAt = 0;
       _profile = null;
       _signingIn = false;
+      window.VANTHESIS_ACTIVE_USER = null;
+      window.VANTHESIS_SESSION_CONTEXT = null;
+      if (window.VANTHESIS_CLASSROOM && typeof window.VANTHESIS_CLASSROOM.close === 'function') {
+        window.VANTHESIS_CLASSROOM.close();
+      }
 
       try { sessionStorage.clear(); } catch {}
       if (wipePublicDevice) {
@@ -11744,6 +13268,127 @@
       }
     }
 
+    async function applyBridgeStatusResult(res) {
+      if (!_authorized || !_profile) return 'NONE';
+      const rawStatus = String((res && res.status) || 'NONE').trim().toUpperCase();
+      const record = (res && (res.user || res.record || res.profile || res.data)) || {};
+      const mergedProf = {
+        email: _profile.email,
+        fullName: record.fullName || (_userProfile && _userProfile.fullName) || _profile.name || '',
+        dob: record.dob || (_userProfile && _userProfile.dob) || '',
+        requestedRole: normalizeRbacRole(record.requestedRole || record.role || (_userProfile && _userProfile.requestedRole) || 'HOMEROOM_TEACHER'),
+        assignedRole: record.assignedRole ? normalizeRbacRole(record.assignedRole) : null,
+        homeroomClass: record.homeroomClass || (_userProfile && _userProfile.homeroomClass) || '',
+        teachingAssignments: Array.isArray(record.teachingAssignments) ? record.teachingAssignments : ((_userProfile && _userProfile.teachingAssignments) || []),
+        gender: record.gender || (_userProfile && _userProfile.gender) || 'Nam',
+        studentClass: record.studentClass || record.className || (_userProfile && _userProfile.studentClass) || '',
+        submittedAt: record.submittedAt || record.updatedAt || new Date().toISOString(),
+        rejectReason: record.rejectReason || (res && res.rejectReason) || ''
+      };
+
+      if (rawStatus === 'APPROVED') {
+        const finalRole = normalizeRbacRole(mergedProf.assignedRole || mergedProf.requestedRole || 'STUDENT');
+        const roleMeta = getRbacRoleMeta(finalRole);
+        _userProfile = Object.freeze({
+          ...mergedProf,
+          role: finalRole,
+          assignedRole: finalRole,
+          className: finalRole === 'STUDENT' ? mergedProf.studentClass : mergedProf.homeroomClass,
+          subject: finalRole === 'SUBJECT_TEACHER'
+            ? (mergedProf.teachingAssignments || []).map(a => `${a.subject} (${a.classes})`).join('; ')
+            : '',
+          onboardingCompleted: true
+        });
+        _onboarded = true;
+        _accessDecision = 'ALLOWED';
+        window.VANTHESIS_ACTIVE_USER = Object.freeze({
+          ..._userProfile,
+          picture: _profile.picture,
+          roleMeta
+        });
+        window.VANTHESIS_SESSION_CONTEXT = Object.freeze({
+          bridgeUrl: AUTH_CONFIG.APPROVAL_BRIDGE_URL,
+          accessToken: _accessToken,
+          email: _profile.email,
+          role: finalRole,
+          fullName: _userProfile.fullName || _profile.name,
+          avatar: _profile.picture || '',
+          status: 'APPROVED'
+        });
+        try { localStorage.setItem('vanthesis_profile_v1_' + _profile.email.toLowerCase(), JSON.stringify(_userProfile)); } catch {}
+        OnboardingController.close();
+        AccessControlManager.hideGateOverlays();
+        unlockAppShell();
+        AuthPortalController.close();
+        renderTopbarAccount();
+        renderAccountHub();
+        resizeCanvases();
+        SystemMasterManager.applySystemState();
+        DriveSyncManager.loadUserProfile().then(() => DriveSyncManager.saveToDrive(false, '', _userProfile)).catch(() => {});
+        return 'ALLOWED';
+      }
+
+      if (rawStatus === 'PENDING') {
+        _userProfile = Object.freeze({ ...mergedProf, role: mergedProf.requestedRole, onboardingCompleted: true });
+        _onboarded = true;
+        _accessDecision = 'PENDING_APPROVAL';
+        lockAppShell();
+        OnboardingController.close();
+        AccessControlManager.showPendingOverlay(_profile.email, _userProfile);
+        return 'PENDING_APPROVAL';
+      }
+
+      if (rawStatus === 'REJECTED') {
+        _userProfile = Object.freeze({ ...mergedProf, role: mergedProf.requestedRole, onboardingCompleted: false });
+        _onboarded = false;
+        _accessDecision = 'REJECTED';
+        lockAppShell();
+        OnboardingController.close();
+        AccessControlManager.showRejectedOverlay(_profile.email, mergedProf.rejectReason);
+        return 'REJECTED';
+      }
+
+      _onboarded = false;
+      _accessDecision = 'NONE';
+      lockAppShell();
+      AccessControlManager.hideGateOverlays();
+      OnboardingController.open(false, mergedProf);
+      return 'NONE';
+    }
+
+    async function recheckBridgeStatusNow() {
+      if (!_authorized || !_accessToken) return { status: 'NONE' };
+      const res = await ApprovalBridgeClient.checkStatus(_accessToken);
+      await applyBridgeStatusResult(res);
+      return res;
+    }
+
+    async function submitRegistrationToBridge(payload) {
+      if (!_authorized || !_accessToken || !_profile) return { ok: false, error: 'Chưa đăng nhập Google.' };
+      const fullPayload = {
+        ...payload,
+        email: _profile.email,
+        picture: _profile.picture || '',
+        submittedAt: new Date().toISOString()
+      };
+      const res = await ApprovalBridgeClient.submitRegistration(_accessToken, fullPayload);
+      if (res && res.networkError) return { ok: false, error: res.error };
+      if (res && res.ok === false && res.error) return { ok: false, error: res.error };
+      _userProfile = Object.freeze({
+        ...fullPayload,
+        role: normalizeRbacRole(fullPayload.requestedRole),
+        onboardingCompleted: true
+      });
+      _onboarded = true;
+      _accessDecision = 'PENDING_APPROVAL';
+      try { localStorage.setItem('vanthesis_profile_v1_' + _profile.email.toLowerCase(), JSON.stringify(_userProfile)); } catch {}
+      DriveSyncManager.saveToDrive(false, '', _userProfile).catch(() => {});
+      OnboardingController.close();
+      lockAppShell();
+      AccessControlManager.showPendingOverlay(_profile.email, _userProfile);
+      return { ok: true };
+    }
+
     async function evaluateAndApplyAccess() {
       if (!_authorized || !_profile || !_userProfile) return 'NONE';
       await SystemMasterManager.fetchMasterData({ forceRefresh: true });
@@ -11785,6 +13430,34 @@
       return true;
     }
 
+    async function savePersonalProfile(updatedFields) {
+      if (!_authorized || !_profile) return { ok: false, driveOk: false };
+      const prev = _userProfile || {};
+      const enforcedRole = _isAdmin ? 'admin' : (prev.role === 'teacher' ? 'teacher' : 'student');
+      const unitVal = String(updatedFields.unit || '').trim();
+      const nextProf = Object.freeze({
+        ...prev,
+        email: _profile.email,
+        role: enforcedRole,
+        fullName: String(updatedFields.fullName || prev.fullName || _profile.name || '').trim(),
+        schoolName: String(updatedFields.schoolName || '').trim(),
+        className: enforcedRole === 'student' ? unitVal : (prev.className || ''),
+        subject: enforcedRole !== 'student' ? unitVal : (prev.subject || ''),
+        dob: String(updatedFields.dob || prev.dob || '').trim(),
+        gender: String(updatedFields.gender || prev.gender || 'Nam').trim(),
+        onboardingCompleted: true,
+        updatedAt: new Date().toISOString()
+      });
+      _userProfile = nextProf;
+      try { localStorage.setItem('vanthesis_profile_v1_' + _profile.email.toLowerCase(), JSON.stringify(_userProfile)); } catch {}
+      renderTopbarAccount();
+      renderAccountHub();
+      const driveOut = await DriveSyncManager.saveToDrive(false, '', _userProfile);
+      renderTopbarAccount();
+      renderAccountHub();
+      return { ok: true, profile: _userProfile, driveOk: !!driveOut.ok };
+    }
+
     return Object.freeze({
       isAuthorized: () => _authorized,
       isOnboarded: () => _authorized && _onboarded,
@@ -11796,6 +13469,9 @@
       getProfile: () => _authorized ? _profile : null,
       getUserProfile: () => (_authorized && _userProfile) ? _userProfile : null,
       completeOnboardingProfile,
+      savePersonalProfile,
+      recheckBridgeStatusNow,
+      submitRegistrationToBridge,
       signInWithGoogle,
       restoreSession,
       handleUnauthorized,
@@ -11964,47 +13640,80 @@
     } catch { return iso; }
   }
 
+  let toastTimer = null;
+  function showAppToast(message) {
+    const el = $('appToast');
+    if (!el) return;
+    el.textContent = message;
+    el.classList.add('visible');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('visible'), 3200);
+  }
+
+  function isMasterSuperAdminSession() {
+    const session = AuthManager.getProfile();
+    return Boolean(
+      AuthManager.isAuthorized() &&
+      session &&
+      session.email &&
+      session.email.trim().toLowerCase() === 'kientdvct@gmail.com' &&
+      session.verified === true
+    );
+  }
+
   function renderTopbarAccount() {
-    const slot = $('topbarAccountSlot');
-    if (!slot) return;
+    const clsBtn = $('btnOpenClassroomHub');
+    if (clsBtn) {
+      const showCls = AuthManager.isFullyAllowed();
+      clsBtn.hidden = !showCls;
+      clsBtn.style.display = showCls ? 'inline-flex' : 'none';
+    }
+
+    const adminBtn = $('btnOpenAdminStudio');
+    const isMasterSuperAdmin = isMasterSuperAdminSession();
+
+    // Strict Super Admin button visibility: ONLY kientdvct@gmail.com
+    if (adminBtn) {
+      if (isMasterSuperAdmin) {
+        adminBtn.hidden = false;
+        adminBtn.style.display = 'inline-flex';
+      } else {
+        adminBtn.hidden = true;
+        adminBtn.style.display = 'none';
+      }
+    }
+
     const p = AuthManager.getProfile();
     const up = AuthManager.getUserProfile();
+    const avatarWrap = $('headerUserAvatar');
+    const nameEl = $('headerUserFullName');
+    const roleEl = $('headerUserRoleBadge');
+    const dotEl = $('headerOnlineDot');
+    if (!avatarWrap || !nameEl || !roleEl) return;
+
     if (AuthManager.isAuthorized() && p) {
-      const isAdm = AuthManager.isAdmin();
       const displayName = (up && up.fullName) ? up.fullName : (p.name || p.email);
       const initials = displayName.trim().split(/\s+/).slice(-1)[0].slice(0, 2).toUpperCase();
-      const shortName = displayName.split(/\s+/).slice(-2).join(' ');
       const dotCls = DriveSyncManager.syncStatus === 'syncing' ? 'syncing' : (DriveSyncManager.syncStatus === 'offline' ? 'offline' : '');
-      const dotTitle = DriveSyncManager.syncStatus === 'syncing' ? 'Đang đồng bộ Drive...' : (DriveSyncManager.syncStatus === 'offline' ? 'Ngoại tuyến - Lưu cục bộ' : 'Đã đồng bộ Google Drive');
-      const avatarHtml = p.picture
-        ? `<img class="account-avatar-sm" src="${escapeXml(p.picture)}" alt="Avatar" referrerpolicy="no-referrer">`
-        : `<span class="account-avatar-sm">${escapeXml(initials)}</span>`;
-      let roleBadgeHtml = `<span class="role-badge">Giáo viên</span>`;
-      if (isAdm) {
-        roleBadgeHtml = `<span class="role-badge admin-gold">Super Admin</span>`;
-      } else if (up && up.role === 'student') {
-        roleBadgeHtml = `<span class="role-badge student">Học sinh${up.className ? ' • Lớp ' + escapeXml(up.className) : ''}</span>`;
+      const dotTitle = DriveSyncManager.syncStatus === 'syncing' ? 'Đang đồng bộ Drive...' : (DriveSyncManager.syncStatus === 'offline' ? 'Ngoại tuyến - Lưu cục bộ' : 'Online • Đã đồng bộ Google Drive');
+
+      if (p.picture) {
+        avatarWrap.innerHTML = `<img src="${escapeXml(p.picture)}" alt="Avatar" referrerpolicy="no-referrer"><span class="uac-online-dot ${dotCls}" id="headerOnlineDot" title="${dotTitle}"></span>`;
+      } else {
+        avatarWrap.innerHTML = `<span>${escapeXml(initials)}</span><span class="uac-online-dot ${dotCls}" id="headerOnlineDot" title="${dotTitle}"></span>`;
       }
-      const adminBtnHtml = isAdm
-        ? `<button id="btnOpenAdminStudio" class="btn btn-sm btn-admin-gold" type="button" style="margin-right:6px;" title="Mở Bảng Quản trị Hệ thống VANTHESIS">⚙ Quản trị Hệ thống</button>`
-        : '';
-      slot.innerHTML = `${adminBtnHtml}
-        <button id="btnOpenAccountHub" class="account-pill-btn" type="button" title="Mở Bảng Quản lý Tài khoản &amp; Đồng bộ">
-          ${avatarHtml}
-          <span class="desktop-only-tool" style="max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeXml(shortName)}</span>
-          ${roleBadgeHtml}
-          <span class="sync-dot ${dotCls}" title="${dotTitle}"></span>
-        </button>`;
-      if (isAdm && $('btnOpenAdminStudio')) {
-        $('btnOpenAdminStudio').addEventListener('click', () => AdminStudioUI.open());
-      }
-      $('btnOpenAccountHub').addEventListener('click', () => {
-        renderAccountHub();
-        $('accountHubModal').classList.add('open');
-      });
+
+      nameEl.textContent = displayName;
+      const meta = isMasterSuperAdmin
+        ? RBAC_ROLE_REGISTRY.SUPER_ADMIN
+        : getRbacRoleMeta((up && (up.assignedRole || up.role)) || 'STUDENT');
+      roleEl.className = 'uac-role-chip ' + meta.badgeClass;
+      roleEl.textContent = meta.label;
     } else {
-      slot.innerHTML = `<button id="btnTopbarLogin" class="btn btn-sm" type="button" title="Đăng nhập bằng Google Gmail">Đăng nhập</button>`;
-      $('btnTopbarLogin').addEventListener('click', () => AuthPortalController.open(false));
+      nameEl.textContent = 'Đăng nhập Gmail';
+      roleEl.className = 'uac-role-chip student';
+      roleEl.textContent = 'Chưa xác thực';
+      if (dotEl) dotEl.className = 'uac-online-dot offline';
     }
   }
 
@@ -12014,25 +13723,60 @@
     return `${d}/${m}/${y}`;
   }
 
+  function switchAccountHubTab(tabName) {
+    const map = { profile: 'hubPaneProfile', workspace: 'hubPaneWorkspace', security: 'hubPaneSecurity' };
+    const targetId = map[tabName] || 'hubPaneProfile';
+    document.querySelectorAll('.hub-tab-btn').forEach((btn) => {
+      const act = btn.getAttribute('data-hubtab') === tabName;
+      btn.classList.toggle('active', act);
+      btn.setAttribute('aria-selected', act ? 'true' : 'false');
+    });
+    Object.values(map).forEach((id) => {
+      const el = $(id);
+      if (el) el.classList.toggle('active', id === targetId);
+    });
+  }
+
   function renderAccountHub() {
     const p = AuthManager.getProfile();
     const up = AuthManager.getUserProfile();
     if (!AuthManager.isAuthorized() || !p) return;
-    $('hubAdminQuickBlock').classList.toggle('visible', AuthManager.isAdmin());
+
+    const isMasterSuperAdmin = isMasterSuperAdminSession();
+    $('hubAdminQuickBlock').classList.toggle('visible', isMasterSuperAdmin);
+
     const displayName = (up && up.fullName) ? up.fullName : (p.name || p.email);
     const av = $('hubAvatarWrap');
     const initials = displayName.trim().split(/\s+/).slice(-1)[0].slice(0, 2).toUpperCase();
     av.innerHTML = p.picture ? `<img src="${escapeXml(p.picture)}" alt="Avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" referrerpolicy="no-referrer">` : escapeXml(initials);
     $('hubUserName').textContent = displayName;
     $('hubUserEmail').textContent = p.email;
-    $('hubModePill').textContent = AuthManager.isAdmin() ? 'Super Admin • Google Drive Cloud' : 'Google Drive Cloud (drive.file)';
+    $('hubModePill').textContent = isMasterSuperAdmin ? 'Super Admin • Google Drive Cloud (drive.file)' : 'Google Drive Cloud (drive.file)';
 
-    const roleLabel = AuthManager.isAdmin() ? 'Super Admin' : (up && up.role === 'student' ? 'Học sinh' : (up && up.role === 'teacher' ? 'Giáo viên' : '—'));
-    $('hubProfRole').textContent = roleLabel;
-    $('hubProfUnitLabel').textContent = (up && up.role === 'student') ? 'Lớp học' : 'Bộ môn / Phụ trách';
-    $('hubProfUnit').textContent = (up && up.role === 'student') ? (up.className || '—') : ((up && up.subject) || '—');
-    $('hubProfSchool').textContent = (up && up.schoolName) ? up.schoolName : '—';
-    $('hubProfDobGender').textContent = up && up.dob ? `${formatDobVn(up.dob)} • ${up.gender || '—'}` : '—';
+    const badge = $('hubRoleBadge');
+    const hubMeta = isMasterSuperAdmin
+      ? RBAC_ROLE_REGISTRY.SUPER_ADMIN
+      : getRbacRoleMeta((up && (up.assignedRole || up.role)) || 'STUDENT');
+    const roleLabel = isMasterSuperAdmin ? 'Super Admin' : `${hubMeta.label} (${hubMeta.subtitle})`;
+    badge.className = 'uac-role-chip ' + hubMeta.badgeClass;
+    badge.textContent = hubMeta.label;
+
+    // Tab 1: Personal Profile Form values
+    $('hubEditFullName').value = displayName;
+    $('hubEditRoleDisplay').value = isMasterSuperAdmin ? 'Super Admin (Khóa cố định)' : roleLabel;
+    $('hubEditSchool').value = (up && up.schoolName) ? up.schoolName : '';
+    const isStudent = !isMasterSuperAdmin && up && up.role === 'student';
+    $('hubEditUnitLabel').textContent = isStudent ? 'Lớp học' : 'Bộ môn / Đơn vị giảng dạy';
+    $('hubEditUnit').value = isStudent ? ((up && up.className) || '') : ((up && up.subject) || '');
+    $('hubEditDob').value = (up && up.dob) ? up.dob : '';
+    $('hubEditGender').value = (up && up.gender) ? up.gender : 'Nam';
+
+    // Tab 2: Workspace Preferences
+    $('prefAutoSyncDrive').checked = state.userPrefs.autoSyncDrive !== false;
+    $('prefAngleUnit').value = state.userPrefs.angleUnit || 'rad';
+    $('prefGridExtrema').checked = state.userPrefs.showGridExtrema !== false;
+
+    // Tab 3: Google Drive & Backups
     $('hubDriveFile').textContent = AUTH_CONFIG.DRIVE_FILENAME;
     $('hubLastSaved').textContent = formatVnTime(DriveSyncManager.lastSavedAt);
     const bytes = new Blob([JSON.stringify(collectWorkspaceSnapshot())]).size;
@@ -12270,9 +14014,14 @@
           }
         }
         const dec = AuthManager.getAccessDecision();
-        const obModal = $('onboardingProfileModal');
+        const obModal = $('registrationOnboardingModal');
         if (dec === 'BANNED') {
           enforceOverlayVisible($('bannedAccountOverlay'));
+          return;
+        }
+        if (dec === 'REJECTED') {
+          if (obModal && obModal.classList.contains('open')) return;
+          enforceOverlayVisible($('rejectedApprovalOverlay'));
           return;
         }
         if (dec === 'PENDING_APPROVAL') {
@@ -12323,7 +14072,7 @@
       bodyObs.observe(document.body, { childList: true });
       const attrObs = new MutationObserver(() => enforceHardAuthGate());
       attrObs.observe(overlay, { attributes: true, attributeFilter: ['class', 'style', 'hidden'] });
-      for (const id of ['publicLandingView', 'onboardingProfileModal', 'pendingApprovalOverlay', 'bannedAccountOverlay']) {
+      for (const id of ['publicLandingView', 'registrationOnboardingModal', 'pendingApprovalOverlay', 'rejectedApprovalOverlay', 'bannedAccountOverlay']) {
         const el = $(id);
         if (el) attrObs.observe(el, { attributes: true, attributeFilter: ['class', 'style', 'hidden'] });
       }
@@ -12393,192 +14142,241 @@
     st.textContent = out.ok ? '✓ Đã tạo điểm sao lưu mới (lưu tối đa 3 bản gần nhất).' : '⚠ Không thể tạo bản sao lưu lúc này.';
     st.style.display = 'block';
   });
+  $('btnOpenClassroomHub').addEventListener('click', () => {
+    if (window.VANTHESIS_CLASSROOM && typeof window.VANTHESIS_CLASSROOM.open === 'function') {
+      window.VANTHESIS_CLASSROOM.open();
+    } else {
+      showAppToast('⚠ Không tìm thấy tệp classroom.js cùng thư mục với index.html.');
+    }
+  });
+  $('btnOpenAdminStudio').addEventListener('click', () => AdminStudioUI.open());
+  $('userAccountCardBtn').addEventListener('click', () => {
+    if (!AuthManager.isAuthorized()) {
+      AuthPortalController.open(false);
+      return;
+    }
+    renderAccountHub();
+    switchAccountHubTab('profile');
+    $('accountHubModal').classList.add('open');
+  });
+  document.querySelectorAll('.hub-tab-btn').forEach((btn) => {
+    btn.addEventListener('click', () => switchAccountHubTab(btn.getAttribute('data-hubtab') || 'profile'));
+  });
+  $('hubProfileForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fullName = $('hubEditFullName').value.trim();
+    if (!fullName) {
+      showAppToast('⚠ Vui lòng nhập Họ và tên hiển thị.');
+      $('hubEditFullName').focus();
+      return;
+    }
+    const btn = $('btnHubSaveProfile');
+    btn.disabled = true;
+    btn.textContent = '⏳ Đang lưu & đồng bộ Google Drive...';
+    try {
+      const res = await AuthManager.savePersonalProfile({
+        fullName,
+        schoolName: $('hubEditSchool').value.trim(),
+        unit: $('hubEditUnit').value.trim(),
+        dob: $('hubEditDob').value,
+        gender: $('hubEditGender').value
+      });
+      if (res.ok) {
+        showAppToast(res.driveOk
+          ? '✓ Đã lưu hồ sơ cá nhân & đồng bộ lên Google Drive thành công!'
+          : '✓ Đã lưu hồ sơ cục bộ (Google Drive tạm ngoại tuyến).');
+      }
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '💾 Lưu Hồ sơ & Đồng bộ Google Drive';
+    }
+  });
+  $('btnHubSavePrefs').addEventListener('click', async () => {
+    state.userPrefs.autoSyncDrive = $('prefAutoSyncDrive').checked;
+    state.userPrefs.angleUnit = $('prefAngleUnit').value || 'rad';
+    state.userPrefs.showGridExtrema = $('prefGridExtrema').checked;
+    state.layers.labels = state.userPrefs.showGridExtrema;
+    state.layers.extrema = state.userPrefs.showGridExtrema;
+    redrawAll();
+    try { localStorage.setItem('giai_tich_studio_v3', JSON.stringify(collectWorkspaceSnapshot())); } catch {}
+    const out = await DriveSyncManager.saveToDrive(false);
+    showAppToast(out.ok
+      ? '✓ Đã lưu tùy chỉnh không gian vào vanthesis_workspace_v1.json!'
+      : '✓ Đã áp dụng tùy chỉnh không gian trên máy hiện tại.');
+  });
   $('btnHubSignOut').addEventListener('click', () => AuthManager.logout(false));
   $('btnHubPublicWipe').addEventListener('click', () => AuthManager.logout(true));
-  $('btnHubEditProfile').addEventListener('click', () => {
-    $('accountHubModal').classList.remove('open');
-    OnboardingController.open(true);
-  });
 
-  /* Mandatory First-Login Onboarding & Profile Editor Controller */
+  /* =========================================================================
+   * 3-ROLE DYNAMIC REGISTRATION ONBOARDING CONTROLLER (#registrationOnboardingModal)
+   * ========================================================================= */
   const OnboardingController = (() => {
-    const modal = $('onboardingProfileModal');
-    let selectedRole = 'student';
-    let isEditMode = false;
-    let isSaving = false;
+    const modal = $('registrationOnboardingModal');
+    const errBox = $('regErrorBox');
+    let selectedRole = 'HOMEROOM_TEACHER';
+    let isSubmitting = false;
+
+    function showErr(msg) {
+      if (!errBox) return;
+      errBox.textContent = msg;
+      errBox.classList.add('visible');
+    }
+    function clearErr() {
+      if (!errBox) return;
+      errBox.textContent = '';
+      errBox.classList.remove('visible');
+    }
 
     function isValidDob(dobStr) {
       if (!dobStr || !/^\d{4}-\d{2}-\d{2}$/.test(dobStr)) return false;
       const [y, m, d] = dobStr.split('-').map(Number);
       const now = new Date();
-      const maxYear = now.getFullYear() - 5;
-      if (y < 1945 || y > maxYear) return false;
+      if (y < 1940 || y > now.getFullYear() - 5) return false;
       const dt = new Date(y, m - 1, d);
-      if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return false;
-      if (dt.getTime() > now.getTime()) return false;
-      return true;
+      return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d && dt.getTime() <= now.getTime();
     }
 
-    function isValidFullName(val) {
-      const clean = String(val || '').trim().replace(/\s+/g, ' ');
-      return clean.length >= 4 && clean.split(' ').length >= 2;
-    }
-
-    function isValidUserProfile(prof, verifiedEmail) {
-      if (!prof || typeof prof !== 'object') return false;
-      if (prof.onboardingCompleted !== true) return false;
-      if (String(prof.email || '').toLowerCase() !== String(verifiedEmail || '').toLowerCase()) return false;
-      if (prof.role !== 'student' && prof.role !== 'teacher') return false;
-      if (!isValidFullName(prof.fullName)) return false;
-      if (!isValidDob(prof.dob)) return false;
-      if (!['Nam', 'Nữ', 'Khác'].includes(prof.gender)) return false;
-      if (String(prof.schoolName || '').trim().length < 3) return false;
-      if (prof.role === 'student' && String(prof.className || '').trim().length < 2) return false;
-      if (prof.role === 'teacher' && String(prof.subject || '').trim().length < 2) return false;
-      return true;
-    }
-
-    function setRoleUI(role) {
-      selectedRole = role === 'teacher' ? 'teacher' : 'student';
-      document.querySelectorAll('.ob-role-card').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.obrole === selectedRole);
+    function renderSubjectRows(rowsData) {
+      const wrap = $('regSubjectRows');
+      if (!wrap) return;
+      const list = (Array.isArray(rowsData) && rowsData.length) ? rowsData : [{ subject: '', classes: '' }];
+      wrap.innerHTML = '';
+      const multi = list.length > 1;
+      list.forEach((item, idx) => {
+        const row = document.createElement('div');
+        row.className = 'reg-subject-row' + (multi ? '' : ' single');
+        row.innerHTML = `
+          <div class="hub-field">
+            ${idx === 0 ? '<label>Bộ môn giảng dạy</label>' : ''}
+            <input type="text" class="reg-subj-input" placeholder="VD: Toán học" value="${escapeXml(item.subject || '')}">
+          </div>
+          <div class="hub-field">
+            ${idx === 0 ? '<label>Lớp giảng dạy</label>' : ''}
+            <input type="text" class="reg-cls-input" placeholder="VD: 12A1, 12A2, 11A3" value="${escapeXml(item.classes || '')}">
+          </div>
+          ${multi ? '<button type="button" class="reg-del-row-btn" title="Xóa dòng này">×</button>' : ''}
+        `;
+        const delBtn = row.querySelector('.reg-del-row-btn');
+        if (delBtn) {
+          delBtn.addEventListener('click', () => {
+            const cur = collectSubjectRows();
+            cur.splice(idx, 1);
+            renderSubjectRows(cur);
+          });
+        }
+        wrap.appendChild(row);
       });
-      $('obFieldClass').style.display = selectedRole === 'student' ? 'block' : 'none';
-      $('obFieldSubject').style.display = selectedRole === 'teacher' ? 'block' : 'none';
-      $('obSchoolLabel').innerHTML = selectedRole === 'teacher'
-        ? 'Trường / Đơn vị công tác <span class="ob-req">*</span>'
-        : 'Trường học <span class="ob-req">*</span>';
-      $('obRoleErr').style.display = 'none';
     }
 
-    function setFieldErr(wrapId, hasErr) {
-      const el = $(wrapId);
-      if (el) el.classList.toggle('has-error', hasErr);
-      return !hasErr;
+    function collectSubjectRows() {
+      const wrap = $('regSubjectRows');
+      if (!wrap) return [];
+      return Array.from(wrap.querySelectorAll('.reg-subject-row')).map((row) => ({
+        subject: (row.querySelector('.reg-subj-input')?.value || '').trim(),
+        classes: (row.querySelector('.reg-cls-input')?.value || '').trim()
+      }));
     }
 
-    function validateAll() {
-      const okName = setFieldErr('obFieldFullName', !isValidFullName($('obFullName').value));
-      const okDob = setFieldErr('obFieldDob', !isValidDob($('obDob').value));
-      const okGender = setFieldErr('obFieldGender', !['Nam', 'Nữ', 'Khác'].includes($('obGender').value));
-      const okSchool = setFieldErr('obFieldSchool', $('obSchoolName').value.trim().length < 3);
-      let okUnit = true;
-      if (selectedRole === 'student') {
-        okUnit = setFieldErr('obFieldClass', $('obClassName').value.trim().length < 2);
-        setFieldErr('obFieldSubject', false);
-      } else {
-        okUnit = setFieldErr('obFieldSubject', $('obSubject').value.trim().length < 2);
-        setFieldErr('obFieldClass', false);
-      }
-      return okName && okDob && okGender && okSchool && okUnit;
+    function setRole(roleKey) {
+      selectedRole = normalizeRbacRole(roleKey);
+      if (selectedRole === 'SUPER_ADMIN') selectedRole = 'HOMEROOM_TEACHER';
+      document.querySelectorAll('.reg-role-card').forEach((card) => {
+        const active = card.getAttribute('data-regrole') === selectedRole;
+        card.classList.toggle('active', active);
+        card.setAttribute('aria-checked', active ? 'true' : 'false');
+      });
+      $('regSecHomeroom').style.display = selectedRole === 'HOMEROOM_TEACHER' ? 'flex' : 'none';
+      $('regSecSubject').style.display = selectedRole === 'SUBJECT_TEACHER' ? 'block' : 'none';
+      $('regSecStudent').style.display = selectedRole === 'STUDENT' ? 'grid' : 'none';
+      clearErr();
     }
 
-    function setSavingUI(saving) {
-      isSaving = saving;
-      const btn = $('btnObSubmit');
-      btn.disabled = saving;
-      if (saving) {
-        btn.innerHTML = '<span class="auth-spinner" style="vertical-align:middle;margin-right:7px;"></span>Đang lưu hồ sơ lên Google Drive...';
-      } else {
-        btn.textContent = isEditMode ? 'Lưu thay đổi lên Google Drive' : 'Lưu hồ sơ lên Google Drive & Tiếp tục →';
-      }
-    }
-
-    function open(editMode = false) {
-      const gp = AuthManager.getProfile();
-      if (!gp) return;
-      isEditMode = !!editMode;
-      const cur = AuthManager.getUserProfile();
-      const initials = (gp.name || 'U').trim().split(/\s+/).slice(-1)[0].slice(0, 2).toUpperCase();
-      $('obAvatarWrap').innerHTML = gp.picture
-        ? `<img src="${escapeXml(gp.picture)}" alt="Avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" referrerpolicy="no-referrer">`
-        : escapeXml(initials);
-      $('obGoogleName').textContent = gp.name;
-      $('obGoogleEmail').textContent = gp.email;
-
-      $('obModalTitle').textContent = isEditMode ? 'Cập nhật Thông tin Cá nhân' : 'Hoàn thiện Hồ sơ Cá nhân';
-      $('obModalSub').textContent = isEditMode
-        ? 'Thay đổi sẽ được đồng bộ trực tiếp vào tệp Google Drive cá nhân của bạn.'
-        : 'Khai báo 1 lần duy nhất — hồ sơ được lưu an toàn trên Google Drive cá nhân của bạn.';
-      $('btnObCancelEdit').style.display = isEditMode ? 'inline-flex' : 'none';
-      $('btnObSwitchAccount').style.display = isEditMode ? 'none' : 'inline-flex';
-      $('obRoleSection').style.display = (isEditMode && AuthManager.isAdmin()) ? 'none' : 'block';
-
-      setRoleUI(cur && cur.role === 'teacher' ? 'teacher' : 'student');
-      $('obFullName').value = (cur && cur.fullName) ? cur.fullName : (gp.name || '');
-      $('obDob').value = (cur && cur.dob) ? cur.dob : '';
-      $('obGender').value = (cur && cur.gender) ? cur.gender : '';
-      $('obSchoolName').value = (cur && cur.schoolName) ? cur.schoolName : '';
-      $('obClassName').value = (cur && cur.className) ? cur.className : '';
-      $('obSubject').value = (cur && cur.subject) ? cur.subject : '';
-
-      ['obFieldFullName','obFieldDob','obFieldGender','obFieldSchool','obFieldClass','obFieldSubject'].forEach(id => setFieldErr(id, false));
-      $('obSubmitErr').classList.remove('visible');
-      setSavingUI(false);
-      modal.classList.add('open');
-    }
-
-    function close() {
-      modal.classList.remove('open');
-    }
-
-    // Bind role cards & real-time validation
-    document.querySelectorAll('.ob-role-card').forEach(btn => {
-      btn.addEventListener('click', () => setRoleUI(btn.dataset.obrole));
+    document.querySelectorAll('.reg-role-card').forEach((card) => {
+      card.addEventListener('click', () => setRole(card.getAttribute('data-regrole') || 'HOMEROOM_TEACHER'));
     });
-    $('obFullName').addEventListener('input', () => setFieldErr('obFieldFullName', !isValidFullName($('obFullName').value)));
-    $('obDob').addEventListener('change', () => setFieldErr('obFieldDob', !isValidDob($('obDob').value)));
-    $('obGender').addEventListener('change', () => setFieldErr('obFieldGender', !['Nam', 'Nữ', 'Khác'].includes($('obGender').value)));
-    $('obSchoolName').addEventListener('input', () => setFieldErr('obFieldSchool', $('obSchoolName').value.trim().length < 3));
-    $('obClassName').addEventListener('input', () => setFieldErr('obFieldClass', $('obClassName').value.trim().length < 2));
-    $('obSubject').addEventListener('input', () => setFieldErr('obFieldSubject', $('obSubject').value.trim().length < 2));
 
-    $('btnObCancelEdit').addEventListener('click', () => {
-      if (isEditMode) close();
+    $('btnRegAddSubjectRow').addEventListener('click', () => {
+      const cur = collectSubjectRows();
+      cur.push({ subject: '', classes: '' });
+      renderSubjectRows(cur);
     });
-    $('btnObSwitchAccount').addEventListener('click', () => AuthManager.logout(false));
 
-    $('onboardingForm').addEventListener('submit', async e => {
+    $('btnRegLogout').addEventListener('click', () => AuthManager.logout(false));
+
+    $('registrationForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (isSaving) return;
-      $('obSubmitErr').classList.remove('visible');
-      if (!validateAll()) return;
+      if (isSubmitting) return;
+      clearErr();
 
-      const gp = AuthManager.getProfile();
-      if (!gp || !gp.email) return;
-      const prevProf = AuthManager.getUserProfile();
-      const nowIso = new Date().toISOString();
-      const cleanName = $('obFullName').value.trim().replace(/\s+/g, ' ');
-      const newProfile = {
-        email: gp.email,
-        role: AuthManager.isAdmin() ? 'admin' : selectedRole,
-        fullName: cleanName,
-        dob: $('obDob').value,
-        gender: $('obGender').value,
-        schoolName: $('obSchoolName').value.trim(),
-        className: selectedRole === 'student' ? $('obClassName').value.trim() : '',
-        subject: selectedRole === 'teacher' ? $('obSubject').value.trim() : '',
-        onboardingCompleted: true,
-        createdAt: (prevProf && prevProf.createdAt) ? prevProf.createdAt : nowIso,
-        updatedAt: nowIso
-      };
+      const fullName = $('regFullName').value.trim();
+      const dob = $('regDob').value.trim();
+      if (fullName.length < 2) { showErr('Vui lòng nhập đầy đủ Họ và tên.'); $('regFullName').focus(); return; }
+      if (!isValidDob(dob)) { showErr('Vui lòng chọn Ngày tháng năm sinh hợp lệ.'); $('regDob').focus(); return; }
 
-      setSavingUI(true);
-      const saveRes = await DriveSyncManager.saveToDrive(false, '', newProfile);
-      setSavingUI(false);
+      const payload = { requestedRole: selectedRole, fullName, dob };
 
-      if (!saveRes.ok) {
-        $('obSubmitErr').textContent = saveRes.status === 401
-          ? 'Phiên đăng nhập Google đã hết hạn (HTTP 401). Vui lòng bấm "Đăng xuất / Đổi tài khoản Gmail khác" và đăng nhập lại.'
-          : 'Không thể lưu hồ sơ lên Google Drive lúc này (lỗi mạng hoặc quyền truy cập). Vui lòng kiểm tra kết nối và nhấn thử lưu lại.';
-        $('obSubmitErr').classList.add('visible');
-        return;
+      if (selectedRole === 'HOMEROOM_TEACHER') {
+        const hc = $('regHomeroomClass').value.trim();
+        if (!hc) { showErr('Vui lòng nhập Tên lớp chủ nhiệm (VD: 12A1).'); $('regHomeroomClass').focus(); return; }
+        payload.homeroomClass = hc;
+      } else if (selectedRole === 'SUBJECT_TEACHER') {
+        const rows = collectSubjectRows().filter(r => r.subject || r.classes);
+        if (!rows.length || rows.some(r => !r.subject || !r.classes)) {
+          showErr('Vui lòng nhập đầy đủ cả Bộ môn giảng dạy và Lớp giảng dạy cho ít nhất 1 dòng.');
+          return;
+        }
+        payload.teachingAssignments = rows;
+      } else if (selectedRole === 'STUDENT') {
+        const gender = $('regGender').value;
+        const sc = $('regStudentClass').value.trim();
+        if (!gender) { showErr('Vui lòng chọn Giới tính.'); return; }
+        if (!sc) { showErr('Vui lòng nhập Lớp học (VD: 12A1).'); $('regStudentClass').focus(); return; }
+        payload.gender = gender;
+        payload.studentClass = sc;
       }
 
-      await AuthManager.completeOnboardingProfile(newProfile);
+      isSubmitting = true;
+      const btn = $('btnRegSubmit');
+      btn.disabled = true;
+      btn.textContent = '⏳ Đang gửi hồ sơ xác nhận...';
+      try {
+        const out = await AuthManager.submitRegistrationToBridge(payload);
+        if (!out.ok) showErr(out.error || 'Không thể gửi hồ sơ lúc này. Vui lòng thử lại.');
+      } finally {
+        isSubmitting = false;
+        btn.disabled = false;
+        btn.textContent = 'Gửi hồ sơ xác nhận →';
+      }
     });
 
-    return Object.freeze({ open, close, isValidUserProfile });
+    return {
+      isValidUserProfile(prof, email) {
+        return Boolean(prof && prof.fullName && prof.email && prof.email.toLowerCase() === String(email || '').toLowerCase());
+      },
+      open(isEdit = false, prefill = null) {
+        const p = AuthManager.getProfile();
+        const up = prefill || AuthManager.getUserProfile() || {};
+        if (!p) return;
+        const displayName = up.fullName || p.name || '';
+        const initials = (displayName || p.email || 'U').trim().split(/\s+/).slice(-1)[0].slice(0, 2).toUpperCase();
+        $('regAvatarWrap').innerHTML = p.picture ? `<img src="${escapeXml(p.picture)}" alt="Avatar" referrerpolicy="no-referrer">` : escapeXml(initials);
+        $('regGoogleName').textContent = p.name || p.email;
+        $('regGoogleEmail').textContent = p.email;
+        $('regModalTitle').textContent = isEdit ? 'Chỉnh sửa & Gửi lại Hồ sơ Thành viên' : 'Khai báo Hồ sơ Thành viên';
+        $('regFullName').value = displayName;
+        $('regDob').value = up.dob || '';
+        $('regHomeroomClass').value = up.homeroomClass || '';
+        $('regGender').value = up.gender || 'Nam';
+        $('regStudentClass').value = up.studentClass || up.className || '';
+        renderSubjectRows(up.teachingAssignments && up.teachingAssignments.length ? up.teachingAssignments : [{ subject: '', classes: '' }]);
+        setRole(up.requestedRole || up.role || 'HOMEROOM_TEACHER');
+        clearErr();
+        modal.classList.add('open');
+      },
+      close() {
+        modal.classList.remove('open');
+      }
+    };
   })();
 
   /* =========================================================================
@@ -12856,112 +14654,359 @@
   /* =========================================================================
    * 20. ACCESS CONTROL MANAGER (APPROVAL GATE) & PENDING/BANNED OVERLAYS
    * ========================================================================= */
-  const AccessControlManager = {
-    evaluate(verifiedEmail, userProfile) {
-      const email = String(verifiedEmail || '').trim().toLowerCase();
-      if (!email) return 'BANNED';
-      if (email === AUTH_CONFIG.ADMIN_EMAIL.toLowerCase()) return 'ALLOWED';
+  function formatAcademicDetailHtml(user) {
+    const role = normalizeRbacRole(user.assignedRole || user.requestedRole || user.role);
+    if (role === 'HOMEROOM_TEACHER') {
+      return `Lớp chủ nhiệm: <b>${escapeXml(user.homeroomClass || user.className || '—')}</b>`;
+    }
+    if (role === 'SUBJECT_TEACHER') {
+      const arr = Array.isArray(user.teachingAssignments) ? user.teachingAssignments : [];
+      if (!arr.length) return `Bộ môn: <b>${escapeXml(user.subject || '—')}</b>`;
+      return arr.map(a => `<b>${escapeXml(a.subject)}</b> (${escapeXml(a.classes)})`).join(' • ');
+    }
+    return `Giới tính: <b>${escapeXml(user.gender || '—')}</b> • Lớp: <b>${escapeXml(user.studentClass || user.className || '—')}</b>`;
+  }
 
-      SystemMasterManager.ensureAccessControlSchema(SystemMasterManager.data);
-      const ac = SystemMasterManager.data.accessControl;
+  const AccessControlManager = (() => {
+    let pollTimer = null;
 
-      if (ac.bannedEmails.includes(email)) return 'BANNED';
+    function stopPolling() {
+      if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    }
 
-      const role = userProfile && userProfile.role ? userProfile.role : 'student';
-      if (role === 'teacher') {
-        if (ac.requireApprovalForTeachers && !ac.approvedTeachers.includes(email)) {
-          return 'PENDING_APPROVAL';
+    function startPolling() {
+      stopPolling();
+      pollTimer = setInterval(() => {
+        const pend = $('pendingApprovalOverlay');
+        if (!document.hidden && pend && pend.classList.contains('open') && AuthManager.isAuthorized()) {
+          AuthManager.recheckBridgeStatusNow().catch(() => {});
         }
-        return 'ALLOWED';
-      }
-      if (ac.requireApprovalForStudents && !ac.approvedStudents.includes(email)) {
-        return 'PENDING_APPROVAL';
-      }
-      return 'ALLOWED';
-    },
-
-    hideGateOverlays() {
-      $('pendingApprovalOverlay').classList.remove('open');
-      $('bannedAccountOverlay').classList.remove('open');
-    },
-
-    buildRegistrationSlip(email, prof) {
-      const roleTxt = prof.role === 'teacher' ? 'Giáo viên' : 'Học sinh';
-      const unitLbl = prof.role === 'teacher' ? 'Bộ môn / Khối lớp' : 'Lớp';
-      const unitVal = prof.role === 'teacher' ? (prof.subject || '—') : (prof.className || '—');
-      return [
-        'PHIẾU ĐĂNG KÝ TÀI KHOẢN VANTHESIS CALCULUS',
-        `• Gmail: ${email}`,
-        `• Vai trò: ${roleTxt}`,
-        `• Họ và tên: ${prof.fullName || '—'}`,
-        `• ${unitLbl}: ${unitVal}`,
-        `• Trường / Đơn vị: ${prof.schoolName || '—'}`,
-        `• Ngày sinh: ${formatDobVn(prof.dob)}`,
-        `• Giới tính: ${prof.gender || '—'}`
-      ].join('\n');
-    },
-
-    showPendingOverlay(email, prof) {
-      $('bannedAccountOverlay').classList.remove('open');
-      const roleTxt = prof.role === 'teacher' ? 'Giáo viên' : 'Học sinh';
-      $('pendEmail').textContent = email;
-      $('pendRole').textContent = roleTxt;
-      $('pendFullName').textContent = prof.fullName || '—';
-      $('pendUnitLabel').textContent = prof.role === 'teacher' ? 'Bộ môn / Phụ trách' : 'Tên lớp';
-      $('pendUnit').textContent = prof.role === 'teacher' ? (prof.subject || '—') : (prof.className || '—');
-      $('pendSchool').textContent = prof.schoolName || '—';
-      $('pendDob').textContent = formatDobVn(prof.dob);
-      $('pendGender').textContent = prof.gender || '—';
-
-      const subj = `[VANTHESIS] Yêu cầu duyệt tài khoản - ${roleTxt} - ${prof.fullName || email}`;
-      const body = this.buildRegistrationSlip(email, prof);
-      $('btnPendMailAdmin').href = `mailto:${AUTH_CONFIG.ADMIN_EMAIL}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
-      $('pendCheckMsg').style.display = 'none';
-      $('pendingApprovalOverlay').classList.add('open');
-    },
-
-    showBannedOverlay(email) {
-      $('pendingApprovalOverlay').classList.remove('open');
-      $('bannedEmailText').textContent = email || '—';
-      const subj = `[VANTHESIS] Khiếu nại / Hỗ trợ mở khóa tài khoản - ${email || ''}`;
-      $('btnBannedContact').href = `mailto:${AUTH_CONFIG.ADMIN_EMAIL}?subject=${encodeURIComponent(subj)}`;
-      $('bannedAccountOverlay').classList.add('open');
+      }, 20000);
     }
-  };
 
-  $('btnPendCopySlip').addEventListener('click', () => {
-    const gp = AuthManager.getProfile(), up = AuthManager.getUserProfile();
-    if (!gp || !up) return;
-    const text = AccessControlManager.buildRegistrationSlip(gp.email, up);
-    const btn = $('btnPendCopySlip');
-    const flash = () => { btn.textContent = '✓ Đã sao chép Phiếu đăng ký!'; setTimeout(() => { btn.textContent = '📋 Sao chép Phiếu đăng ký (Gửi Zalo / Nhóm lớp)'; }, 1800); };
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(flash).catch(() => {
-        const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); flash();
-      });
-    } else {
-      const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); flash();
-    }
-  });
+    return {
+      evaluate(verifiedEmail) {
+        const em = String(verifiedEmail || '').trim().toLowerCase();
+        if (em === AUTH_CONFIG.SUPER_ADMIN_EMAIL.toLowerCase()) return 'ALLOWED';
+        return AuthManager.getAccessDecision() || 'PENDING_APPROVAL';
+      },
+      hideGateOverlays() {
+        stopPolling();
+        $('pendingApprovalOverlay').classList.remove('open');
+        $('rejectedApprovalOverlay').classList.remove('open');
+        $('bannedAccountOverlay').classList.remove('open');
+      },
+      showPendingOverlay(email, up) {
+        $('rejectedApprovalOverlay').classList.remove('open');
+        $('bannedAccountOverlay').classList.remove('open');
+        const roleMeta = getRbacRoleMeta((up && (up.requestedRole || up.role)) || 'STUDENT');
+        $('pendEmail').textContent = email || '—';
+        $('pendRole').textContent = `${roleMeta.subtitle} (${roleMeta.label})`;
+        $('pendName').textContent = (up && up.fullName) || '—';
+        $('pendDob').textContent = formatDobVn(up && up.dob);
+        $('pendDetailVal').innerHTML = formatAcademicDetailHtml(up || {});
+        $('pendSubmittedAt').textContent = formatVnTime((up && up.submittedAt) || new Date().toISOString());
+        $('pendingCheckStatusMsg').style.display = 'none';
+        $('pendingApprovalOverlay').classList.add('open');
+        startPolling();
+      },
+      showRejectedOverlay(email, reason) {
+        stopPolling();
+        $('pendingApprovalOverlay').classList.remove('open');
+        $('bannedAccountOverlay').classList.remove('open');
+        $('rejEmailText').textContent = email || '—';
+        const rb = $('rejReasonBox');
+        if (reason && String(reason).trim()) {
+          $('rejReasonText').textContent = String(reason).trim();
+          rb.style.display = 'block';
+        } else {
+          rb.style.display = 'none';
+        }
+        $('rejectedApprovalOverlay').classList.add('open');
+      },
+      showBannedOverlay(email) {
+        stopPolling();
+        $('pendingApprovalOverlay').classList.remove('open');
+        $('rejectedApprovalOverlay').classList.remove('open');
+        $('bannedEmailText').textContent = email || '—';
+        $('bannedAccountOverlay').classList.add('open');
+      }
+    };
+  })();
 
-  $('btnPendRecheck').addEventListener('click', async () => {
-    const btn = $('btnPendRecheck'), msg = $('pendCheckMsg');
+  $('btnPendingRecheckNow').addEventListener('click', async () => {
+    const btn = $('btnPendingRecheckNow');
+    const st = $('pendingCheckStatusMsg');
     btn.disabled = true;
-    btn.textContent = '⏳ Đang kiểm tra danh sách phê duyệt mới nhất...';
-    const decision = await AuthManager.evaluateAndApplyAccess();
-    btn.disabled = false;
-    btn.textContent = '🔄 Kiểm tra lại trạng thái duyệt';
-    if (decision === 'PENDING_APPROVAL') {
-      msg.style.display = 'block';
-      msg.style.background = '#FFFBEB';
-      msg.style.color = '#92400E';
-      msg.textContent = 'Tài khoản vẫn đang chờ Quản trị viên thêm vào danh sách duyệt. Vui lòng thử lại sau khi Admin xác nhận.';
+    btn.textContent = '⏳ Đang kiểm tra trạng thái duyệt...';
+    try {
+      const res = await AuthManager.recheckBridgeStatusNow();
+      if (!AuthManager.isFullyAllowed()) {
+        st.textContent = (res && res.networkError)
+          ? '⚠ Không thể kết nối máy chủ kiểm duyệt. Vui lòng thử lại sau.'
+          : '⏳ Hồ sơ vẫn đang chờ Quản trị viên phê duyệt.';
+        st.style.display = 'block';
+      }
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🔄 Kiểm tra trạng thái duyệt ngay';
     }
   });
+  $('btnPendingEditInfo').addEventListener('click', () => {
+    $('pendingApprovalOverlay').classList.remove('open');
+    OnboardingController.open(true, AuthManager.getUserProfile());
+  });
+  $('btnPendingSignOut').addEventListener('click', () => AuthManager.logout(false));
+  $('btnRejectedResubmit').addEventListener('click', () => {
+    $('rejectedApprovalOverlay').classList.remove('open');
+    OnboardingController.open(true, AuthManager.getUserProfile());
+  });
+  $('btnRejectedSignOut').addEventListener('click', () => AuthManager.logout(false));
 
-  $('btnPendEditProfile').addEventListener('click', () => OnboardingController.open(true));
-  $('btnPendLogout').addEventListener('click', () => AuthManager.logout(false));
-  $('btnBannedLogout').addEventListener('click', () => AuthManager.logout(false));
+  /* =========================================================================
+   * SUPER ADMIN RBAC QUEUE & USER DIRECTORY CONTROLLER (ONLY kientdvct@gmail.com)
+   * ========================================================================= */
+  const AdminRbacController = (() => {
+    let allUsers = [];
+    let activeSubTab = 'pending';
+
+    function updateBadge(pendingCount) {
+      const badge = $('adminPendingBadge');
+      if (!badge) return;
+      const n = Math.max(0, Number(pendingCount) || 0);
+      badge.textContent = n > 99 ? '99+' : String(n);
+      badge.classList.toggle('visible', n > 0 && isMasterSuperAdminSession());
+    }
+
+    function setMsg(text, isErr = false) {
+      const el = $('rbacAdminStatusMsg');
+      if (!el) return;
+      el.textContent = text;
+      el.style.display = 'block';
+      el.style.background = isErr ? 'rgba(220,38,38,0.09)' : 'var(--primary-soft)';
+      el.style.color = isErr ? '#B91C1C' : 'var(--primary)';
+    }
+
+    function syncStatsAndLists() {
+      const pending = allUsers.filter(u => String(u.status || '').toUpperCase() === 'PENDING');
+      const approved = allUsers.filter(u => String(u.status || '').toUpperCase() === 'APPROVED');
+      const rejected = allUsers.filter(u => String(u.status || '').toUpperCase() === 'REJECTED');
+
+      $('rbacStatPending').textContent = String(pending.length);
+      $('rbacStatApproved').textContent = String(approved.length);
+      $('rbacStatRejected').textContent = String(rejected.length);
+      $('rbacTabPendingCnt').textContent = String(pending.length);
+      $('rbacTabDirCnt').textContent = String(approved.length + rejected.length);
+      updateBadge(pending.length);
+
+      renderPendingQueue(pending);
+      renderDirectory([...approved, ...rejected]);
+    }
+
+    function mirrorDirectoryToMasterDrive() {
+      try {
+        if (!SystemMasterManager || !SystemMasterManager.data) return;
+        SystemMasterManager.ensureAccessControlSchema(SystemMasterManager.data);
+        const ac = SystemMasterManager.data.accessControl;
+        ac.approvedTeachers = allUsers
+          .filter(u => String(u.status).toUpperCase() === 'APPROVED' && (normalizeRbacRole(u.assignedRole) === 'HOMEROOM_TEACHER' || normalizeRbacRole(u.assignedRole) === 'SUBJECT_TEACHER'))
+          .map(u => String(u.email).toLowerCase());
+        ac.approvedStudents = allUsers
+          .filter(u => String(u.status).toUpperCase() === 'APPROVED' && normalizeRbacRole(u.assignedRole) === 'STUDENT')
+          .map(u => String(u.email).toLowerCase());
+        ac.rbacDirectorySnapshot = allUsers.map(u => ({
+          email: u.email,
+          fullName: u.fullName || '',
+          status: u.status,
+          assignedRole: u.assignedRole || u.requestedRole || 'STUDENT',
+          updatedAt: u.updatedAt || new Date().toISOString()
+        }));
+        SystemMasterManager.publishMasterData(SystemMasterManager.data).catch(() => {});
+      } catch {}
+    }
+
+    async function decide(targetEmail, decision, assignedRole, rejectReason = '') {
+      if (!isMasterSuperAdminSession()) return;
+      const token = AuthManager.getAccessToken();
+      if (!token) return;
+      setMsg(`⏳ Đang cập nhật ${targetEmail}...`);
+      const res = await ApprovalBridgeClient.adminDecideUser(token, { targetEmail, decision, assignedRole, rejectReason });
+      if (res && res.ok === false) {
+        setMsg(`⚠ Lỗi cập nhật: ${res.error || 'Không rõ nguyên nhân.'}`, true);
+        return;
+      }
+      const roleMeta = getRbacRoleMeta(assignedRole);
+      showAppToast(decision === 'APPROVED'
+        ? `✓ Đã phê duyệt ${targetEmail} với quyền ${roleMeta.label}!`
+        : `✓ Đã từ chối tài khoản ${targetEmail}.`);
+      await loadUsers();
+      mirrorDirectoryToMasterDrive();
+    }
+
+    function renderPendingQueue(list) {
+      const wrap = $('rbacPendingList');
+      if (!wrap) return;
+      if (!list.length) {
+        wrap.innerHTML = '<div style="font-size:12.5px;color:var(--text-soft);padding:18px;text-align:center;">🎉 Không có hồ sơ nào đang chờ xác nhận.</div>';
+        return;
+      }
+      wrap.innerHTML = '';
+      list.forEach((u) => {
+        const reqRole = normalizeRbacRole(u.requestedRole || u.role || 'STUDENT');
+        const reqMeta = getRbacRoleMeta(reqRole);
+        const initials = (u.fullName || u.email || 'U').trim().split(/\s+/).slice(-1)[0].slice(0, 2).toUpperCase();
+        const card = document.createElement('div');
+        card.className = 'rbac-user-card';
+        card.innerHTML = `
+          <div class="rbac-user-head">
+            <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+              <div class="reg-avatar" style="width:36px;height:36px;">${u.picture ? `<img src="${escapeXml(u.picture)}" alt="Avatar" referrerpolicy="no-referrer">` : escapeXml(initials)}</div>
+              <div style="min-width:0;">
+                <div style="font-size:13.5px;font-weight:700;color:var(--text);">${escapeXml(u.fullName || 'Chưa rõ tên')}</div>
+                <div style="font-size:11.6px;font-family:var(--font-mono);color:var(--text-muted);">${escapeXml(u.email)}</div>
+              </div>
+            </div>
+            <span class="uac-role-chip ${reqMeta.badgeClass}">Đăng ký: ${escapeXml(reqMeta.label)}</span>
+          </div>
+          <div class="rbac-user-meta">
+            <div><span>Ngày sinh:</span> <b>${formatDobVn(u.dob)}</b></div>
+            <div><span>Gửi lúc:</span> <b>${formatVnTime(u.submittedAt)}</b></div>
+            <div style="grid-column:1 / -1;"><span>Chi tiết học vụ:</span> ${formatAcademicDetailHtml(u)}</div>
+          </div>
+          <div class="rbac-action-bar">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:11.5px;font-weight:600;color:var(--text-muted);">Cấp quyền:</span>
+              <select class="rbac-role-select">
+                <option value="HOMEROOM_TEACHER" ${reqRole === 'HOMEROOM_TEACHER' ? 'selected' : ''}>HOMEROOM TEACHER</option>
+                <option value="SUBJECT_TEACHER" ${reqRole === 'SUBJECT_TEACHER' ? 'selected' : ''}>SUBJECT TEACHER</option>
+                <option value="STUDENT" ${reqRole === 'STUDENT' ? 'selected' : ''}>STUDENT</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button type="button" class="btn btn-sm btn-primary rbac-btn-accept" style="background:#059669;border-color:#059669;">✓ Accept (Phê duyệt)</button>
+              <button type="button" class="btn btn-sm btn-danger-soft rbac-btn-reject-toggle">✕ Reject (Từ chối)</button>
+            </div>
+          </div>
+          <div class="rbac-reject-box">
+            <input type="text" class="rbac-reject-reason" placeholder="Nhập lý do từ chối (tùy chọn)...">
+            <button type="button" class="btn btn-sm btn-danger-soft rbac-btn-reject-confirm">Xác nhận Từ chối</button>
+          </div>
+        `;
+        const sel = card.querySelector('.rbac-role-select');
+        card.querySelector('.rbac-btn-accept').addEventListener('click', () => decide(u.email, 'APPROVED', sel.value));
+        const rejBox = card.querySelector('.rbac-reject-box');
+        card.querySelector('.rbac-btn-reject-toggle').addEventListener('click', () => rejBox.classList.toggle('open'));
+        card.querySelector('.rbac-btn-reject-confirm').addEventListener('click', () => {
+          const reason = card.querySelector('.rbac-reject-reason').value.trim();
+          decide(u.email, 'REJECTED', sel.value, reason);
+        });
+        wrap.appendChild(card);
+      });
+    }
+
+    function renderDirectory(list) {
+      const wrap = $('rbacDirectoryList');
+      if (!wrap) return;
+      const q = ($('rbacDirSearch')?.value || '').trim().toLowerCase();
+      const flt = $('rbacDirFilter')?.value || 'ALL';
+      const filtered = list.filter((u) => {
+        const st = String(u.status || '').toUpperCase();
+        const role = normalizeRbacRole(u.assignedRole || u.requestedRole || 'STUDENT');
+        if (flt === 'REJECTED' && st !== 'REJECTED') return false;
+        if (flt !== 'ALL' && flt !== 'REJECTED' && (st !== 'APPROVED' || role !== flt)) return false;
+        if (!q) return true;
+        const hay = `${u.fullName || ''} ${u.email || ''} ${u.homeroomClass || ''} ${u.studentClass || ''} ${JSON.stringify(u.teachingAssignments || [])}`.toLowerCase();
+        return hay.includes(q);
+      });
+
+      if (!filtered.length) {
+        wrap.innerHTML = '<div style="font-size:12.5px;color:var(--text-soft);padding:16px;text-align:center;">Không có thành viên nào khớp bộ lọc.</div>';
+        return;
+      }
+      wrap.innerHTML = '';
+      filtered.forEach((u) => {
+        const st = String(u.status || '').toUpperCase();
+        const role = normalizeRbacRole(u.assignedRole || u.requestedRole || 'STUDENT');
+        const meta = getRbacRoleMeta(role);
+        const card = document.createElement('div');
+        card.className = 'rbac-user-card';
+        card.innerHTML = `
+          <div class="rbac-user-head">
+            <div>
+              <b style="font-size:13.2px;color:var(--text);">${escapeXml(u.fullName || u.email)}</b>
+              <div style="font-size:11.4px;font-family:var(--font-mono);color:var(--text-muted);">${escapeXml(u.email)}</div>
+            </div>
+            <span class="uac-role-chip ${st === 'REJECTED' ? 'admin' : meta.badgeClass}" style="${st === 'REJECTED' ? 'background:rgba(220,38,38,0.12);color:#DC2626;border-color:rgba(220,38,38,0.3);' : ''}">
+              ${st === 'REJECTED' ? 'Đã từ chối' : escapeXml(meta.label)}
+            </span>
+          </div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:9px;">${formatAcademicDetailHtml(u)}</div>
+          <div class="rbac-action-bar">
+            <select class="rbac-role-select">
+              <option value="HOMEROOM_TEACHER" ${role === 'HOMEROOM_TEACHER' ? 'selected' : ''}>HOMEROOM TEACHER</option>
+              <option value="SUBJECT_TEACHER" ${role === 'SUBJECT_TEACHER' ? 'selected' : ''}>SUBJECT TEACHER</option>
+              <option value="STUDENT" ${role === 'STUDENT' ? 'selected' : ''}>STUDENT</option>
+            </select>
+            <div style="display:flex;gap:6px;">
+              ${st === 'APPROVED'
+                ? '<button type="button" class="btn btn-sm btn-primary rbac-btn-updaterole">Lưu đổi quyền</button><button type="button" class="btn btn-sm btn-danger-soft rbac-btn-revoke">Thu hồi (Reject)</button>'
+                : '<button type="button" class="btn btn-sm btn-primary rbac-btn-restore" style="background:#059669;border-color:#059669;">✓ Khôi phục (Accept)</button>'}
+            </div>
+          </div>
+        `;
+        const sel = card.querySelector('.rbac-role-select');
+        const btnUpd = card.querySelector('.rbac-btn-updaterole');
+        const btnRev = card.querySelector('.rbac-btn-revoke');
+        const btnRes = card.querySelector('.rbac-btn-restore');
+        if (btnUpd) btnUpd.addEventListener('click', () => decide(u.email, 'APPROVED', sel.value));
+        if (btnRev) btnRev.addEventListener('click', () => decide(u.email, 'REJECTED', sel.value, 'Thu hồi quyền truy cập bởi Quản trị viên'));
+        if (btnRes) btnRes.addEventListener('click', () => decide(u.email, 'APPROVED', sel.value));
+        wrap.appendChild(card);
+      });
+    }
+
+    async function loadUsers() {
+      if (!isMasterSuperAdminSession()) return;
+      const token = AuthManager.getAccessToken();
+      if (!token) return;
+      const res = await ApprovalBridgeClient.adminListUsers(token);
+      if (res && res.networkError) {
+        setMsg(`⚠ ${res.error}`, true);
+        return;
+      }
+      const rawList = Array.isArray(res) ? res : (Array.isArray(res && res.users) ? res.users : (Array.isArray(res && res.data) ? res.data : []));
+      allUsers = rawList;
+      $('rbacAdminStatusMsg').style.display = 'none';
+      syncStatsAndLists();
+    }
+
+    async function refreshPendingBadge() {
+      if (!isMasterSuperAdminSession()) { updateBadge(0); return; }
+      const token = AuthManager.getAccessToken();
+      if (!token) return;
+      const res = await ApprovalBridgeClient.adminListUsers(token);
+      const rawList = Array.isArray(res) ? res : (Array.isArray(res && res.users) ? res.users : (Array.isArray(res && res.data) ? res.data : []));
+      if (rawList.length) {
+        allUsers = rawList;
+        const pCnt = rawList.filter(u => String(u.status || '').toUpperCase() === 'PENDING').length;
+        updateBadge(pCnt);
+      }
+    }
+
+    document.querySelectorAll('.rbac-subtab-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        activeSubTab = btn.getAttribute('data-rbactab') || 'pending';
+        document.querySelectorAll('.rbac-subtab-btn').forEach(b => b.classList.toggle('active', b === btn));
+        $('rbacSubPanePending').style.display = activeSubTab === 'pending' ? 'block' : 'none';
+        $('rbacSubPaneDirectory').style.display = activeSubTab === 'directory' ? 'block' : 'none';
+      });
+    });
+    $('btnAdminRbacRefresh').addEventListener('click', () => loadUsers());
+    $('rbacDirSearch').addEventListener('input', () => syncStatsAndLists());
+    $('rbacDirFilter').addEventListener('change', () => syncStatsAndLists());
+
+    return { loadUsers, refreshPendingBadge };
+  })();
 
   /* Super Admin Studio Modal Controller (#adminStudioModal) */
   const AdminStudioUI = (() => {
@@ -13087,44 +15132,7 @@
     }
 
     function syncAccessUI() {
-      if (!draft) return;
-      SystemMasterManager.ensureAccessControlSchema(draft);
-      const ac = draft.accessControl;
-      $('admReqTeacher').checked = !!ac.requireApprovalForTeachers;
-      $('admReqStudent').checked = !!ac.requireApprovalForStudents;
-      const q = ($('admAccessSearch').value || '').trim().toLowerCase();
-
-      const renderChipList = (arr, mountId, countId, listKey) => {
-        $(countId).textContent = arr.length;
-        const box = $(mountId);
-        box.innerHTML = '';
-        const filtered = q ? arr.filter(em => em.includes(q)) : arr;
-        if (!filtered.length) {
-          box.innerHTML = `<span style="font-size:11.5px;color:var(--text-soft);">${q ? 'Không tìm thấy email khớp.' : 'Danh sách đang trống.'}</span>`;
-          return;
-        }
-        filtered.forEach(em => {
-          const chip = document.createElement('span');
-          chip.className = `adm-email-chip${listKey === 'bannedEmails' ? ' banned' : ''}`;
-          const span = document.createElement('span');
-          span.textContent = em;
-          const delBtn = document.createElement('button');
-          delBtn.type = 'button';
-          delBtn.title = `Gỡ ${em}`;
-          delBtn.textContent = '×';
-          delBtn.addEventListener('click', () => {
-            ac[listKey] = ac[listKey].filter(x => x !== em);
-            syncAccessUI();
-          });
-          chip.appendChild(span);
-          chip.appendChild(delBtn);
-          box.appendChild(chip);
-        });
-      };
-
-      renderChipList(ac.approvedTeachers, 'admChipsTeachers', 'admCountTeachers', 'approvedTeachers');
-      renderChipList(ac.approvedStudents, 'admChipsStudents', 'admCountStudents', 'approvedStudents');
-      renderChipList(ac.bannedEmails, 'admChipsBanned', 'admCountBanned', 'bannedEmails');
+      AdminRbacController.loadUsers();
     }
 
     function syncPublishUI() {
@@ -13139,6 +15147,11 @@
 
     return {
       open() {
+        const currentSession = AuthManager.getProfile();
+        if (!AuthManager.isAuthorized() || !currentSession || !currentSession.email || currentSession.email.trim().toLowerCase() !== 'kientdvct@gmail.com' || currentSession.verified !== true) {
+          console.warn('[VANTHESIS Security] Từ chối truy cập Quản trị Hệ thống: chỉ tài khoản Super Admin kientdvct@gmail.com được phép.');
+          return;
+        }
         if (!AuthManager.isAdmin()) return;
         draft = cloneMasterData(SystemMasterManager.data);
         if (!draft.systemConfig) draft.systemConfig = cloneMasterData(DEFAULT_SYSTEM_MASTER.systemConfig);
@@ -13151,8 +15164,7 @@
         syncPublishUI();
         syncAccessUI();
         $('admPublishStatus').style.display = 'none';
-        $('admAccessPubStatus').style.display = 'none';
-        $('admAccessConflictMsg').style.display = 'none';
+        $('rbacAdminStatusMsg').style.display = 'none';
         $('accountHubModal').classList.remove('open');
         $('adminStudioModal').classList.add('open');
       },
@@ -13405,30 +15417,6 @@
     AdminStudioUI.refreshAccess();
   }
 
-  $('admReqTeacher').addEventListener('change', e => { const d = AdminStudioUI.getDraft(); if (d && d.accessControl) d.accessControl.requireApprovalForTeachers = e.target.checked; });
-  $('admReqStudent').addEventListener('change', e => { const d = AdminStudioUI.getDraft(); if (d && d.accessControl) d.accessControl.requireApprovalForStudents = e.target.checked; });
-  $('admAccessSearch').addEventListener('input', () => AdminStudioUI.refreshAccess());
-  $('btnAdmAddTeachers').addEventListener('click', () => addEmailsToAccessList('approvedTeachers', 'admInputTeachers'));
-  $('btnAdmAddStudents').addEventListener('click', () => addEmailsToAccessList('approvedStudents', 'admInputStudents'));
-  $('btnAdmAddBanned').addEventListener('click', () => addEmailsToAccessList('bannedEmails', 'admInputBanned'));
-
-  $('btnAdmPublishAccess').addEventListener('click', async () => {
-    const d = AdminStudioUI.getDraft();
-    if (!d) return;
-    const btn = $('btnAdmPublishAccess'), st = $('admAccessPubStatus');
-    btn.disabled = true;
-    btn.textContent = '⏳ Đang lưu & xuất bản phân quyền lên Google Drive...';
-    const res = await SystemMasterManager.publishMasterData(d);
-    btn.disabled = false;
-    btn.textContent = '☁ Lưu & Xuất bản phân quyền lên Google Drive';
-    st.style.display = 'block';
-    st.style.background = res.ok ? '#DCFCE7' : '#FEE2E2';
-    st.style.color = res.ok ? '#166534' : '#991B1B';
-    st.textContent = res.message;
-    if (res.fileId) $('admMasterFileIdInput').value = res.fileId;
-    AdminStudioUI.refreshPublish();
-  });
-
   window.addEventListener('load', () => {
     setupOfflinePWA();
     const restoredFromUrl = tryRestoreFromUrlHash();
@@ -13443,6 +15431,11 @@
         }
         if (Array.isArray(d.customPoints)) state.customPoints = d.customPoints;
         if (d.layers) state.layers = { ...state.layers, ...d.layers };
+    if (d.userPrefs && typeof d.userPrefs === 'object') {
+      state.userPrefs = { ...state.userPrefs, ...d.userPrefs };
+      state.layers.labels = state.userPrefs.showGridExtrema !== false;
+      state.layers.extrema = state.userPrefs.showGridExtrema !== false;
+    }
         if (typeof d.uStr === 'string') { state.uStr = d.uStr; $('inputU').value = d.uStr; }
         if (typeof d.fxyStr === 'string') { state.fxyStr = d.fxyStr; $('inputFxy').value = d.fxyStr; }
         if (typeof d.vecPStr === 'string') { state.vecPStr = d.vecPStr; $('inputVecP').value = d.vecPStr; }
@@ -14767,12 +16760,20 @@
       });
     }
 
+    window.addEventListener('vanthesis:themechange', (ev) => {
+      isNight = !!(ev && ev.detail && ev.detail.theme === 'dark');
+    });
     if (btnToggle) {
       btnToggle.addEventListener('click', () => {
-        isNight = !isNight;
-        landing.setAttribute('data-cosmic', isNight ? 'night' : 'day');
-        if (icoToggle) icoToggle.textContent = isNight ? '☀️' : '🌙';
-        if (lblToggle) lblToggle.textContent = isNight ? 'Ban ngày' : 'Đêm Vũ trụ';
+        if (window.VANTHESIS_THEME) {
+          window.VANTHESIS_THEME.toggle();
+        } else {
+          isNight = !isNight;
+          document.documentElement.setAttribute('data-theme', isNight ? 'dark' : 'light');
+          landing.setAttribute('data-cosmic', isNight ? 'night' : 'day');
+          if (icoToggle) icoToggle.textContent = isNight ? '☀️' : '🌙';
+          if (lblToggle) lblToggle.textContent = isNight ? 'Ban ngày' : 'Đêm Vũ trụ';
+        }
       });
     }
 
@@ -14796,5 +16797,6 @@
   })();
 })();
 </script>
+<script src="./classroom.js" defer></script>
 </body>
 </html>
