@@ -5169,14 +5169,13 @@
   /* =====================================================================
    * v5.1 CINEMATIC DESK-LAMP 360° PHYSICS & ILLUMINATION OF KNOWLEDGE
    * ===================================================================== */
+  /* 100% Opaque Deep Space Portal Background (zero bleed-through from Landing Page) */
   #authPortalOverlay {
-    background: #050814 !important;
-    transition: background 0.9s cubic-bezier(0.22, 1, 0.36, 1) !important;
+    background: #03050F !important;
     overflow: hidden;
   }
   #authPortalOverlay[data-on="true"] {
-    background:
-      radial-gradient(circle at 34% 40%, rgba(251, 191, 36, 0.24) 0%, rgba(37, 99, 235, 0.22) 34%, rgba(11, 21, 52, 0.94) 68%, #060B19 100%) !important;
+    background: #03050F !important;
   }
 
   #authKnowledgeCanvas {
@@ -5207,7 +5206,7 @@
     border: 1.5px solid rgba(253, 230, 138, 0.55);
   }
   .knowledge-wave.pulsing {
-    animation: vtKnowledgeWave 900ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation: vtKnowledgeWave 850ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
   @keyframes vtKnowledgeWave {
     0% { transform: translate(-50%, -50%) scale(0.4); opacity: 0.92; }
@@ -5256,11 +5255,139 @@
     pointer-events: none;
   }
 
-  /* Flagship Minimal Luxury Login Card (180ms reveal after lamp illuminates) */
+  /* Flagship High-Contrast Dark Frosted Login Card over Milky Way */
+  #authPortalOverlay .auth-glass-card {
+    background: rgba(8, 13, 28, 0.82) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(140%) !important;
+    backdrop-filter: blur(24px) saturate(140%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  }
   #authPortalOverlay[data-on="true"] .auth-glass-card {
     transition-delay: 180ms !important;
-    border-color: rgba(253, 230, 138, 0.28) !important;
-    box-shadow: 0 28px 70px -16px rgba(0, 0, 0, 0.62), 0 0 0 1px rgba(251, 191, 36, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+    box-shadow: 0 28px 70px -16px rgba(0, 0, 0, 0.72), 0 0 0 1px rgba(253, 230, 138, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+  }
+
+  /* =====================================================================
+   * SINGLE-ROW CONSOLIDATED WORKSPACE TOOLBAR & FLOATING POPOVERS
+   * ===================================================================== */
+  .topbar {
+    flex-wrap: nowrap !important;
+  }
+  .header-center.toolbar-group {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .header-center.toolbar-group::-webkit-scrollbar {
+    display: none;
+  }
+  .header-center.toolbar-group > * {
+    flex-shrink: 0 !important;
+  }
+  #presetSelect.select-ctrl {
+    max-width: 210px !important;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .tb-popover-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .tb-popover-trigger.is-active {
+    border-color: var(--primary) !important;
+    background: var(--primary-soft) !important;
+    color: var(--primary) !important;
+    box-shadow: 0 0 0 1px rgba(29, 78, 216, 0.24);
+  }
+  .tb-ink-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.22);
+    flex-shrink: 0;
+  }
+
+  .tb-floating-popover {
+    display: none;
+    position: fixed;
+    z-index: 140;
+    min-width: 224px;
+    padding: 10px;
+    border-radius: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    box-shadow: 0 20px 48px -12px rgba(15, 23, 42, 0.26);
+    flex-direction: column;
+    gap: 8px;
+  }
+  .tb-floating-popover.open {
+    display: flex;
+  }
+  html[data-theme="light"] .tb-floating-popover {
+    background: rgba(255, 255, 255, 0.96) !important;
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+    border-color: rgba(15, 23, 42, 0.14) !important;
+  }
+  html[data-theme="dark"] .tb-floating-popover {
+    background: rgba(15, 23, 42, 0.96) !important;
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+    border-color: rgba(56, 189, 248, 0.28) !important;
+  }
+  .tb-pop-section-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-soft);
+    padding: 0 2px;
+  }
+  .tb-pop-mode-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .tb-pop-swatches {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 2px 2px;
+  }
+  .tb-pop-swatches .pen-swatch {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    border-radius: 50%;
+    border: 2px solid var(--border-strong);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .tb-pop-swatches .pen-swatch.active {
+    transform: scale(1.12);
+    box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary);
+  }
+  .tb-pop-menu-item {
+    width: 100%;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    padding: 8px 11px !important;
+    border-radius: 10px !important;
+    font-size: 12.8px !important;
+    font-weight: 600 !important;
   }
   .auth-epigraph {
     font-family: 'Newsreader', 'STIX Two Text', Georgia, serif;
@@ -5369,10 +5496,328 @@
       border-radius: 24px !important;
     }
   }
+
+  /* =====================================================================
+   * VANTHESIS CONSTELLATION LCMS — 5-SECTOR UNIFIED COMMAND SHELL CSS
+   * ===================================================================== */
+  .lcms-shell-body {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  /* Left Sector Navigation Rail (Desktop 216px / iPad compact 74px) */
+  .vt-topbar-sector-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 700;
+    background: var(--primary-soft);
+    color: var(--primary);
+    border: 1px solid rgba(29, 78, 216, 0.22);
+    white-space: nowrap;
+  }
+  .vt-topbar-scope-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 11.5px;
+    font-weight: 600;
+    background: var(--surface-alt);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  @media (max-width: 1024px) {
+    .vt-topbar-scope-pill { display: none !important; }
+  }
+  @media (max-width: 767px) {
+    .vt-topbar-sector-pill, #btnTopbarThemeQuick { display: none !important; }
+  }
+  .vt-sector-rail {
+    width: 216px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 10px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    z-index: 15;
+  }
+  html[data-theme="light"] .vt-sector-rail {
+    background: rgba(255, 255, 255, 0.90) !important;
+    -webkit-backdrop-filter: blur(22px);
+    backdrop-filter: blur(22px);
+    border-right-color: rgba(15, 23, 42, 0.09) !important;
+  }
+  html[data-theme="dark"] .vt-sector-rail {
+    background: rgba(10, 17, 36, 0.90) !important;
+    -webkit-backdrop-filter: blur(22px);
+    backdrop-filter: blur(22px);
+    border-right-color: rgba(56, 189, 248, 0.18) !important;
+  }
+  .vt-rail-scope-pill {
+    padding: 8px 10px;
+    border-radius: 14px;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    line-height: 1.35;
+  }
+  .vt-sector-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 12px;
+    border-radius: 16px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+    font-size: 13.2px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .vt-sector-btn:hover {
+    background: var(--surface-alt);
+    color: var(--text);
+  }
+  .vt-sector-btn.active {
+    background: var(--primary-soft);
+    color: var(--primary);
+    border-color: rgba(217, 119, 6, 0.45);
+    box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.22), 0 6px 18px -6px rgba(29, 78, 216, 0.24);
+  }
+  .vt-sector-ico {
+    font-size: 17px;
+    line-height: 1;
+    flex-shrink: 0;
+    width: 22px;
+    text-align: center;
+  }
+  .vt-sector-lbl {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Main Sector Host & Panes */
+  .vt-sector-host {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+  .lcms-sector {
+    display: none;
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .lcms-sector.active {
+    display: flex;
+    flex-direction: column;
+  }
+  #sectorLab.active {
+    overflow: hidden;
+  }
+  #sectorLab > .workspace {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+  }
+
+  /* Hide Lab-specific center tools when viewing non-Lab sectors */
+  .app-shell:not([data-active-sector="lab"]) .header-center.toolbar-group {
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .app-shell:not([data-active-sector="lab"]) #mobileBottomNav {
+    display: none !important;
+  }
+
+  /* Clean Sector Mount Shell Cards */
+  .lcms-mount-wrap {
+    padding: 22px 24px 36px;
+    max-width: 1380px;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .lcms-welcome-banner {
+    border-radius: 22px;
+    padding: 24px 26px;
+    background: linear-gradient(135deg, #090F24 0%, #172554 55%, #1E1B4B 100%);
+    color: #F8FAFC;
+    border: 1px solid rgba(253, 230, 138, 0.24);
+    box-shadow: 0 18px 44px -16px rgba(9, 15, 36, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .lcms-welcome-banner h2 {
+    font-family: 'Newsreader', var(--font-math), serif;
+    font-size: 26px;
+    font-weight: 600;
+    margin: 0 0 6px;
+    color: #FFFFFF;
+  }
+  .lcms-welcome-banner p {
+    font-size: 13.5px;
+    color: #CBD5E1;
+    margin: 0;
+    max-width: 620px;
+  }
+  .lcms-placeholder-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .lcms-glass-tile {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* Mobile 5-Sector Bottom Bar (iOS style, visible ONLY < 768px) */
+  .vt-mobile-sector-nav {
+    display: none;
+  }
+
+  /* Compact iPad Rail (768px - 1024px) */
+  @media (min-width: 768px) and (max-width: 1024px) {
+    .vt-sector-rail {
+      width: 76px;
+      padding: 10px 6px;
+      align-items: center;
+    }
+    .vt-rail-scope-pill,
+    .vt-sector-lbl {
+      display: none;
+    }
+    .vt-sector-btn {
+      justify-content: center;
+      padding: 12px 0;
+    }
+    .lcms-placeholder-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  /* Mobile (< 768px): Bottom 5-Sector Bar + Lab sub-nav neatly stacked */
+  @media (max-width: 767px) {
+    .vt-sector-rail {
+      display: none !important;
+    }
+    .lcms-shell-body {
+      padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    }
+    .lcms-mount-wrap {
+      padding: 14px 14px 28px;
+    }
+    .lcms-placeholder-grid {
+      grid-template-columns: 1fr;
+    }
+    .vt-mobile-sector-nav {
+      display: flex !important;
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: calc(64px + env(safe-area-inset-bottom, 0px));
+      padding: 4px 6px env(safe-area-inset-bottom, 0px);
+      background: var(--surface);
+      border-top: 1px solid var(--border-strong);
+      z-index: 85;
+      gap: 4px;
+      align-items: center;
+    }
+    html[data-theme="light"] .vt-mobile-sector-nav {
+      background: rgba(255, 255, 255, 0.94) !important;
+      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(18px);
+    }
+    html[data-theme="dark"] .vt-mobile-sector-nav {
+      background: rgba(10, 17, 36, 0.94) !important;
+      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(18px);
+    }
+    .vt-msector-btn {
+      flex: 1;
+      min-width: 0 !important;
+      height: 52px !important;
+      min-height: 48px !important;
+      border: none;
+      border-radius: 14px;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: var(--font-sans);
+      font-size: 10.5px;
+      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      cursor: pointer;
+    }
+    .vt-msector-btn.active {
+      color: var(--primary);
+      background: var(--primary-soft);
+    }
+    .vt-msector-btn span:first-child {
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    /* When in Lab on mobile, float Lab 3-tab switcher cleanly above the 5-sector bottom bar */
+    .app-shell[data-active-sector="lab"] #mobileBottomNav {
+      bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+      height: 46px !important;
+      padding: 3px 8px !important;
+      z-index: 82 !important;
+    }
+    .app-shell[data-active-sector="lab"] #mobileBottomNav .mb-nav-btn {
+      height: 38px !important;
+      min-height: 38px !important;
+      flex-direction: row !important;
+      gap: 5px !important;
+    }
+    .app-shell[data-active-sector="lab"] .workspace {
+      padding-bottom: 48px !important;
+    }
+  }
 </style>
 </head>
 <body data-theme="light" data-projector="false">
-<div class="app-shell" id="appShell" data-ipad-tab="funcs" data-mobile-view="graph" hidden inert aria-hidden="true">
+<div class="app-shell" id="appShell" data-active-sector="resources" data-ipad-tab="funcs" data-mobile-view="graph" hidden inert aria-hidden="true">
   <!-- TOP CLASSROOM TOOLBAR -->
   <header class="topbar">
     <!-- Zone 1: Left Brand -->
@@ -5392,46 +5837,44 @@
       </svg>
       <span class="brand-title">VANTHESIS</span>
       <span class="brand-sub">Calculus</span>
+      <span id="vtTopbarSectorTitle" class="vt-topbar-sector-pill" title="Phân khu đang mở">✦ Kho Chòm sao</span>
+      <span id="vtTopbarScopeBadge" class="vt-topbar-scope-pill" title="Phạm vi quyền hạn hiện tại">Không gian Học tập</span>
     </div>
 
-    <!-- Zone 2: Center Tools (horizontally scrollable on narrow screens so right zone never wraps) -->
+    <!-- Zone 2: Single-Row Consolidated Academic Toolbar -->
     <div class="header-center toolbar-group">
-      <select id="presetSelect" class="select-ctrl" title="Thư viện bài toán mẫu (Cơ bản, THPT &amp; Đại học)">
+      <!-- Group 1: Lessons & Viewport -->
+      <select id="presetSelect" class="select-ctrl" title="Thư viện bài toán mẫu">
         <option value="" disabled hidden>-- Thư viện Bài toán Mẫu --</option>
         <option value="__blank__">+ Trang trắng (Khởi tạo mới)</option>
         <option value="__showcase__" selected>0. Khám phá Toàn cảnh (Mẫu Trải Nghiệm)</option>
       </select>
-      <button id="btnBlankPage" class="btn" title="Xóa sạch mọi hàm số, điểm và nét vẽ về trang trắng">
-        <span>+</span> Trang trắng
+      <button id="btnBlankPage" class="btn" type="button" title="Xóa sạch hàm số và nét vẽ về trang trắng">+ Trang trắng</button>
+      <button id="btnAutoFit" class="btn" type="button" title="Tự động căn khung chứa cực trị &amp; tiệm cận">⌖ Căn khung</button>
+
+      <div class="toolbar-sep"></div>
+
+      <!-- Group 2: Draw & Annotate Popover Trigger -->
+      <button id="btnDrawToolsMenu" class="btn tb-popover-trigger desktop-only-tool" type="button" aria-haspopup="true" aria-expanded="false" title="Công cụ Bút vẽ &amp; Tẩy trên đồ thị">
+        <span class="tb-ink-dot" id="drawInkDot" style="background:#ef4444;"></span>
+        <span>✏️ Bút vẽ ▾</span>
+      </button>
+
+      <!-- Group 3: Export & Share Popover Trigger -->
+      <button id="btnExportShareMenu" class="btn btn-primary tb-popover-trigger desktop-only-tool" type="button" aria-haspopup="true" aria-expanded="false" title="Xuất ảnh PNG, Vector SVG và Chia sẻ mã QR">
+        <span>📤 Xuất &amp; Chia sẻ ▾</span>
       </button>
 
       <div class="toolbar-sep"></div>
 
-      <button id="btnAutoFit" class="btn" title="Tự động căn khung chứa cực trị &amp; tiệm cận">
-        <span>⌖</span> Căn khung
-      </button>
-      <button id="btnProjector" class="btn toggle-btn desktop-only-tool" title="Tăng nét 3.5px, chữ lớn, tương phản cao">Máy chiếu</button>
-      <button id="btnTheme" class="btn toggle-btn desktop-only-tool" title="Chuyển chế độ Sáng / Tối">Tối</button>
-
-      <div class="toolbar-sep"></div>
-
-      <!-- Whiteboard Pen + Object Eraser -->
-      <button id="btnPenToggle" class="btn toggle-btn desktop-only-tool" title="Bật/tắt bút vẽ bảng trắng (Ctrl+Z hoàn tác, Ctrl+Y làm lại)">Bút vẽ</button>
-      <button class="pen-swatch active desktop-only-tool" data-color="#ef4444" style="background:#ef4444" title="Bút đỏ"></button>
-      <button class="pen-swatch desktop-only-tool" data-color="#1d4ed8" style="background:#1d4ed8" title="Bút xanh"></button>
-      <button class="pen-swatch desktop-only-tool" data-color="#eab308" style="background:#eab308" title="Bút vàng"></button>
-      <button id="btnEraserToggle" class="btn btn-sm toggle-btn desktop-only-tool" title="Cục tẩy: kéo chạm qua nét vẽ để xóa từng nét (Ctrl+Z hoàn tác)">Tẩy</button>
-
-      <div class="toolbar-sep"></div>
-
-      <!-- Export Suite with Formula Overlay -->
-      <button id="btnExportPng" class="btn btn-sm desktop-only-tool" title="Tải ảnh PNG độ phân giải cao 2x kèm công thức">Tải ảnh PNG</button>
-      <button id="btnExportSvg" class="btn btn-sm desktop-only-tool" title="Tải ảnh Vector SVG chuẩn Edge/Chrome kèm công thức">Tải ảnh Vector (SVG)</button>
-      <button id="btnShareQr" class="btn btn-sm btn-primary" title="Chia sẻ đồ thị &amp; bài toán qua Link và Mã QR">🔗 Chia sẻ &amp; QR</button>
+      <!-- Group 4: Display Modes -->
+      <button id="btnProjector" class="btn toggle-btn desktop-only-tool" type="button" title="Tăng nét 3.5px, chữ lớn, tương phản cao">Máy chiếu</button>
+      <button id="btnTheme" class="btn toggle-btn desktop-only-tool" type="button" title="Chuyển chế độ Sáng / Tối">Tối</button>
     </div>
 
     <!-- Zone 3: Right Admin & Account Settings Card -->
     <div class="header-right">
+      <button id="btnTopbarThemeQuick" class="btn btn-sm" type="button" title="Chuyển chế độ Ban ngày / Đêm Vũ trụ" style="border-radius:999px;padding:5px 10px;">🌙 Đêm Vũ trụ</button>
       <button id="btnOpenClassroomHub" class="btn btn-sm btn-primary" type="button" hidden style="display: none;" title="Mở Trung tâm Lớp học &amp; Sổ điểm">🏫 Lớp học &amp; Sổ điểm</button>
       <button id="btnOpenAdminStudio" class="btn btn-sm btn-admin-gold" type="button" hidden style="display: none;" title="Mở Bảng Quản trị Hệ thống VANTHESIS (Chỉ Super Admin)">⚙ Quản trị Hệ thống<span id="adminPendingBadge" class="admin-pending-badge" title="Số đơn đang chờ duyệt">0</span></button>
       <div id="topbarAccountSlot" style="display:inline-flex;align-items:center;">
@@ -5466,6 +5909,64 @@
     <button id="btnDismissAnn" class="btn btn-sm" style="padding:2px 7px;" type="button" title="Ẩn thông báo trong phiên này">×</button>
   </div>
 
+  <!-- 5-SECTOR UNIFIED COMMAND SHELL (VANTHESIS Constellation LCMS) -->
+  <div class="lcms-shell-body">
+    <aside class="vt-sector-rail" id="vtSectorRail" aria-label="Điều hướng 5 phân khu học tập">
+      <div class="vt-rail-scope-pill" id="vtRailScopeBadge">Không gian Học tập</div>
+      <button class="vt-sector-btn" type="button" data-sector="dashboard"><span class="vt-sector-ico">◎</span><span class="vt-sector-lbl">Tổng quan</span></button>
+      <button class="vt-sector-btn active" type="button" data-sector="resources"><span class="vt-sector-ico">✦</span><span class="vt-sector-lbl">Kho Chòm sao</span></button>
+      <button class="vt-sector-btn" type="button" data-sector="exams"><span class="vt-sector-ico">🏆</span><span class="vt-sector-lbl">Đấu trường Đề</span></button>
+      <button class="vt-sector-btn" type="button" data-sector="lab"><span class="vt-sector-ico">∫</span><span class="vt-sector-lbl">Phòng Thí nghiệm</span></button>
+      <button class="vt-sector-btn" type="button" data-sector="classroom"><span class="vt-sector-ico">🏫</span><span class="vt-sector-lbl">Lớp học &amp; 360°</span></button>
+    </aside>
+
+    <div class="vt-sector-host" id="vtSectorHost">
+      <!-- Sector 1: Tổng quan & Lộ trình -->
+      <section class="lcms-sector" id="sectorDashboard" aria-label="Tổng quan và Lộ trình">
+        <div class="lcms-mount-wrap" id="vtDashboardMount">
+          <div class="lcms-welcome-banner">
+            <div>
+              <h2>Trạm Quan trắc Tiến độ &amp; Lộ trình</h2>
+              <p>Theo dõi tiến độ chinh phục các Chòm sao Tri thức, lịch kiểm tra và tín hiệu học vụ cá nhân hóa.</p>
+            </div>
+            <button class="btn btn-primary" type="button" onclick="window.VANTHESIS_SWITCH_SECTOR('resources')">✦ Vào Kho Chòm sao →</button>
+          </div>
+          <div class="lcms-placeholder-grid">
+            <div class="lcms-glass-tile"><b>✦ Chòm sao đang học</b><span style="color:var(--text-muted);font-size:13px;">Tự động đồng bộ từ Kho Chòm sao &amp; Học liệu.</span></div>
+            <div class="lcms-glass-tile"><b>🏆 Đề thi sắp tới</b><span style="color:var(--text-muted);font-size:13px;">Hiển thị bài luyện tập và đề kiểm tra được giao cho lớp.</span></div>
+            <div class="lcms-glass-tile"><b>📊 Tín hiệu Học vụ</b><span style="color:var(--text-muted);font-size:13px;">Liên thông trực tiếp với Hồ sơ Học sinh 360°.</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sector 2: Kho Chòm sao & Học liệu (Default Active Sector) -->
+      <section class="lcms-sector active" id="sectorResources" aria-label="Kho Chòm sao và Học liệu">
+        <div class="lcms-mount-wrap" id="vtResourcesMount">
+          <div class="lcms-welcome-banner">
+            <div>
+              <h2>Kho Chòm sao &amp; Học liệu Tương tác</h2>
+              <p>Hệ thống cây chuyên đề 4 cấp, bản đồ chòm sao kiến thức, bài giảng đa khối kèm đồ thị 2D/3D trực tiếp.</p>
+            </div>
+            <button class="btn btn-primary" type="button" onclick="window.VANTHESIS_SWITCH_SECTOR('lab')">∫ Mở Phòng Thí nghiệm 2D/3D</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sector 3: Đấu trường Đề & Tinh thông -->
+      <section class="lcms-sector" id="sectorExams" aria-label="Đấu trường Đề và Tinh thông">
+        <div class="lcms-mount-wrap" id="vtExamsMount">
+          <div class="lcms-welcome-banner">
+            <div>
+              <h2>Đấu trường Đề &amp; Tinh thông</h2>
+              <p>Luyện tập theo 4 chế độ chinh phục, câu hỏi đồ thị tương tác, nhận diện bẫy tư duy và bài tập tương tự.</p>
+            </div>
+            <button class="btn btn-primary" type="button" onclick="window.VANTHESIS_SWITCH_SECTOR('resources')">✦ Chọn Chuyên đề</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sector 4: Phòng Thí nghiệm 2D/3D (Existing Calculus Engine 100% Preserved) -->
+      <section class="lcms-sector" id="sectorLab" aria-label="Phòng Thí nghiệm Giải tích 2D và 3D">
   <!-- MAIN WORKSPACE -->
   <div class="workspace">
     <div id="tabletBackdrop" class="tablet-backdrop"></div>
@@ -6039,6 +6540,56 @@
       </section>
     </main>
   </div>
+      </section>
+
+      <!-- Sector 5: Lớp học, Sổ điểm & Hồ sơ 360° -->
+      <section class="lcms-sector" id="sectorClassroom" aria-label="Lớp học, Sổ điểm và Hồ sơ 360 độ">
+        <div class="lcms-mount-wrap" id="vtClassroomSectorMount">
+          <div class="lcms-welcome-banner">
+            <div>
+              <h2>Lớp học, Sổ điểm &amp; Hồ sơ Học sinh 360°</h2>
+              <p>Quản lý danh sách khối lớp, sổ điểm kép, điểm danh 1 chạm, rèn luyện và nhân sự toàn trường.</p>
+            </div>
+            <button id="btnSectorOpenClassroom" class="btn btn-primary" type="button">🏫 Mở Không gian Lớp học →</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Mobile 5-Sector Bottom Navigation Bar (< 768px) -->
+  <nav class="vt-mobile-sector-nav" id="vtMobileSectorNav" aria-label="Điều hướng 5 phân khu di động">
+    <button class="vt-msector-btn" type="button" data-sector="dashboard"><span>◎</span><span>Tổng quan</span></button>
+    <button class="vt-msector-btn active" type="button" data-sector="resources"><span>✦</span><span>Chòm sao</span></button>
+    <button class="vt-msector-btn" type="button" data-sector="exams"><span>🏆</span><span>Đề thi</span></button>
+    <button class="vt-msector-btn" type="button" data-sector="lab"><span>∫</span><span>Thí nghiệm</span></button>
+    <button class="vt-msector-btn" type="button" data-sector="classroom"><span>🏫</span><span>Lớp học</span></button>
+  </nav>
+</div>
+
+<!-- FLOATING DRAW TOOLS POPOVER (Group 2) -->
+<div class="tb-floating-popover" id="drawToolsPopover" role="menu" aria-label="Công cụ Bút vẽ và Tẩy">
+  <div class="tb-pop-section-label">Chế độ vẽ</div>
+  <div class="tb-pop-mode-row">
+    <button id="btnPenToggle" class="btn btn-sm toggle-btn" type="button" title="Bật/tắt bút vẽ (Ctrl+Z hoàn tác)">✏️ Bút vẽ</button>
+    <button id="btnEraserToggle" class="btn btn-sm toggle-btn" type="button" title="Kéo chạm qua nét vẽ để xóa">⌫ Tẩy</button>
+    <button id="btnClearAllDrawings" class="btn btn-sm" type="button" title="Xóa toàn bộ nét vẽ bảng trắng">🗑 Xóa hết</button>
+  </div>
+  <div class="tb-pop-section-label">Màu mực</div>
+  <div class="tb-pop-swatches">
+    <button class="pen-swatch active" type="button" data-color="#ef4444" style="background:#ef4444" title="Đỏ"></button>
+    <button class="pen-swatch" type="button" data-color="#1d4ed8" style="background:#1d4ed8" title="Xanh Cobalt"></button>
+    <button class="pen-swatch" type="button" data-color="#f59e0b" style="background:#f59e0b" title="Vàng hổ phách"></button>
+    <button class="pen-swatch" id="penSwatchNeutral" type="button" data-color="#0f172a" style="background:#0f172a" title="Đen / Trắng"></button>
+  </div>
+</div>
+
+<!-- FLOATING EXPORT & SHARE POPOVER (Group 3) -->
+<div class="tb-floating-popover" id="exportSharePopover" role="menu" aria-label="Xuất bản và Chia sẻ">
+  <button id="btnExportPng" class="btn tb-pop-menu-item" type="button">🖼️ Tải ảnh PNG (Độ nét cao)</button>
+  <button id="btnExportSvg" class="btn tb-pop-menu-item" type="button">📐 Tải ảnh Vector (SVG)</button>
+  <button id="btnShareQr" class="btn btn-primary tb-pop-menu-item" type="button">🔗 Chia sẻ Liên kết &amp; Mã QR</button>
+  <button id="btnPackageToResource" class="btn tb-pop-menu-item" type="button">📚 Đóng gói thành Học liệu</button>
 </div>
 
 <!-- MOBILE TOOLS POPOVER MENU -->
@@ -6394,11 +6945,11 @@
       </div>
 
       <div class="auth-highlights-row" aria-label="Tính năng nổi bật">
-        <span>✦ Đồ thị 2D/3D</span>
+        <span>✦ Kho Chòm sao Tri thức</span>
         <span class="auth-highlights-sep" aria-hidden="true">·</span>
-        <span>◎ Lớp học &amp; Sổ điểm</span>
+        <span>◎ Phòng Thí nghiệm 2D/3D</span>
         <span class="auth-highlights-sep" aria-hidden="true">·</span>
-        <span>☁ Đồng bộ Đám mây</span>
+        <span>★ Lớp học &amp; Hồ sơ 360°</span>
       </div>
 
       <button id="btnGoogleSignIn" class="auth-primary-btn" type="button">
@@ -6651,10 +7202,10 @@
 
         <div class="hub-section">
           <div class="hub-section-title">Bật / Tắt Tính năng Toàn cục</div>
-          <div class="admin-toggle-row">
-            <label for="admFeatGuest" style="cursor:pointer;"><b>Cho phép Khách trải nghiệm không cần đăng nhập</b></label>
-            <input id="admFeatGuest" type="checkbox" style="width:17px;height:17px;cursor:pointer;">
-          </div>
+        <div class="admin-toggle-row" style="display:none;" aria-hidden="true">
+          <label for="admFeatGuest"><b>Không hỗ trợ chế độ Khách</b></label>
+          <input id="admFeatGuest" type="checkbox" disabled>
+        </div>
           <div class="admin-toggle-row">
             <label for="admFeatCosmic" style="cursor:pointer;"><b>Mở Kho Bài học &amp; Quỹ đạo Thiên văn</b></label>
             <input id="admFeatCosmic" type="checkbox" style="width:17px;height:17px;cursor:pointer;">
@@ -12166,6 +12717,8 @@
     const lblT = $('landingThemeLabel');
     if (icoT) icoT.textContent = mode === 'dark' ? '☀️' : '🌙';
     if (lblT) lblT.textContent = mode === 'dark' ? 'Ban ngày' : 'Đêm Vũ trụ';
+    const topQuickT = $('btnTopbarThemeQuick');
+    if (topQuickT) topQuickT.textContent = mode === 'dark' ? '☀️ Ban ngày' : '🌙 Đêm Vũ trụ';
     if (persist) {
       try { localStorage.setItem('vanthesis_theme_v1', mode); } catch {}
     }
@@ -12185,29 +12738,103 @@
   });
 
   // Whiteboard buttons
+  const drawPopover = $('drawToolsPopover');
+  const exportPopover = $('exportSharePopover');
+  const btnDrawMenu = $('btnDrawToolsMenu');
+  const btnExportMenu = $('btnExportShareMenu');
+
+  function closeToolbarPopovers() {
+    if (drawPopover) drawPopover.classList.remove('open');
+    if (exportPopover) exportPopover.classList.remove('open');
+    if (btnDrawMenu) btnDrawMenu.setAttribute('aria-expanded', 'false');
+    if (btnExportMenu) btnExportMenu.setAttribute('aria-expanded', 'false');
+  }
+
+  function openToolbarPopover(triggerBtn, popEl) {
+    if (!triggerBtn || !popEl) return;
+    const wasOpen = popEl.classList.contains('open');
+    closeToolbarPopovers();
+    if (wasOpen) return;
+    const rect = triggerBtn.getBoundingClientRect();
+    const popW = 240;
+    const left = Math.max(8, Math.min(window.innerWidth - popW - 8, rect.left));
+    popEl.style.top = (rect.bottom + 6) + 'px';
+    popEl.style.left = left + 'px';
+    popEl.classList.add('open');
+    triggerBtn.setAttribute('aria-expanded', 'true');
+  }
+
+  if (btnDrawMenu) btnDrawMenu.addEventListener('click', e => { e.stopPropagation(); openToolbarPopover(btnDrawMenu, drawPopover); });
+  if (btnExportMenu) btnExportMenu.addEventListener('click', e => { e.stopPropagation(); openToolbarPopover(btnExportMenu, exportPopover); });
+
+  document.addEventListener('click', e => {
+    const insideDraw = drawPopover && drawPopover.contains(e.target);
+    const insideExp = exportPopover && exportPopover.contains(e.target);
+    if (!insideDraw && !insideExp && e.target !== btnDrawMenu && e.target !== btnExportMenu) {
+      closeToolbarPopovers();
+    }
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeToolbarPopovers();
+  });
+
+  function syncNeutralSwatchColor() {
+    const neutralSw = $('penSwatchNeutral');
+    if (!neutralSw) return;
+    const col = state.theme === 'dark' ? '#f8fafc' : '#0f172a';
+    neutralSw.dataset.color = col;
+    neutralSw.style.background = col;
+  }
+  window.addEventListener('vanthesis:themechange', syncNeutralSwatchColor);
+  syncNeutralSwatchColor();
+
   function syncWbUI() {
     $('btnPenToggle').classList.toggle('btn-active', state.penActive && state.penTool === 'pen');
     $('btnEraserToggle').classList.toggle('btn-active', state.penActive && state.penTool === 'eraser');
+    if (btnDrawMenu) btnDrawMenu.classList.toggle('is-active', state.penActive);
+    const inkDot = $('drawInkDot');
+    if (inkDot) inkDot.style.background = state.penColor || '#ef4444';
     annotCanvas.classList.toggle('drawing', state.penActive);
     annotCanvas.style.cursor = (state.penActive && state.penTool === 'eraser') ? 'cell' : 'crosshair';
   }
   $('btnPenToggle').addEventListener('click', () => {
     state.penActive = !(state.penActive && state.penTool === 'pen'); state.penTool = 'pen'; syncWbUI();
+    closeToolbarPopovers();
     showToast(state.penActive ? 'Đã bật Bút vẽ bảng trắng (Ctrl+Z hoàn tác)' : 'Đã tắt Bút vẽ');
   });
   $('btnEraserToggle').addEventListener('click', () => {
     state.penActive = !(state.penActive && state.penTool === 'eraser'); state.penTool = 'eraser'; syncWbUI();
+    closeToolbarPopovers();
     showToast(state.penActive ? 'Đã bật Cục Tẩy — kéo qua nét vẽ để xóa' : 'Đã tắt Cục Tẩy');
   });
+  if ($('btnClearAllDrawings')) {
+    $('btnClearAllDrawings').addEventListener('click', () => {
+      if (state.strokes && state.strokes.length) {
+        state.undoStack.push(cloneStrokes(state.strokes));
+        state.strokes = [];
+        redrawAnnotations();
+        showToast('Đã xóa toàn bộ nét vẽ (Ctrl+Z để hoàn tác)');
+      } else {
+        showToast('Hiện chưa có nét vẽ nào trên bảng.');
+      }
+      closeToolbarPopovers();
+    });
+  }
   document.querySelectorAll('.pen-swatch').forEach(sw => {
     sw.addEventListener('click', () => {
       document.querySelectorAll('.pen-swatch').forEach(s => s.classList.remove('active'));
-      sw.classList.add('active'); state.penColor = sw.dataset.color; state.penActive = true; state.penTool = 'pen'; syncWbUI();
+      sw.classList.add('active');
+      state.penColor = sw.dataset.color;
+      state.penActive = true;
+      state.penTool = 'pen';
+      syncWbUI();
+      closeToolbarPopovers();
     });
   });
 
-  $('btnExportPng').addEventListener('click', exportPng2x);
-  $('btnExportSvg').addEventListener('click', exportSvgVector);
+  $('btnExportPng').addEventListener('click', () => { closeToolbarPopovers(); exportPng2x(); });
+  $('btnExportSvg').addEventListener('click', () => { closeToolbarPopovers(); exportSvgVector(); });
+  if ($('btnShareQr')) $('btnShareQr').addEventListener('click', closeToolbarPopovers);
 
   // Vertical Split-Pane Resizer
   const drawerEl = $('analysisDrawer'), resizerEl = $('drawerResizer');
@@ -13268,6 +13895,9 @@
 
     function publishSessionContext(ctxObj) {
       window.VANTHESIS_SESSION_CONTEXT = ctxObj ? Object.freeze(ctxObj) : null;
+      if (window.VANTHESIS_POLICY && typeof window.VANTHESIS_POLICY.setContext === 'function') {
+        window.VANTHESIS_POLICY.setContext(window.VANTHESIS_SESSION_CONTEXT, _userProfile);
+      }
       window.dispatchEvent(new CustomEvent('vantesis:session-changed', { detail: window.VANTHESIS_SESSION_CONTEXT }));
     }
 
@@ -14173,34 +14803,82 @@
       } catch {}
     }
 
-    /* --- B. 60fps Illumination of Knowledge Canvas (#authKnowledgeCanvas) --- */
+    /* --- B. 60fps Luminous Milky Way & Spiral Galaxies Canvas (#authKnowledgeCanvas) --- */
     let dustRaf = null, kW = 0, kH = 0;
     let litProgress = 0;
     let parallaxX = 0, parallaxY = 0, targetPx = 0, targetPy = 0;
 
-    const bgStars = [];
-    for (let i = 0; i < 65; i++) {
-      bgStars.push({ x: Math.random(), y: Math.random(), r: 0.6 + Math.random() * 1.4, phase: Math.random() * Math.PI * 2 });
+    // Deterministic starfield & galactic dust for crisp 60fps rendering
+    let gSeed = 20261121;
+    function gRand() {
+      gSeed = (gSeed * 1664525 + 1013904223) >>> 0;
+      return gSeed / 4294967296;
     }
-    const motes = [];
-    for (let i = 0; i < 56; i++) {
-      motes.push({
-        x: Math.random(),
-        y: Math.random(),
-        r: 1.0 + Math.random() * 2.2,
-        vx: (Math.random() - 0.5) * 0.00024,
-        vy: -0.00010 - Math.random() * 0.00024,
-        phase: Math.random() * Math.PI * 2
+
+    const bgStars = [];
+    for (let i = 0; i < 110; i++) {
+      bgStars.push({
+        x: gRand(), y: gRand(),
+        r: 0.55 + gRand() * 1.45,
+        phase: gRand() * Math.PI * 2,
+        tint: gRand() > 0.72 ? '#FDE68A' : (gRand() > 0.45 ? '#BAE6FD' : '#FFFFFF')
       });
     }
-    const equations = [
-      { text: 'e^(iπ) + 1 = 0', x: 0.14, y: 0.22, size: 17, drift: 0.6 },
-      { text: '∫ f(x) dx', x: 0.78, y: 0.19, size: 18, drift: 0.9 },
-      { text: '∇ · E = ρ / ε₀', x: 0.82, y: 0.78, size: 15, drift: 0.7 },
-      { text: 'lim (sin x / x) = 1', x: 0.16, y: 0.80, size: 15, drift: 0.8 },
-      { text: '∑ 1/n² = π²/6', x: 0.52, y: 0.14, size: 16, drift: 0.5 },
-      { text: 'df / dx', x: 0.44, y: 0.86, size: 16, drift: 1.0 }
+
+    // 720 Milky Way diagonal band star-dust particles
+    const mwParticles = [];
+    for (let i = 0; i < 720; i++) {
+      const u = gRand(); // along diagonal [0..1]
+      // Gaussian-like spread around band center
+      const spread = (gRand() + gRand() + gRand() - 1.5) * 0.16;
+      mwParticles.push({
+        u,
+        spread,
+        r: 0.5 + gRand() * 1.65,
+        alpha: 0.18 + gRand() * 0.72,
+        phase: gRand() * Math.PI * 2,
+        color: gRand() < 0.34 ? '253, 224, 71' : (gRand() < 0.72 ? '125, 211, 252' : '192, 132, 252')
+      });
+    }
+
+    // 3 Luminous Spiral Galaxies (1 hero galaxy upper-left + 2 distant satellites)
+    function buildSpiralGalaxy(cfg) {
+      const stars = [];
+      for (let i = 0; i < cfg.count; i++) {
+        const arm = i % cfg.arms;
+        const frac = Math.pow(gRand(), 0.72);
+        const rad = frac * cfg.radius;
+        const baseAngle = (arm * Math.PI * 2) / cfg.arms + frac * cfg.twist;
+        const jitter = (gRand() - 0.5) * (0.48 * (0.35 + frac));
+        const angle = baseAngle + jitter;
+        const size = (1 - frac * 0.55) * (0.8 + gRand() * 1.6);
+        const col = frac < 0.25 ? '254, 249, 195' : (frac < 0.62 ? '125, 211, 252' : '196, 181, 253');
+        stars.push({ rad, angle, size, col, alpha: (1 - frac * 0.58) * (0.45 + gRand() * 0.55) });
+      }
+      return { ...cfg, stars };
+    }
+
+    const galaxies = [
+      buildSpiralGalaxy({ nx: 0.22, ny: 0.25, radius: 138, tiltY: 0.56, rotOffset: -0.38, speed: 0.045, arms: 2, twist: 4.4, count: 340, parallax: 20 }),
+      buildSpiralGalaxy({ nx: 0.76, ny: 0.18, radius: 64, tiltY: 0.52, rotOffset: 0.45, speed: -0.06, arms: 2, twist: 3.8, count: 140, parallax: 12 }),
+      buildSpiralGalaxy({ nx: 0.86, ny: 0.76, radius: 52, tiltY: 0.62, rotOffset: -0.2, speed: 0.055, arms: 3, twist: 3.4, count: 110, parallax: 10 })
     ];
+
+    // Golden Stardust Motes floating in lamp cone
+    const motes = [];
+    for (let i = 0; i < 54; i++) {
+      motes.push({
+        x: gRand(), y: gRand(),
+        r: 1.0 + gRand() * 2.1,
+        vx: (gRand() - 0.5) * 0.00022,
+        vy: -0.00010 - gRand() * 0.00022,
+        phase: gRand() * Math.PI * 2
+      });
+    }
+
+    // Occasional Shooting Stars
+    let shootingStar = null;
+    let nextMeteorAt = 2.5;
 
     function resizeDust() {
       if (!knowledgeCanvas || !kctx) return;
@@ -14215,127 +14893,158 @@
     function renderKnowledgeFrame(now) {
       if (overlay.classList.contains('portal-hidden') || document.hidden) { dustRaf = null; return; }
       if (!kctx) return;
-      kctx.clearRect(0, 0, kW, kH);
+
+      // Solid opaque deep space base
+      kctx.globalCompositeOperation = 'source-over';
+      kctx.fillStyle = '#03050F';
+      kctx.fillRect(0, 0, kW, kH);
 
       const isLit = overlay.getAttribute('data-on') === 'true';
       const targetLit = isLit ? 1 : 0;
-      litProgress += (targetLit - litProgress) * 0.075;
+      litProgress += (targetLit - litProgress) * 0.07;
       parallaxX += (targetPx - parallaxX) * 0.06;
       parallaxY += (targetPy - parallaxY) * 0.06;
 
       const lampRect = $('lampStage').getBoundingClientRect();
-      const cx = lampRect.left + lampRect.width * 0.55;
-      const cy = lampRect.top + lampRect.height * 0.36;
+      const lx = lampRect.left + lampRect.width * 0.55;
+      const ly = lampRect.top + lampRect.height * 0.36;
       const t = now * 0.001;
 
-      // 1. Quiet Night Background Stars
+      // 1. Quiet Deep-Space Background Stars (always softly visible, brighter when lit)
       for (const s of bgStars) {
-        const tw = 0.55 + 0.45 * Math.sin(t * 1.6 + s.phase);
-        const a = (0.12 + 0.20 * litProgress) * tw;
-        kctx.fillStyle = `rgba(226, 232, 240, ${a.toFixed(3)})`;
+        const tw = 0.55 + 0.45 * Math.sin(t * 1.7 + s.phase);
+        const a = (0.14 + 0.46 * litProgress) * tw;
+        kctx.globalAlpha = a;
+        kctx.fillStyle = s.tint;
         kctx.beginPath();
-        kctx.arc(s.x * kW, s.y * kH, s.r, 0, Math.PI * 2);
+        kctx.arc(s.x * kW + parallaxX * 4, s.y * kH + parallaxY * 4, s.r, 0, Math.PI * 2);
         kctx.fill();
       }
+      kctx.globalAlpha = 1;
 
-      // 2. Knowledge Map Awakening (Astrolabe, Polar Grid, Fibonacci Spiral, Equations & Golden Motes)
       if (litProgress > 0.015) {
-        const ox = cx + parallaxX * 14;
-        const oy = cy + parallaxY * 14;
-        const maxR = Math.max(kW, kH) * 0.72;
+        kctx.save();
+        kctx.globalCompositeOperation = 'lighter';
 
-        // Volumetric golden-cobalt halo
-        const halo = kctx.createRadialGradient(ox, oy, 12, ox, oy, maxR * 0.85);
-        halo.addColorStop(0, `rgba(254, 243, 199, ${(0.24 * litProgress).toFixed(3)})`);
-        halo.addColorStop(0.32, `rgba(56, 189, 248, ${(0.11 * litProgress).toFixed(3)})`);
-        halo.addColorStop(1, 'rgba(5, 8, 20, 0)');
-        kctx.fillStyle = halo;
+        // 2. Diagonal Sweeping Milky Way Nebulae (Warm Gold + Celestial Cyan + Nebula Violet)
+        const mwClouds = [
+          { x: 0.18, y: 0.78, rx: 0.44, col: `rgba(56, 189, 248, ${(0.24 * litProgress).toFixed(3)})` },
+          { x: 0.46, y: 0.52, rx: 0.48, col: `rgba(253, 224, 71, ${(0.20 * litProgress).toFixed(3)})` },
+          { x: 0.68, y: 0.30, rx: 0.44, col: `rgba(168, 85, 247, ${(0.20 * litProgress).toFixed(3)})` },
+          { x: 0.86, y: 0.14, rx: 0.36, col: `rgba(56, 189, 248, ${(0.18 * litProgress).toFixed(3)})` }
+        ];
+        const diagScale = Math.max(kW, kH);
+        for (const cl of mwClouds) {
+          const cx = cl.x * kW + parallaxX * 10;
+          const cy = cl.y * kH + parallaxY * 10;
+          const r = cl.rx * diagScale;
+          const grad = kctx.createRadialGradient(cx, cy, r * 0.05, cx, cy, r);
+          grad.addColorStop(0, cl.col);
+          grad.addColorStop(0.55, cl.col.replace(/[\d.]+\)$/, (0.06 * litProgress).toFixed(3) + ')'));
+          grad.addColorStop(1, 'rgba(0,0,0,0)');
+          kctx.fillStyle = grad;
+          kctx.beginPath();
+          kctx.arc(cx, cy, r, 0, Math.PI * 2);
+          kctx.fill();
+        }
+
+        // Milky Way Core Glittering Star Dust along diagonal
+        for (const p of mwParticles) {
+          const bx = p.u * kW * 1.15 - kW * 0.08 + p.spread * kW * 0.85 + parallaxX * 9;
+          const by = (1 - p.u) * kH * 1.08 + p.spread * kH * 0.85 + parallaxY * 9;
+          const tw = 0.62 + 0.38 * Math.sin(t * 2.1 + p.phase);
+          kctx.fillStyle = `rgba(${p.color}, ${(p.alpha * tw * litProgress).toFixed(3)})`;
+          kctx.beginPath();
+          kctx.arc(bx, by, p.r, 0, Math.PI * 2);
+          kctx.fill();
+        }
+
+        // 3. Luminous Spiral Galaxies (Rotating Logarithmic Arms + Glowing Cores)
+        for (const gal of galaxies) {
+          const gx = gal.nx * kW + parallaxX * gal.parallax;
+          const gy = gal.ny * kH + parallaxY * gal.parallax;
+
+          // Bright galactic core bloom
+          const coreGrad = kctx.createRadialGradient(gx, gy, 1.5, gx, gy, gal.radius * 0.52);
+          coreGrad.addColorStop(0, `rgba(255, 251, 235, ${(0.85 * litProgress).toFixed(3)})`);
+          coreGrad.addColorStop(0.28, `rgba(253, 224, 71, ${(0.36 * litProgress).toFixed(3)})`);
+          coreGrad.addColorStop(0.65, `rgba(56, 189, 248, ${(0.14 * litProgress).toFixed(3)})`);
+          coreGrad.addColorStop(1, 'rgba(0,0,0,0)');
+          kctx.fillStyle = coreGrad;
+          kctx.beginPath();
+          kctx.arc(gx, gy, gal.radius * 0.52, 0, Math.PI * 2);
+          kctx.fill();
+
+          // Rotating spiral arm star clusters
+          kctx.save();
+          kctx.translate(gx, gy);
+          kctx.rotate(gal.rotOffset);
+          const spin = t * gal.speed;
+          for (const st of gal.stars) {
+            const ang = st.angle + spin;
+            const sx = Math.cos(ang) * st.rad;
+            const sy = Math.sin(ang) * st.rad * gal.tiltY;
+            kctx.fillStyle = `rgba(${st.col}, ${(st.alpha * litProgress).toFixed(3)})`;
+            kctx.beginPath();
+            kctx.arc(sx, sy, st.size, 0, Math.PI * 2);
+            kctx.fill();
+          }
+          kctx.restore();
+        }
+
+        // 4. Warm Lamp Volumetric Halo + Golden Stardust Motes
+        const lampHalo = kctx.createRadialGradient(lx, ly, 10, lx, ly, Math.max(kW, kH) * 0.52);
+        lampHalo.addColorStop(0, `rgba(254, 243, 199, ${(0.26 * litProgress).toFixed(3)})`);
+        lampHalo.addColorStop(0.38, `rgba(251, 191, 36, ${(0.10 * litProgress).toFixed(3)})`);
+        lampHalo.addColorStop(1, 'rgba(0,0,0,0)');
+        kctx.fillStyle = lampHalo;
         kctx.fillRect(0, 0, kW, kH);
 
-        // Rotating Celestial Astrolabe & Polar Coordinate Rings
-        kctx.save();
-        kctx.translate(ox, oy);
-        kctx.rotate(t * 0.035);
-        const ringRadii = [120, 215, 330, 460];
-        ringRadii.forEach((rad, idx) => {
-          kctx.strokeStyle = idx % 2 === 0
-            ? `rgba(253, 230, 138, ${(0.16 * litProgress).toFixed(3)})`
-            : `rgba(147, 197, 253, ${(0.14 * litProgress).toFixed(3)})`;
-          kctx.lineWidth = idx === 1 ? 1.2 : 0.9;
-          kctx.setLineDash(idx % 2 === 1 ? [5, 9] : []);
-          kctx.beginPath();
-          kctx.arc(0, 0, rad, 0, Math.PI * 2);
-          kctx.stroke();
-        });
-        kctx.setLineDash([]);
-
-        // Polar rays
-        kctx.strokeStyle = `rgba(147, 197, 253, ${(0.07 * litProgress).toFixed(3)})`;
-        kctx.lineWidth = 0.8;
-        for (let a = 0; a < 12; a++) {
-          const ang = (a * Math.PI) / 6;
-          kctx.beginPath();
-          kctx.moveTo(Math.cos(ang) * 70, Math.sin(ang) * 70);
-          kctx.lineTo(Math.cos(ang) * 480, Math.sin(ang) * 480);
-          kctx.stroke();
-        }
-
-        // Golden Ratio / Logarithmic Fibonacci Spiral
-        kctx.strokeStyle = `rgba(253, 230, 138, ${(0.22 * litProgress).toFixed(3)})`;
-        kctx.lineWidth = 1.25;
-        kctx.beginPath();
-        for (let th = 0; th < Math.PI * 5.2; th += 0.08) {
-          const r = 7 * Math.exp(0.225 * th);
-          const sx = Math.cos(th - t * 0.08) * r;
-          const sy = Math.sin(th - t * 0.08) * r;
-          if (th === 0) kctx.moveTo(sx, sy); else kctx.lineTo(sx, sy);
-        }
-        kctx.stroke();
-        kctx.restore();
-
-        // Subtle Sine Wave Grid across lower horizon
-        kctx.save();
-        kctx.strokeStyle = `rgba(147, 197, 253, ${(0.11 * litProgress).toFixed(3)})`;
-        kctx.lineWidth = 1;
-        kctx.beginPath();
-        for (let x = 0; x <= kW; x += 14) {
-          const y = kH * 0.72 + Math.sin(x * 0.011 + t * 0.8) * 26 + Math.cos(x * 0.005 - t * 0.4) * 14;
-          if (x === 0) kctx.moveTo(x, y); else kctx.lineTo(x, y);
-        }
-        kctx.stroke();
-        kctx.restore();
-
-        // Classic Mathematical Equations glowing by distance from lamp center
-        kctx.save();
-        kctx.textAlign = 'center';
-        for (const eq of equations) {
-          const ex = eq.x * kW + parallaxX * 22 * eq.drift;
-          const ey = eq.y * kH + parallaxY * 18 * eq.drift + Math.sin(t * 0.9 + eq.x * 10) * 5;
-          const dist = Math.hypot(ex - ox, ey - oy);
-          const proximity = Math.max(0.22, 1 - dist / (maxR * 1.15));
-          const alpha = proximity * 0.58 * litProgress;
-          kctx.font = `italic 600 ${eq.size}px "STIX Two Text", "Newsreader", Georgia, serif`;
-          kctx.fillStyle = proximity > 0.55
-            ? `rgba(254, 243, 199, ${alpha.toFixed(3)})`
-            : `rgba(191, 219, 254, ${alpha.toFixed(3)})`;
-          kctx.fillText(eq.text, ex, ey);
-        }
-        kctx.restore();
-
-        // 56 Golden Stardust Motes floating inside the light field
         for (const m of motes) {
           m.x = (m.x + m.vx + 1) % 1;
           m.y = (m.y + m.vy + 1) % 1;
           const mx = m.x * kW, my = m.y * kH;
-          const dist = Math.hypot(mx - ox, my - oy);
-          const falloff = Math.max(0.12, 1 - dist / (maxR * 0.95));
+          const dist = Math.hypot(mx - lx, my - ly);
+          const falloff = Math.max(0.15, 1 - dist / (Math.max(kW, kH) * 0.72));
           const tw = 0.65 + 0.35 * Math.sin(t * 2.2 + m.phase);
-          const alpha = 0.62 * falloff * tw * litProgress;
-          kctx.fillStyle = `rgba(253, 230, 138, ${alpha.toFixed(3)})`;
+          kctx.fillStyle = `rgba(253, 230, 138, ${(0.68 * falloff * tw * litProgress).toFixed(3)})`;
           kctx.beginPath();
           kctx.arc(mx, my, m.r, 0, Math.PI * 2);
           kctx.fill();
         }
+
+        // 5. Occasional Shooting Star streaking across the sky
+        if (litProgress > 0.7 && !shootingStar && t > nextMeteorAt) {
+          shootingStar = {
+            x: (0.15 + Math.random() * 0.65) * kW,
+            y: (0.06 + Math.random() * 0.30) * kH,
+            vx: 9 + Math.random() * 5,
+            vy: 3.5 + Math.random() * 2.5,
+            life: 1.0
+          };
+          nextMeteorAt = t + 4.5 + Math.random() * 5.5;
+        }
+        if (shootingStar) {
+          const m = shootingStar;
+          const tailX = m.x - m.vx * 11;
+          const tailY = m.y - m.vy * 11;
+          const mg = kctx.createLinearGradient(m.x, m.y, tailX, tailY);
+          mg.addColorStop(0, `rgba(255, 255, 255, ${(0.92 * m.life * litProgress).toFixed(3)})`);
+          mg.addColorStop(0.4, `rgba(186, 230, 253, ${(0.45 * m.life * litProgress).toFixed(3)})`);
+          mg.addColorStop(1, 'rgba(0,0,0,0)');
+          kctx.strokeStyle = mg;
+          kctx.lineWidth = 1.8;
+          kctx.beginPath();
+          kctx.moveTo(m.x, m.y);
+          kctx.lineTo(tailX, tailY);
+          kctx.stroke();
+          m.x += m.vx;
+          m.y += m.vy;
+          m.life -= 0.028;
+          if (m.life <= 0 || m.x > kW + 120 || m.y > kH + 120) shootingStar = null;
+        }
+
+        kctx.restore();
       }
 
       dustRaf = requestAnimationFrame(renderKnowledgeFrame);
@@ -17350,6 +18059,240 @@
       if (portal) visObs.observe(portal, { attributes: true, attributeFilter: ['class', 'hidden'] });
     }
 
+
+  /* =========================================================================
+   * VANTHESIS CONSTELLATION LCMS — UNIFIED 3-TIER POLICY ENGINE & 5-SECTOR ROUTER
+   * ========================================================================= */
+  window.VANTHESIS_POLICY = (() => {
+    let _ctx = null;
+    let _prof = null;
+
+    function normU(v) { return String(v || '').trim().replace(/\s+/g, ' ').toUpperCase(); }
+
+    function parseAssignments() {
+      const list = (_prof && Array.isArray(_prof.teachingAssignments)) ? _prof.teachingAssignments : [];
+      return list.map(a => ({
+        subject: String(a.subject || '').trim(),
+        subjectKey: normU(a.subject),
+        classKeys: String(a.classes || '').split(/[,;]+/).map(c => normU(c)).filter(Boolean)
+      }));
+    }
+
+    function isAdmin() { return Boolean(_ctx && _ctx.role === 'SUPER_ADMIN'); }
+    function isTeacher() { return Boolean(_ctx && (_ctx.role === 'HOMEROOM_TEACHER' || _ctx.role === 'SUBJECT_TEACHER')); }
+    function isStudent() { return Boolean(_ctx && _ctx.role === 'STUDENT'); }
+
+    function isInTeacherScope(target) {
+      if (!isTeacher()) return false;
+      const t = target || {};
+      const hrKey = normU((_prof && _prof.homeroomClass) || '');
+      const targetClassKey = normU(t.className || t.classKey || '');
+      const targetSubjKey = normU(t.subject || '');
+
+      if (_ctx.role === 'HOMEROOM_TEACHER' && hrKey && targetClassKey && hrKey === targetClassKey && !targetSubjKey) {
+        return true;
+      }
+      const assigns = parseAssignments();
+      if (!targetClassKey && !targetSubjKey) return assigns.length > 0 || Boolean(hrKey);
+      return assigns.some(a => {
+        const subjOk = !targetSubjKey || a.subjectKey === targetSubjKey;
+        const clsOk = !targetClassKey || a.classKeys.includes(targetClassKey) || (_ctx.role === 'HOMEROOM_TEACHER' && hrKey === targetClassKey);
+        return subjOk && clsOk;
+      });
+    }
+
+    function can(action, target) {
+      if (!_ctx || _ctx.status !== 'APPROVED') return false;
+      if (isAdmin()) return true;
+
+      const act = String(action || '').trim().toLowerCase();
+      const t = target || {};
+      const customPerms = (_prof && _prof.customPermissions) || {};
+
+      // Super Admin exclusive actions
+      if (['manage_users', 'manage_permissions', 'manage_classes', 'moderate_any_resource', 'approve_school_resource'].includes(act)) {
+        return false;
+      }
+
+      if (isTeacher()) {
+        if (act === 'publish_school_resource') return Boolean(customPerms.publishSchoolDirect);
+        if (act === 'submit_school_resource') return true;
+        if (act === 'edit_resource' || act === 'delete_resource') {
+          const isOwner = t.authorEmail && String(t.authorEmail).toLowerCase() === String(_ctx.email || '').toLowerCase();
+          return Boolean(isOwner) && isInTeacherScope(t);
+        }
+        if (['create_resource', 'assign_class_resource', 'create_exam', 'edit_grades', 'log_behavior'].includes(act)) {
+          return isInTeacherScope(t);
+        }
+        if (act === 'manage_roster') {
+          return _ctx.role === 'HOMEROOM_TEACHER' && isInTeacherScope({ className: t.className });
+        }
+        if (['view_resource', 'use_lab', 'answer_question', 'view_class_summary'].includes(act)) return true;
+        return false;
+      }
+
+      if (isStudent()) {
+        return ['view_resource', 'take_exam', 'ask_question', 'use_lab', 'view_own_profile'].includes(act);
+      }
+      return false;
+    }
+
+    function getScopeBadge() {
+      if (!_ctx) return 'Chưa đăng nhập';
+      if (isAdmin()) return 'Quản trị • Toàn trường';
+      if (_ctx.role === 'HOMEROOM_TEACHER') {
+        const hr = (_prof && _prof.homeroomClass) ? 'Lớp ' + _prof.homeroomClass : 'Chủ nhiệm';
+        return 'GV Chủ nhiệm • ' + hr;
+      }
+      if (_ctx.role === 'SUBJECT_TEACHER') {
+        const assigns = parseAssignments();
+        const subjs = [...new Set(assigns.map(a => a.subject).filter(Boolean))].slice(0, 2).join(', ');
+        return 'GV Bộ môn' + (subjs ? ' • ' + subjs : '');
+      }
+      if (isStudent()) {
+        const cls = (_prof && (_prof.studentClass || _prof.className)) ? 'Lớp ' + (_prof.studentClass || _prof.className) : 'Học sinh';
+        return 'Học sinh • ' + cls;
+      }
+      return 'Thành viên';
+    }
+
+    function setContext(ctx, prof) {
+      _ctx = ctx || null;
+      _prof = prof || null;
+      const badgeTxt = getScopeBadge();
+      const badgeEl = $('vtRailScopeBadge');
+      if (badgeEl) badgeEl.textContent = badgeTxt;
+      const topScopeEl = $('vtTopbarScopeBadge');
+      if (topScopeEl) topScopeEl.textContent = badgeTxt;
+      const pkgBtn = $('btnPackageToResource');
+      if (pkgBtn) pkgBtn.style.display = (isAdmin() || isTeacher()) ? '' : 'none';
+    }
+
+    return Object.freeze({ setContext, can, getScopeBadge, isAdmin, isTeacher, isStudent });
+  })();
+
+  window.VANTHESIS_SWITCH_SECTOR = function (sectorName) {
+    const valid = ['dashboard', 'resources', 'exams', 'lab', 'classroom'];
+    const target = valid.includes(sectorName) ? sectorName : 'resources';
+    const shell = $('appShell');
+    if (shell) shell.setAttribute('data-active-sector', target);
+
+    const mapIds = {
+      dashboard: 'sectorDashboard',
+      resources: 'sectorResources',
+      exams: 'sectorExams',
+      lab: 'sectorLab',
+      classroom: 'sectorClassroom'
+    };
+    valid.forEach(k => {
+      const sec = $(mapIds[k]);
+      if (sec) sec.classList.toggle('active', k === target);
+    });
+    document.querySelectorAll('[data-sector]').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-sector') === target);
+    });
+
+    const sectorTitles = {
+      dashboard: '◎ Tổng quan & Lộ trình',
+      resources: '✦ Kho Chòm sao',
+      exams: '🏆 Đấu trường Đề',
+      lab: '∫ Phòng Thí nghiệm 2D/3D',
+      classroom: '🏫 Lớp học & Hồ sơ 360°'
+    };
+    const topTitleEl = $('vtTopbarSectorTitle');
+    if (topTitleEl) topTitleEl.textContent = sectorTitles[target] || '✦ Kho Chòm sao';
+
+    if (target === 'lab') {
+      setTimeout(() => { try { resizeCanvases(); redrawAll(); } catch {} }, 45);
+    } else if (target === 'classroom') {
+      if (window.VANTHESIS_CLASSROOM && typeof window.VANTHESIS_CLASSROOM.open === 'function') {
+        window.VANTHESIS_CLASSROOM.open();
+      }
+    }
+    window.dispatchEvent(new CustomEvent('vantesis:sector-changed', { detail: { sector: target } }));
+    window.dispatchEvent(new CustomEvent('vanthesis:sector-changed', { detail: { sector: target } }));
+  };
+
+  document.querySelectorAll('[data-sector]').forEach(btn => {
+    btn.addEventListener('click', () => window.VANTHESIS_SWITCH_SECTOR(btn.getAttribute('data-sector')));
+  });
+  if ($('btnSectorOpenClassroom')) {
+    $('btnSectorOpenClassroom').addEventListener('click', () => {
+      if (window.VANTHESIS_CLASSROOM && typeof window.VANTHESIS_CLASSROOM.open === 'function') {
+        window.VANTHESIS_CLASSROOM.open();
+      }
+    });
+  }
+
+  if ($('btnTopbarThemeQuick')) {
+    $('btnTopbarThemeQuick').addEventListener('click', () => {
+      if (window.VANTHESIS_THEME) window.VANTHESIS_THEME.toggle();
+    });
+  }
+
+  function getCurrentLabSnapshot() {
+    return {
+      exprs: (state.exprs || []).map(ex => ({ expr: ex.expr, color: ex.color, visible: ex.visible !== false, label: ex.label || '' })),
+      params: Object.assign({}, state.params || {}),
+      mode: state.mode || 'standard',
+      solid3D: Boolean(state.solid3D),
+      view: Object.assign({}, state.view || { xMin: -6, xMax: 6, yMin: -4, yMax: 4 }),
+      customPoints: Array.isArray(state.customPoints) ? state.customPoints.slice() : []
+    };
+  }
+
+  window.VANTHESIS_LOAD_LAB_SNAPSHOT = function (snapshot) {
+    if (!snapshot || typeof snapshot !== 'object') return false;
+    window.VANTHESIS_SWITCH_SECTOR('lab');
+    try {
+      if (Array.isArray(snapshot.exprs) && snapshot.exprs.length) {
+        state.exprs = snapshot.exprs.map((it, idx) => ({
+          id: 'snap_' + Date.now() + '_' + idx,
+          expr: String(it.expr || ''),
+          color: it.color || ['#1D4ED8', '#0D9488', '#D97706', '#7C3AED'][idx % 4],
+          visible: it.visible !== false,
+          label: it.label || ''
+        }));
+      }
+      if (snapshot.params && typeof snapshot.params === 'object') {
+        state.params = Object.assign({}, state.params, snapshot.params);
+      }
+      if (snapshot.view && typeof snapshot.view === 'object') {
+        state.view = Object.assign({}, state.view, snapshot.view);
+      }
+      if (Array.isArray(snapshot.customPoints)) {
+        state.customPoints = snapshot.customPoints.slice();
+      }
+      if (typeof renderExprListUI === 'function') renderExprListUI();
+      if (typeof renderCustomPointsUI === 'function') renderCustomPointsUI();
+      if (typeof recompileAndAnalyze === 'function') recompileAndAnalyze();
+      setTimeout(() => {
+        try { resizeCanvases(); redrawAll(); renderVariationTableAndCards(); } catch {}
+      }, 60);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  window.VANTHESIS_GET_LAB_SNAPSHOT = getCurrentLabSnapshot;
+
+  if ($('btnPackageToResource')) {
+    $('btnPackageToResource').addEventListener('click', () => {
+      closeToolbarPopovers();
+      if (!window.VANTHESIS_POLICY || (!window.VANTHESIS_POLICY.isAdmin() && !window.VANTHESIS_POLICY.isTeacher())) {
+        showAppToast('Tính năng đóng gói học liệu dành cho Giáo viên và Quản trị viên.');
+        return;
+      }
+      const snap = window.VANTHESIS_GET_LAB_SNAPSHOT();
+      if (window.VANTHESIS_RESOURCES && typeof window.VANTHESIS_RESOURCES.createFromStudio === 'function') {
+        window.VANTHESIS_RESOURCES.createFromStudio(snap);
+      } else {
+        showAppToast('Kho Chòm sao & Học liệu đang sẵn sàng — hãy đặt tệp resources.js cùng thư mục để đóng gói bài giảng.');
+      }
+    });
+  }
+
     resizeAll();
     sync();
     return { sync };
@@ -17357,5 +18300,6 @@
 })();
 </script>
 <script src="./classroom.js" defer></script>
+<script src="./resources.js" defer></script>
 </body>
 </html>
