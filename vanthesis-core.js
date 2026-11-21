@@ -159,42 +159,74 @@
   let currentSyncRev = 0;
   let heartbeatTimer = null;
 
-  const auth = {
+  function checkSignedIn() {
+    const ctx = window.VANTHESIS_SESSION_CONTEXT;
+    return Boolean(ctx && (ctx.isSignedIn || ctx.email || ctx.accessToken));
+  }
+
+  function ensureValidTokenSingleFlight() {
+    if (inFlightRefreshPromise) return inFlightRefreshPromise;
+    inFlightRefreshPromise = (async function () {
+      try {
+        if (typeof window.VANTHESIS_REFRESH_TOKEN !== 'function') return false;
+        const ok = await window.VANTHESIS_REFRESH_TOKEN();
+        if (ok && window.VANTHESIS_SESSION_CONTEXT) {
+          bus.emit('session-changed', window.VANTHESIS_SESSION_CONTEXT);
+        }
+        return Boolean(ok);
+      } catch (e) {
+        return false;
+      } finally {
+        inFlightRefreshPromise = null;
+      }
+    })();
+    return inFlightRefreshPromise;
+  }
+
+  const auth = Object.freeze({
+    setSession: function (ctx) {
+      if (!ctx || typeof ctx !== 'object') {
+        auth.clearSession();
+        return null;
+      }
+      const next = Object.assign({}, ctx, {
+        email: ctx.email ? String(ctx.email).trim().toLowerCase() : '',
+        isSignedIn: Boolean(ctx.isSignedIn || ctx.email || ctx.accessToken)
+      });
+      window.VANTHESIS_SESSION_CONTEXT = next;
+      bus.emit('session-changed', next);
+      return next;
+    },
     getSession: function () {
       const ctx = window.VANTHESIS_SESSION_CONTEXT;
-      if (!ctx || !ctx.bridgeUrl || !ctx.accessToken) return null;
+      if (!ctx || (!ctx.email && !ctx.accessToken)) return null;
       return ctx;
     },
-    isAuthenticated: function () {
-      return Boolean(auth.getSession());
+    clearSession: function () {
+      window.VANTHESIS_SESSION_CONTEXT = null;
+      if (typeof api !== 'undefined' && api && typeof api.stopHeartbeat === 'function') {
+        api.stopHeartbeat();
+      }
+      bus.emit('session-changed', null);
     },
+    isSignedIn: checkSignedIn,
+    isLoggedIn: checkSignedIn,
+    isAuthenticated: checkSignedIn,
     getEmail: function () {
       const s = auth.getSession();
       return s && s.email ? String(s.email).trim().toLowerCase() : '';
+    },
+    getToken: function () {
+      const s = auth.getSession();
+      return s ? String(s.accessToken || '') : '';
     },
     getAccessToken: function () {
       const s = auth.getSession();
       return s ? String(s.accessToken || '') : '';
     },
-    refreshToken: function () {
-      if (inFlightRefreshPromise) return inFlightRefreshPromise;
-      inFlightRefreshPromise = (async function () {
-        try {
-          if (typeof window.VANTHESIS_REFRESH_TOKEN !== 'function') return false;
-          const ok = await window.VANTHESIS_REFRESH_TOKEN();
-          if (ok && window.VANTHESIS_SESSION_CONTEXT) {
-            bus.emit('session-changed', window.VANTHESIS_SESSION_CONTEXT);
-          }
-          return Boolean(ok);
-        } catch (e) {
-          return false;
-        } finally {
-          inFlightRefreshPromise = null;
-        }
-      })();
-      return inFlightRefreshPromise;
-    }
-  };
+    ensureValidToken: ensureValidTokenSingleFlight,
+    refreshToken: ensureValidTokenSingleFlight
+  });
 
   function updateSyncRevIfNewer(rev, broadcast) {
     const n = Number(rev);
@@ -250,7 +282,7 @@
     post: async function (action, payload, options) {
       const opts = options || {};
       const sess = auth.getSession();
-      if (!sess) {
+      if (!sess || !sess.bridgeUrl || !sess.accessToken) {
         return { ok: false, error: translateFriendlyError('UNAUTHORIZED_TOKEN'), rawError: 'UNAUTHORIZED_TOKEN' };
       }
 
@@ -382,6 +414,8 @@
       }
     }
   };
+  api.call = api.post;
+  api.request = api.post;
 
   bus.on('session-changed', function (s) {
     if (s && s.accessToken) api.startHeartbeat();
@@ -1213,11 +1247,274 @@
   };
 
   /* ==========================================================================
+   * 5B. CENTRALIZED SECTOR LIFECYCLE & ERROR ISOLATION SHIELD (v2.0)
+   * ========================================================================== */
+
+  const SECTOR_META = {
+    dashboard: { label: 'Tổng quan', containerId: 'sectorDashboard' },
+    resources: { label: 'Kho Chòm sao', containerId: 'sectorResources' },
+    exams: { label: 'Đấu trường Đề', containerId: 'sectorExams' },
+    lab: { label: 'Phòng Thí nghiệm', containerId: 'sectorLab' },
+    slate: { label: 'Bảng Giảng', containerId: 'sectorSlate' },
+    classroom: { label: 'Lớp học', containerId: 'sectorClassroom' }
+  };
+
+  const sectorRegistry = new Map();
+  let activeSectorId = '';
+
+  function getSectorContainer(sectorId, entry) {
+    if (typeof document === 'undefined') return null;
+    const cid = (entry && entry.containerId) || (SECTOR_META[sectorId] && SECTOR_META[sectorId].containerId) || sectorId;
+    return document.getElementById(cid);
+  }
+
+  function renderSectorErrorShield(sectorId, container, err) {
+    if (!container) return;
+    ensureCoreStyles();
+    const meta = SECTOR_META[sectorId] || { label: sectorId };
+    const shieldId = 'vtcShield_' + sectorId;
+    let shield = container.querySelector('#' + shieldId);
+    if (!shield) {
+      shield = document.createElement('div');
+      shield.id = shieldId;
+      shield.style.cssText = 'padding:28px 20px;display:flex;align-items:center;justify-content:center;min-height:260px;';
+      container.innerHTML = '';
+      container.appendChild(shield);
+    }
+    shield.innerHTML =
+      '<div class="vtc-glass-card" style="max-width:460px;width:100%;padding:24px;text-align:center;">' +
+        '<div style="font-family:var(--vt-cosmos-font-display);font-size:22px;font-weight:700;margin-bottom:8px;">Phân khu ' + escapeHtml(meta.label) + ' tạm thời gián đoạn</div>' +
+        '<p style="font-size:13.5px;color:var(--vt-cosmos-text-muted);line-height:1.6;margin:0 0 18px;">Hệ thống đã tự động cô lập sự cố để không ảnh hưởng các phân khu khác. Bạn có thể thử tải lại ngay.</p>' +
+        '<button type="button" class="vtc-btn vtc-btn-primary" data-vtc-retry-sector="' + escapeHtml(sectorId) + '">↻ Thử tải lại phân khu</button>' +
+      '</div>';
+    const retryBtn = shield.querySelector('[data-vtc-retry-sector]');
+    if (retryBtn) {
+      retryBtn.addEventListener('click', function () {
+        const entry = sectorRegistry.get(sectorId);
+        if (entry) {
+          entry.mounted = false;
+          entry.lastError = '';
+        }
+        activateSector(sectorId);
+      });
+    }
+  }
+
+  function registerSector(sectorId, lifecycle) {
+    const id = String(sectorId || '').trim().toLowerCase();
+    if (!id || !lifecycle || typeof lifecycle !== 'object') return false;
+    const prev = sectorRegistry.get(id);
+    const entry = {
+      id: id,
+      mount: typeof lifecycle.mount === 'function' ? lifecycle.mount : null,
+      refresh: typeof lifecycle.refresh === 'function' ? lifecycle.refresh : null,
+      unmount: typeof lifecycle.unmount === 'function' ? lifecycle.unmount : null,
+      containerId: lifecycle.containerId || (SECTOR_META[id] && SECTOR_META[id].containerId) || id,
+      mounted: prev ? prev.mounted : false,
+      lastError: '',
+      lastActiveAt: prev ? prev.lastActiveAt : 0
+    };
+    sectorRegistry.set(id, entry);
+    if (activeSectorId === id && auth.isSignedIn() && !entry.mounted) {
+      activateSector(id);
+    }
+    return true;
+  }
+
+  async function activateSector(sectorId) {
+    const id = String(sectorId || '').trim().toLowerCase();
+    if (!id) return false;
+
+    // Unmount previously active sector safely
+    if (activeSectorId && activeSectorId !== id) {
+      const prevEntry = sectorRegistry.get(activeSectorId);
+      if (prevEntry && prevEntry.unmount) {
+        try {
+          const prevContainer = getSectorContainer(activeSectorId, prevEntry);
+          await Promise.resolve(prevEntry.unmount(prevContainer));
+        } catch (e) {}
+      }
+    }
+
+    activeSectorId = id;
+
+    // Synchronize DOM active class across the 6 standard sectors if present
+    if (typeof document !== 'undefined') {
+      Object.keys(SECTOR_META).forEach(function (k) {
+        const el = document.getElementById(SECTOR_META[k].containerId);
+        if (el) el.classList.toggle('is-active', k === id);
+      });
+    }
+
+    const entry = sectorRegistry.get(id);
+    if (!entry) return true;
+
+    const sess = auth.getSession();
+    if (!auth.isSignedIn() || !sess) return false;
+
+    const container = getSectorContainer(id, entry);
+    entry.lastActiveAt = Date.now();
+
+    try {
+      if (!entry.mounted) {
+        if (entry.mount) {
+          await Promise.resolve(entry.mount(container, sess));
+        }
+        entry.mounted = true;
+      } else if (entry.refresh) {
+        await Promise.resolve(entry.refresh(container, sess));
+      }
+      entry.lastError = '';
+      bus.emit('sector-activated', { sectorId: id, ts: Date.now() });
+      return true;
+    } catch (err) {
+      entry.lastError = (err && err.message) ? String(err.message) : 'Lỗi hiển thị phân khu';
+      renderSectorErrorShield(id, container, err);
+      return false;
+    }
+  }
+
+  bus.on('session-changed', function (s) {
+    if (s && auth.isSignedIn() && activeSectorId) {
+      const entry = sectorRegistry.get(activeSectorId);
+      if (entry && !entry.mounted) {
+        activateSector(activeSectorId);
+      }
+    }
+  });
+
+  /* ==========================================================================
+   * 5C. BUILT-IN DIAGNOSTICS STATION (CTRL + SHIFT + D / VANTHESIS_CORE.diagnose)
+   * ========================================================================== */
+
+  async function openDiagnosticsModal() {
+    if (typeof document === 'undefined') return null;
+    ensureCoreStyles();
+    const existing = document.getElementById('vtcDiagBackdrop');
+    if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+
+    const signedIn = auth.isSignedIn();
+    const email = auth.getEmail() || 'Chưa đăng nhập';
+    const scopeBadge = policy.getScopeBadge();
+    const sectorKeys = Object.keys(SECTOR_META);
+
+    const sectorRows = sectorKeys.map(function (k) {
+      const entry = sectorRegistry.get(k);
+      const domOk = Boolean(document.getElementById(SECTOR_META[k].containerId));
+      let statusTxt = 'Sẵn sàng';
+      let statusColor = '#059669';
+      if (entry && entry.lastError) { statusTxt = 'Cần tải lại'; statusColor = '#DC2626'; }
+      else if (entry && entry.mounted) { statusTxt = 'Đã khởi tạo'; statusColor = '#059669'; }
+      else if (entry) { statusTxt = 'Đã đăng ký'; statusColor = '#2563EB'; }
+      else if (!domOk) { statusTxt = 'Chưa gắn khung'; statusColor = '#D97706'; }
+      return {
+        key: k,
+        label: SECTOR_META[k].label,
+        statusTxt: statusTxt,
+        statusColor: statusColor
+      };
+    });
+
+    const bd = document.createElement('div');
+    bd.id = 'vtcDiagBackdrop';
+    bd.className = 'vtc-confirm-backdrop';
+    bd.setAttribute('role', 'dialog');
+    bd.setAttribute('aria-modal', 'true');
+
+    const rowsHtml = sectorRows.map(function (r) {
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-radius:10px;background:var(--vt-cosmos-surface);border:1px solid var(--vt-cosmos-border);font-size:12.5px;">' +
+        '<span>' + escapeHtml(r.label) + (activeSectorId === r.key ? ' (Đang mở)' : '') + '</span>' +
+        '<strong style="color:' + r.statusColor + ';">' + escapeHtml(r.statusTxt) + '</strong>' +
+      '</div>';
+    }).join('');
+
+    bd.innerHTML =
+      '<div class="vtc-confirm-card" style="width:min(520px,95vw);max-height:86vh;overflow-y:auto;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
+          '<h3 class="vtc-confirm-title" style="margin:0;">Trạm Chẩn Đoán Hệ Thống</h3>' +
+          '<button type="button" class="vtc-btn" data-diag-close style="padding:4px 10px;">Đóng</button>' +
+        '</div>' +
+        '<div style="display:grid;gap:8px;margin-bottom:14px;font-size:13px;">' +
+          '<div><strong>Phiên đăng nhập:</strong> ' + (signedIn ? ('Đang hoạt động (' + escapeHtml(email) + ')') : 'Chưa đăng nhập') + '</div>' +
+          '<div><strong>Phạm vi quyền:</strong> ' + escapeHtml(scopeBadge) + '</div>' +
+          '<div><strong>Kết nối máy chủ:</strong> <span id="vtcDiagPing">Đang kiểm tra độ trễ...</span></div>' +
+          '<div><strong>Bộ nhớ đệm cục bộ:</strong> <span id="vtcDiagDb">' + (typeof indexedDB !== 'undefined' ? 'Sẵn sàng lưu nháp nhanh' : 'Chế độ bộ nhớ tạm') + '</span></div>' +
+        '</div>' +
+        '<div style="font-size:12px;font-weight:800;margin-bottom:6px;opacity:0.75;">Trạng thái 6 phân khu</div>' +
+        '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-bottom:16px;">' + rowsHtml + '</div>' +
+        '<div class="vtc-confirm-actions" style="flex-wrap:wrap;">' +
+          '<button type="button" class="vtc-btn" data-diag-copy>Sao chép báo cáo</button>' +
+          '<button type="button" class="vtc-btn vtc-btn-danger" data-diag-clear>Làm sạch bộ nhớ đệm &amp; Tải lại</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(bd);
+
+    let pingSummary = 'Chưa kiểm tra';
+    if (signedIn) {
+      const t0 = Date.now();
+      api.post('sync_heartbeat', {}, { timeoutMs: 8000, silent: true, dedupe: false }).then(function (r) {
+        const ms = Date.now() - t0;
+        const el = document.getElementById('vtcDiagPing');
+        if (r && r.ok) {
+          pingSummary = 'Ổn định (' + ms + ' ms)';
+          if (el) { el.textContent = pingSummary; el.style.color = '#059669'; }
+        } else {
+          pingSummary = 'Phản hồi chậm hoặc gián đoạn';
+          if (el) { el.textContent = pingSummary; el.style.color = '#D97706'; }
+        }
+      });
+    } else {
+      const el = document.getElementById('vtcDiagPing');
+      pingSummary = 'Cần đăng nhập để kiểm tra';
+      if (el) el.textContent = pingSummary;
+    }
+
+    function closeDiag() { if (bd.parentNode) bd.parentNode.removeChild(bd); }
+    bd.addEventListener('click', function (e) { if (e.target === bd) closeDiag(); });
+    bd.querySelector('[data-diag-close]').addEventListener('click', closeDiag);
+    bd.querySelector('[data-diag-copy]').addEventListener('click', function () {
+      const report = [
+        'Báo cáo chẩn đoán VANTHESIS (' + new Date().toLocaleString('vi-VN') + ')',
+        '- Tài khoản: ' + email,
+        '- Phạm vi quyền: ' + scopeBadge,
+        '- Kết nối máy chủ: ' + pingSummary,
+        '- Phân khu: ' + sectorRows.map(function (r) { return r.label + ': ' + r.statusTxt; }).join(' | ')
+      ].join('\n');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(report).then(function () {
+          ui.toast('Đã sao chép báo cáo chẩn đoán.', 'success');
+        }).catch(function () { ui.toast('Không thể sao chép tự động.', 'warning'); });
+      }
+    });
+    bd.querySelector('[data-diag-clear]').addEventListener('click', async function () {
+      try { localStorage.clear(); } catch (e) {}
+      try {
+        if (typeof indexedDB !== 'undefined' && indexedDB.deleteDatabase) {
+          indexedDB.deleteDatabase(DB_NAME);
+        }
+      } catch (e) {}
+      window.location.reload();
+    });
+
+    return { signedIn: signedIn, email: email, scopeBadge: scopeBadge, sectors: sectorRows };
+  }
+
+  if (typeof document !== 'undefined') {
+    document.addEventListener('keydown', function (e) {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        openDiagnosticsModal();
+      }
+    });
+  }
+
+  /* ==========================================================================
    * 6. PUBLIC EXPORT (window.VANTHESIS_CORE)
    * ========================================================================== */
 
   window.VANTHESIS_CORE = Object.freeze({
-    version: '1.0',
+    version: '2.0',
     bus: bus,
     auth: auth,
     api: api,
@@ -1225,6 +1522,9 @@
     db: db,
     drive: drive,
     ui: ui,
+    registerSector: registerSector,
+    activateSector: activateSector,
+    diagnose: openDiagnosticsModal,
     translateError: translateFriendlyError
   });
 })();
