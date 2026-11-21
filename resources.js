@@ -1187,6 +1187,281 @@
         100% { opacity: 0; transform: translate(var(--dx2, 24px), -105px) scale(0.4); }
       }
 
+    
+      /* === CELESTIAL PLANETARIUM & ASTROLABE LECTURE SYSTEM (60FPS) === */
+      .vt-orbital-lecture-shell {
+        border-radius: 22px;
+        padding: 18px;
+        border: 1px solid var(--border-strong);
+      }
+      html[data-theme="light"] .vt-orbital-lecture-shell {
+        background-color: #FAF8F3;
+        background-image:
+          linear-gradient(to right, rgba(180, 83, 9, 0.06) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(180, 83, 9, 0.06) 1px, transparent 1px);
+        background-size: 48px 48px;
+      }
+      html[data-theme="dark"] .vt-orbital-lecture-shell {
+        background-color: #040816;
+        background-image:
+          radial-gradient(620px circle at 18% 12%, rgba(56, 189, 248, 0.09), transparent 60%),
+          radial-gradient(540px circle at 84% 82%, rgba(251, 191, 36, 0.06), transparent 62%);
+      }
+
+      /* Orbital Timeline Rail */
+      .vt-lesson-toc.vt-orbital-rail {
+        position: sticky;
+        top: 12px;
+        border-radius: 18px;
+        padding: 14px 12px;
+        background: var(--surface);
+        border: 1px solid var(--border-strong);
+      }
+      .vt-orbital-progress-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 11.5px;
+        font-weight: 800;
+        margin-bottom: 8px;
+      }
+      .vt-orbital-track {
+        position: relative;
+        padding-left: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .vt-orbital-track::before {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 8px;
+        bottom: 8px;
+        width: 2px;
+        background: rgba(148, 163, 184, 0.28);
+        border-radius: 9999px;
+      }
+      .vt-orbital-node-btn {
+        position: relative;
+        width: 100%;
+        text-align: left;
+        padding: 6px 8px;
+        border-radius: 10px;
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: color 150ms ease, background-color 150ms ease;
+      }
+      .vt-orbital-node-btn::before {
+        content: '';
+        position: absolute;
+        left: -16px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 10px;
+        height: 10px;
+        border-radius: 9999px;
+        background: var(--surface);
+        border: 2px solid rgba(148, 163, 184, 0.55);
+        transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
+      }
+      .vt-orbital-node-btn.is-read::before {
+        background: #FBBF24;
+        border-color: #F59E0B;
+      }
+      .vt-orbital-node-btn.active {
+        color: var(--primary);
+        background: rgba(37, 99, 235, 0.10);
+        font-weight: 800;
+      }
+      .vt-orbital-node-btn.active::before {
+        background: #38BDF8;
+        border-color: #2563EB;
+        transform: translateY(-50%) scale(1.22);
+      }
+
+      /* 5 Upgraded Academic Block Styles */
+      .vt-blk-theory {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 18px 20px;
+        line-height: 1.82;
+        font-size: 15.2px;
+      }
+      .vt-blk-theory-title {
+        font-family: 'Cormorant Garamond', 'Newsreader', Georgia, serif;
+        font-size: 21px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .vt-blk-theory-body::first-letter {
+        font-family: 'Cormorant Garamond', Georgia, serif;
+        font-size: 1.38em;
+        font-weight: 700;
+        color: var(--primary);
+      }
+
+      /* Theorem Star-Core Box with 4 Astrolabe Corner Reticles */
+      .vt-theorem-box.vt-blk-theorem-star {
+        position: relative;
+        border-radius: 20px;
+        padding: 20px 22px;
+        background: linear-gradient(145deg, rgba(29, 78, 216, 0.06), rgba(180, 83, 9, 0.06)), var(--surface);
+        border: 1.5px solid rgba(180, 83, 9, 0.42);
+      }
+      html[data-theme="dark"] .vt-theorem-box.vt-blk-theorem-star {
+        border-color: rgba(251, 191, 36, 0.45);
+        background: linear-gradient(145deg, rgba(56, 189, 248, 0.09), rgba(251, 191, 36, 0.06)), rgba(10, 17, 38, 0.92);
+      }
+      .vt-astrolabe-corner {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-color: rgba(180, 83, 9, 0.65);
+        border-style: solid;
+        pointer-events: none;
+      }
+      html[data-theme="dark"] .vt-astrolabe-corner { border-color: rgba(251, 191, 36, 0.72); }
+      .vt-astrolabe-corner.tl { top: 8px; left: 8px; border-width: 1.5px 0 0 1.5px; }
+      .vt-astrolabe-corner.tr { top: 8px; right: 8px; border-width: 1.5px 1.5px 0 0; }
+      .vt-astrolabe-corner.bl { bottom: 8px; left: 8px; border-width: 0 0 1.5px 1.5px; }
+      .vt-astrolabe-corner.br { bottom: 8px; right: 8px; border-width: 0 1.5px 1.5px 0; }
+      .vt-blk-theorem-star .vt-theorem-kicker {
+        font-family: 'Cormorant Garamond', 'Newsreader', Georgia, serif;
+        font-size: 20px;
+        font-weight: 700;
+        color: #B45309;
+        margin-bottom: 8px;
+      }
+      html[data-theme="dark"] .vt-blk-theorem-star .vt-theorem-kicker { color: #FBBF24; }
+
+      /* Method Eclipse Reveal & Inline Ruled Scratchpad */
+      .vt-eclipse-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .vt-eclipse-step {
+        padding: 10px 14px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        line-height: 1.72;
+        transition: filter 220ms ease, opacity 220ms ease, border-color 180ms ease;
+      }
+      .vt-eclipse-step.is-veiled {
+        filter: blur(5.5px);
+        opacity: 0.42;
+        user-select: none;
+        cursor: pointer;
+      }
+      .vt-eclipse-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
+      .vt-scratchpad-wrap {
+        margin-top: 12px;
+        border-radius: 16px;
+        border: 1.5px solid var(--border-strong);
+        background: #FFFFFF;
+        overflow: hidden;
+        display: none;
+        flex-direction: column;
+      }
+      html[data-theme="dark"] .vt-scratchpad-wrap { background: #0B1324; }
+      .vt-scratchpad-wrap.open { display: flex; }
+      .vt-scratchpad-bar {
+        padding: 7px 12px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        flex-wrap: wrap;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .vt-inline-scratchpad {
+        width: 100%;
+        height: 220px;
+        display: block;
+        touch-action: none;
+        cursor: crosshair;
+        background-image:
+          linear-gradient(to right, rgba(148, 163, 184, 0.22) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(148, 163, 184, 0.22) 1px, transparent 1px);
+        background-size: 24px 24px;
+      }
+
+      /* Planetarium Presentation Mode: Spotlight Focus + Meteor Laser */
+      #vtPresentationOverlay {
+        background: radial-gradient(760px circle at 18% 12%, rgba(56, 189, 248, 0.10), transparent 60%), #040816 !important;
+      }
+      html[data-theme="light"] #vtPresentationOverlay {
+        background: #FAF8F3 !important;
+      }
+      .vt-pres-slide-card {
+        transition: opacity 220ms ease, transform 220ms cubic-bezier(0.22, 1, 0.36, 1), border-color 180ms ease;
+      }
+      .vt-pres-stage.is-scroll-spotlight .vt-pres-slide-card {
+        opacity: 0.44;
+        cursor: pointer;
+      }
+      .vt-pres-stage.is-scroll-spotlight .vt-pres-slide-card.is-spotlight {
+        opacity: 1;
+        border-color: rgba(56, 189, 248, 0.55);
+        box-shadow: 0 22px 54px -14px rgba(37, 99, 235, 0.24);
+      }
+      #vtPresLaserCanvas {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 10002;
+        pointer-events: none;
+      }
+      #vtPresLaserCanvas.is-armed {
+        pointer-events: auto;
+        cursor: crosshair;
+      }
+      .vt-pres-dock-btn.laser-on {
+        background: linear-gradient(135deg, #DC2626, #EA580C) !important;
+        color: #FFFFFF !important;
+        border-color: transparent !important;
+      }
+
+      /* Side-by-Side Live Preview in Block Editor */
+      .vt-ed-split-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+        gap: 12px;
+        align-items: start;
+      }
+      .vt-ed-live-preview {
+        padding: 12px;
+        border-radius: 14px;
+        border: 1px dashed var(--border-strong);
+        background: var(--bg);
+        min-height: 110px;
+        font-size: 13.5px;
+      }
+      @media (max-width: 820px) {
+        .vt-ed-split-grid { grid-template-columns: 1fr; }
+        .vt-lesson-toc.vt-orbital-rail { position: static; margin-bottom: 12px; }
+        .vt-orbital-track { flex-direction: row; overflow-x: auto; padding-left: 0; padding-bottom: 4px; }
+        .vt-orbital-track::before, .vt-orbital-node-btn::before { display: none; }
+        .vt-orbital-node-btn { white-space: nowrap; width: auto; border: 1px solid var(--border); }
+      }
+
     `;
     document.head.appendChild(style);
   }
@@ -1323,6 +1598,7 @@
             <div style="padding:12px 14px;border-radius:16px;background:var(--bg);border:1px solid var(--border-strong);margin-bottom:12px;">
               <div style="font-size:12.5px;font-weight:800;margin-bottom:8px;">🧩 Cấu trúc Bài giảng Đa khối (Sắp xếp tự do)</div>
               <div class="vt-block-add-bar">
+                <button class="btn btn-sm btn-primary" type="button" id="vtAddTemplate4Stages">✦ Tạo khung bài giảng chuẩn 4 chặng</button>
                 <button class="btn btn-sm" type="button" id="vtAddBlkTheory">+ Lý thuyết</button>
                 <button class="btn btn-sm" type="button" id="vtAddBlkTheorem">+ Định lý / Công thức</button>
                 <button class="btn btn-sm" type="button" id="vtAddBlkMethod">+ Phương pháp giải</button>
@@ -1382,14 +1658,17 @@
           <div id="vtPresCounter" style="font-size:13px;font-weight:800;color:var(--primary);white-space:nowrap;"></div>
         </div>
         <div class="vt-pres-stage" id="vtPresStage"></div>
+        <canvas id="vtPresLaserCanvas" aria-hidden="true"></canvas>
         <div class="vt-pres-dock">
           <button id="vtPresModeBtn" class="vt-pres-dock-btn" type="button">Chế độ Cuộn liên tục</button>
           <button id="vtPresPrevBtn" class="vt-pres-dock-btn" type="button">← Khối trước</button>
           <button id="vtPresNextBtn" class="vt-pres-dock-btn" type="button">Khối tiếp theo →</button>
+          <button id="vtPresLaserBtn" class="vt-pres-dock-btn" type="button" title="Bật/tắt Bút Laser Thiên thạch chỉ điểm công thức">🔴 Bút Laser</button>
           <button id="vtPresFontDec" class="vt-pres-dock-btn" type="button" title="Thu nhỏ cỡ chữ">A-</button>
           <button id="vtPresFontInc" class="vt-pres-dock-btn" type="button" title="Phóng to cỡ chữ">A+</button>
-          <button id="vtPresOpenLabBtn" class="vt-pres-dock-btn primary" type="button">🔭 Mở Phòng Thí nghiệm 2D/3D</button>
-          <button id="vtPresExitBtn" class="vt-pres-dock-btn" type="button">✕ Thoát trình chiếu</button>
+          <button id="vtPresOpenLabBtn" class="vt-pres-dock-btn primary" type="button">🔭 Phòng Thí nghiệm</button>
+          <button id="vtPresOpenSlateBtn" class="vt-pres-dock-btn" type="button">✍️ Bảng Giảng</button>
+          <button id="vtPresExitBtn" class="vt-pres-dock-btn" type="button">✕ Thoát</button>
         </div>
       </div>
 
@@ -1584,6 +1863,19 @@
       else if (state.presentation.slideIdx > 0) { state.presentation.slideIdx--; renderPresentationStage(); }
     }, { passive: true });
 
+    const tpl4Btn = document.getElementById('vtAddTemplate4Stages');
+    if (tpl4Btn) {
+      tpl4Btn.addEventListener('click', function () {
+        state.editorBlocks.push(
+          { type: 'THEORY', title: 'Chặng 1: Khởi động & Lý thuyết trọng tâm', text: 'Trình bày khái niệm cốt lõi và ý nghĩa hình học của bài học...' },
+          { type: 'THEOREM', title: 'Chặng 2: Định lý Hạt nhân Sao', text: 'Cho hàm số $y = f(x)$ liên tục trên $[a;b]$. Khi đó: $f\'(x) = 0$ xác định các điểm tới hạn.' },
+          { type: 'METHOD', title: 'Chặng 3: Phương pháp giải & Ví dụ mẫu', text: 'Ví dụ: Tìm cực trị của hàm số $y = x^3 - 3x + 2$.', solution: 'Tính đạo hàm $y\' = 3x^2 - 3$.\nGiải $y\' = 0 \\Leftrightarrow x = \\pm 1$.\nLập bảng biến thiên và kết luận cực đại tại $x=-1$, cực tiểu tại $x=1$.' },
+          { type: 'LAB_EMBED', title: 'Chặng 4: Khám phá trực quan 2D/3D', labSnapshot: { mode: 'standard', exprs: [{ expr: 'x^3 - 3*m*x + 2' }], params: { m: 1 } } }
+        );
+        renderEditorBlockBuilder();
+        showNotice('✦ Đã tạo sẵn khung bài giảng chuẩn 4 chặng. Bạn có thể chỉnh sửa trực tiếp từng khối.');
+      });
+    }
     document.getElementById('vtAddBlkTheory').addEventListener('click', function () {
       state.editorBlocks.push({ type: 'THEORY', style: 'plain', title: 'Lý thuyết trọng tâm', text: '' });
       renderEditorBlockBuilder();
@@ -2516,16 +2808,21 @@
     });
   }
 
+  function splitSolutionSteps(rawSol) {
+    const lines = String(rawSol || '').split(/\r?\n+/).map(function (s) { return s.trim(); }).filter(Boolean);
+    return lines.length ? lines : [];
+  }
+
   function renderSingleLessonBlockHtml(item, idx, forPresentation) {
     const idAttr = forPresentation ? '' : (' id="vtLessonBlock_' + idx + '" data-lesson-block-idx="' + idx + '"');
     if (item.kind === 'DRIVE_MEDIA' && item.previewUrl) {
       return '<div class="lcms-glass-tile"' + idAttr + '>' +
         '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">' +
-          '<b style="font-size:14px;">📎 ' + escapeHtml(item.name || item.title || 'Tài liệu đính kèm') + '</b>' +
-          '<div style="display:flex;gap:6px;">' +
-            '<button class="btn btn-sm" type="button" data-open-wb-idx="' + idx + '">✍️ Mở trên Bảng Giảng để chữa / nháp bài</button>' +
+          '<b style="font-size:14.5px;">📎 ' + escapeHtml(item.name || item.title || 'Tài liệu đính kèm') + '</b>' +
+          '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
+            '<button class="btn btn-sm btn-primary" type="button" data-open-wb-idx="' + idx + '">✍️ Đưa đề lên Bảng Giảng Thiên Văn</button>' +
             '<a class="btn btn-sm" href="' + escapeAttr(item.previewUrl) + '" target="_blank" rel="noopener">↗ Mở toàn màn hình</a>' +
-            '<a class="btn btn-sm btn-primary" href="' + escapeAttr(item.downloadUrl || item.previewUrl) + '" target="_blank" rel="noopener">⬇ Tải bản gốc</a>' +
+            '<a class="btn btn-sm" href="' + escapeAttr(item.downloadUrl || item.previewUrl) + '" target="_blank" rel="noopener">⬇ Tải bản gốc</a>' +
           '</div>' +
         '</div>' +
         '<iframe class="vt-drive-preview-frame" src="' + escapeAttr(item.previewUrl) + '" allow="autoplay"></iframe>' +
@@ -2544,34 +2841,198 @@
       }).join(' ');
       return '<div class="vt-embed-lab-card"' + idAttr + ' data-embed-lab-idx="' + idx + '">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">' +
-          '<div style="font-weight:800;font-size:14.5px;">∫ ' + escapeHtml(item.title || 'Mô phỏng Đồ thị 2D/3D Trực tiếp') + '</div>' +
+          '<div style="font-family:\'Cormorant Garamond\',serif;font-weight:700;font-size:19px;">∫ ' + escapeHtml(item.title || 'Mô phỏng Đồ thị 2D/3D Trực tiếp') + '</div>' +
           '<span class="vt-res-pill class">' + escapeHtml(getLabModeLabel(snap)) + '</span>' +
         '</div>' +
         (exprBadges ? '<div style="display:flex;flex-wrap:wrap;gap:6px;">' + exprBadges + '</div>' : '') +
         '<canvas class="vt-embed-lab-canvas" aria-label="Khung mô phỏng đồ thị tương tác"></canvas>' +
         slidersHtml +
-        '<button class="btn btn-primary btn-sm" type="button" data-load-snap="' + idx + '" style="align-self:flex-start;">🔭 Mở rộng trong Phòng Thí nghiệm 2D/3D</button>' +
+        '<button class="btn btn-primary btn-sm" type="button" data-load-snap="' + idx + '" style="align-self:flex-start;">🔭 Mở rộng sang Phòng Thí nghiệm 2D/3D</button>' +
       '</div>';
     }
     if (item.kind === 'THEOREM') {
-      return '<div class="vt-theorem-box"' + idAttr + '>' +
-        '<div class="vt-theorem-kicker">✦ ' + escapeHtml(item.title || 'Định lý & Công thức trọng tâm') + '</div>' +
-        '<div style="line-height:1.76;">' + renderMathInText(item.text || '') + '</div>' +
+      return '<div class="vt-theorem-box vt-blk-theorem-star"' + idAttr + '>' +
+        '<span class="vt-astrolabe-corner tl"></span><span class="vt-astrolabe-corner tr"></span>' +
+        '<span class="vt-astrolabe-corner bl"></span><span class="vt-astrolabe-corner br"></span>' +
+        '<div class="vt-theorem-kicker">✦ ' + escapeHtml(item.title || 'Định lý Hạt nhân Sao') + '</div>' +
+        '<div style="line-height:1.8;">' + renderMathInText(item.text || '') + '</div>' +
       '</div>';
     }
     if (item.kind === 'METHOD') {
-      const solHtml = item.solution
-        ? '<details class="vt-method-solution"><summary>▸ Xem lời giải chi tiết</summary><div style="line-height:1.75;">' + renderMathInText(item.solution) + '</div></details>'
-        : '';
+      const steps = splitSolutionSteps(item.solution);
+      let eclipseHtml = '';
+      if (steps.length) {
+        const stepsHtml = steps.map(function (st, sIdx) {
+          const veiled = sIdx > 0 ? ' is-veiled' : '';
+          return '<div class="vt-eclipse-step' + veiled + '" data-eclipse-step="' + sIdx + '"><strong style="color:var(--primary);margin-right:6px;">Bước ' + (sIdx + 1) + ':</strong>' + renderMathInText(st) + '</div>';
+        }).join('');
+        eclipseHtml =
+          '<div class="vt-eclipse-wrap" data-eclipse-block="' + idx + '">' +
+            '<div class="vt-eclipse-steps">' + stepsHtml + '</div>' +
+            '<div class="vt-eclipse-controls">' +
+              '<button type="button" class="btn btn-sm btn-primary" data-eclipse-next="' + idx + '">✨ Hé lộ từng bước</button>' +
+              '<button type="button" class="btn btn-sm" data-eclipse-all="' + idx + '">Mở toàn bộ lời giải</button>' +
+              '<button type="button" class="btn btn-sm" data-scratch-toggle="' + idx + '">✍️ Mở giấy nháp ngay tại đây</button>' +
+            '</div>' +
+          '</div>';
+      } else {
+        eclipseHtml =
+          '<div class="vt-eclipse-controls">' +
+            '<button type="button" class="btn btn-sm" data-scratch-toggle="' + idx + '">✍️ Mở giấy nháp ngay tại đây</button>' +
+          '</div>';
+      }
+      const scratchpadHtml =
+        '<div class="vt-scratchpad-wrap" data-scratch-wrap="' + idx + '">' +
+          '<div class="vt-scratchpad-bar">' +
+            '<span>Giấy nháp ô ly trực tiếp</span>' +
+            '<div style="display:flex;align-items:center;gap:6px;">' +
+              '<button type="button" class="btn btn-sm" data-scratch-color="#0F172A" style="padding:2px 8px;">Đen</button>' +
+              '<button type="button" class="btn btn-sm" data-scratch-color="#1D4ED8" style="padding:2px 8px;color:#1D4ED8;">Xanh</button>' +
+              '<button type="button" class="btn btn-sm" data-scratch-color="#DC2626" style="padding:2px 8px;color:#DC2626;">Đỏ</button>' +
+              '<button type="button" class="btn btn-sm" data-scratch-clear="' + idx + '" style="padding:2px 8px;">Xóa nháp</button>' +
+            '</div>' +
+          '</div>' +
+          '<canvas class="vt-inline-scratchpad" data-scratch-canvas="' + idx + '"></canvas>' +
+        '</div>';
+
       return '<div class="vt-method-box"' + idAttr + '>' +
-        '<div class="vt-method-kicker">🧭 ' + escapeHtml(item.title || 'Phương pháp giải & Ví dụ mẫu') + '</div>' +
-        '<div style="line-height:1.75;">' + renderMathInText(item.text || '') + '</div>' +
-        solHtml +
+        '<div class="vt-method-kicker" style="font-family:\'Cormorant Garamond\',serif;font-size:20px;font-weight:700;">🧭 ' + escapeHtml(item.title || 'Phương pháp giải & Ví dụ mẫu') + '</div>' +
+        '<div style="line-height:1.78;">' + renderMathInText(item.text || '') + '</div>' +
+        eclipseHtml +
+        scratchpadHtml +
       '</div>';
     }
-    return '<div class="lcms-glass-tile"' + idAttr + ' style="line-height:1.78;font-size:15px;">' +
-      (item.title ? '<div style="font-weight:800;font-size:16px;margin-bottom:6px;">' + escapeHtml(item.title) + '</div>' : '') +
-      '<div>' + renderMathInText(item.text || '') + '</div></div>';
+    return '<div class="vt-blk-theory"' + idAttr + '>' +
+      (item.title ? '<div class="vt-blk-theory-title">' + escapeHtml(item.title) + '</div>' : '') +
+      '<div class="vt-blk-theory-body">' + renderMathInText(item.text || '') + '</div></div>';
+  }
+
+  function wireEclipseAndScratchpads(rootEl) {
+    if (!rootEl) return;
+    // Eclipse step-by-step reveal
+    rootEl.querySelectorAll('[data-eclipse-next]').forEach(function (btn) {
+      if (btn._vtBound) return;
+      btn._vtBound = true;
+      btn.addEventListener('click', function () {
+        const wrap = btn.closest('.vt-eclipse-wrap');
+        if (!wrap) return;
+        const nextVeiled = wrap.querySelector('.vt-eclipse-step.is-veiled');
+        if (nextVeiled) nextVeiled.classList.remove('is-veiled');
+      });
+    });
+    rootEl.querySelectorAll('[data-eclipse-all]').forEach(function (btn) {
+      if (btn._vtBound) return;
+      btn._vtBound = true;
+      btn.addEventListener('click', function () {
+        const wrap = btn.closest('.vt-eclipse-wrap');
+        if (!wrap) return;
+        wrap.querySelectorAll('.vt-eclipse-step.is-veiled').forEach(function (el) { el.classList.remove('is-veiled'); });
+      });
+    });
+    rootEl.querySelectorAll('.vt-eclipse-step.is-veiled').forEach(function (st) {
+      if (st._vtBound) return;
+      st._vtBound = true;
+      st.addEventListener('click', function () { st.classList.remove('is-veiled'); });
+    });
+
+    // Inline ruled scratchpad toggle & drawing
+    rootEl.querySelectorAll('[data-scratch-toggle]').forEach(function (btn) {
+      if (btn._vtBound) return;
+      btn._vtBound = true;
+      btn.addEventListener('click', function () {
+        const idx = btn.getAttribute('data-scratch-toggle');
+        const wrap = rootEl.querySelector('[data-scratch-wrap="' + idx + '"]');
+        if (!wrap) return;
+        const isOpen = wrap.classList.toggle('open');
+        btn.textContent = isOpen ? 'Ẩn giấy nháp' : '✍️ Mở giấy nháp ngay tại đây';
+        if (isOpen) initSingleInlineScratchpad(wrap);
+      });
+    });
+  }
+
+  function initSingleInlineScratchpad(wrap) {
+    const cvs = wrap.querySelector('.vt-inline-scratchpad');
+    if (!cvs || cvs._vtScratchReady) return;
+    cvs._vtScratchReady = true;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const rect = cvs.getBoundingClientRect();
+    cvs.width = Math.max(300, Math.floor(rect.width * dpr));
+    cvs.height = Math.max(180, Math.floor(rect.height * dpr));
+    const ctx = cvs.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 2.4;
+    let inkColor = document.documentElement.getAttribute('data-theme') === 'dark' ? '#F8FAFC' : '#0F172A';
+    let drawing = false;
+
+    wrap.querySelectorAll('[data-scratch-color]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        inkColor = b.getAttribute('data-scratch-color');
+        if (inkColor === '#0F172A' && document.documentElement.getAttribute('data-theme') === 'dark') inkColor = '#F8FAFC';
+      });
+    });
+    const clrBtn = wrap.querySelector('[data-scratch-clear]');
+    if (clrBtn) {
+      clrBtn.addEventListener('click', function () { ctx.clearRect(0, 0, cvs.width, cvs.height); });
+    }
+
+    function getPos(e) {
+      const r = cvs.getBoundingClientRect();
+      return { x: e.clientX - r.left, y: e.clientY - r.top };
+    }
+    cvs.addEventListener('pointerdown', function (e) {
+      drawing = true;
+      try { cvs.setPointerCapture(e.pointerId); } catch (err) {}
+      const p = getPos(e);
+      ctx.strokeStyle = inkColor;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+    });
+    cvs.addEventListener('pointermove', function (e) {
+      if (!drawing) return;
+      const p = getPos(e);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+    });
+    function stop(e) {
+      drawing = false;
+      try { cvs.releasePointerCapture(e.pointerId); } catch (err) {}
+    }
+    cvs.addEventListener('pointerup', stop);
+    cvs.addEventListener('pointercancel', stop);
+  }
+
+  function wireOrbitalTimelineProgress(rootEl) {
+    if (!rootEl) return;
+    const nodes = Array.from(rootEl.querySelectorAll('.vt-orbital-node-btn'));
+    const blocks = Array.from(rootEl.querySelectorAll('[data-lesson-block-idx]'));
+    const pctEl = rootEl.querySelector('#vtOrbitalPct');
+    if (!nodes.length || !blocks.length) return;
+
+    function updateOrbital(activeIdx) {
+      nodes.forEach(function (n, i) {
+        n.classList.toggle('active', i === activeIdx);
+        if (i <= activeIdx) n.classList.add('is-read');
+      });
+      if (pctEl) {
+        const pct = Math.min(100, Math.round(((activeIdx + 1) / blocks.length) * 100));
+        pctEl.textContent = pct + '%';
+      }
+    }
+    updateOrbital(0);
+
+    if (typeof IntersectionObserver !== 'undefined') {
+      const obs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (ent) {
+          if (ent.isIntersecting) {
+            const idx = Number(ent.target.getAttribute('data-lesson-block-idx')) || 0;
+            updateOrbital(idx);
+          }
+        });
+      }, { threshold: 0.35 });
+      blocks.forEach(function (b) { obs.observe(b); });
+    }
   }
 
   function initEmbeddedLabCanvasesInRoot(rootEl, resourceObj, items) {
@@ -2669,7 +3130,120 @@
       }).join('');
     }
     renderMathInElementSafe(stageEl);
+    wireEclipseAndScratchpads(stageEl);
+    stageEl.classList.toggle('is-scroll-spotlight', state.presentation.mode !== 'slide');
+    const cards = Array.from(stageEl.querySelectorAll('.vt-pres-slide-card'));
+    if (cards.length) {
+      cards.forEach(function (c, i) {
+        c.classList.toggle('is-spotlight', i === state.presentation.slideIdx);
+        c.addEventListener('click', function () {
+          if (state.presentation.mode !== 'slide') {
+            state.presentation.slideIdx = i;
+            cards.forEach(function (x, j) { x.classList.toggle('is-spotlight', j === i); });
+          }
+        });
+      });
+    }
+    wirePlanetariumLaserAndControls();
     setTimeout(function () { initEmbeddedLabCanvasesInRoot(stageEl, r, items); }, 50);
+  }
+
+  let presLaserWired = false;
+  let presLaserArmed = false;
+  let presLaserTrails = [];
+  let presLaserRaf = 0;
+
+  function wirePlanetariumLaserAndControls() {
+    if (presLaserWired) return;
+    presLaserWired = true;
+    const laserBtn = document.getElementById('vtPresLaserBtn');
+    const laserCvs = document.getElementById('vtPresLaserCanvas');
+    const slateBtn = document.getElementById('vtPresOpenSlateBtn');
+
+    if (slateBtn) {
+      slateBtn.addEventListener('click', function () {
+        closePresentationMode();
+        if (typeof window.VANTHESIS_SWITCH_SECTOR === 'function') window.VANTHESIS_SWITCH_SECTOR('slate');
+      });
+    }
+
+    function resizeLaser() {
+      if (!laserCvs) return;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      laserCvs.width = Math.floor(window.innerWidth * dpr);
+      laserCvs.height = Math.floor(window.innerHeight * dpr);
+      const ctx = laserCvs.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function renderLaserFrame() {
+      presLaserRaf = 0;
+      if (!laserCvs) return;
+      const ctx = laserCvs.getContext('2d');
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      const now = performance.now();
+      presLaserTrails = presLaserTrails.filter(function (tr) { return now - tr.t < 1500; });
+      for (let i = 0; i < presLaserTrails.length; i++) {
+        const tr = presLaserTrails[i];
+        const life = Math.max(0, 1 - (now - tr.t) / 1500);
+        if (tr.pts.length > 1) {
+          ctx.save();
+          ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+          ctx.strokeStyle = 'rgba(239, 68, 68, ' + (life * 0.42) + ')';
+          ctx.lineWidth = 11;
+          ctx.beginPath();
+          ctx.moveTo(tr.pts[0].x, tr.pts[0].y);
+          for (let k = 1; k < tr.pts.length; k++) ctx.lineTo(tr.pts[k].x, tr.pts[k].y);
+          ctx.stroke();
+          ctx.strokeStyle = 'rgba(251, 191, 36, ' + (life * 0.95) + ')';
+          ctx.lineWidth = 3.2;
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+      if (presLaserTrails.length) {
+        presLaserRaf = requestAnimationFrame(renderLaserFrame);
+      }
+    }
+
+    if (laserBtn && laserCvs) {
+      laserBtn.addEventListener('click', function () {
+        presLaserArmed = !presLaserArmed;
+        laserBtn.classList.toggle('laser-on', presLaserArmed);
+        laserCvs.classList.toggle('is-armed', presLaserArmed);
+        if (presLaserArmed) resizeLaser();
+      });
+
+      let curTrail = null;
+      laserCvs.addEventListener('pointerdown', function (e) {
+        if (!presLaserArmed) return;
+        curTrail = { t: performance.now(), pts: [{ x: e.clientX, y: e.clientY }] };
+        presLaserTrails.push(curTrail);
+        if (!presLaserRaf) presLaserRaf = requestAnimationFrame(renderLaserFrame);
+      });
+      laserCvs.addEventListener('pointermove', function (e) {
+        if (!presLaserArmed || !curTrail) return;
+        curTrail.t = performance.now();
+        curTrail.pts.push({ x: e.clientX, y: e.clientY });
+        if (!presLaserRaf) presLaserRaf = requestAnimationFrame(renderLaserFrame);
+      });
+      const stopLaser = function () { curTrail = null; };
+      laserCvs.addEventListener('pointerup', stopLaser);
+      laserCvs.addEventListener('pointercancel', stopLaser);
+    }
+
+    // Spacebar reveals next Eclipse step in active presentation slide
+    document.addEventListener('keydown', function (e) {
+      if (!state.presentation.open) return;
+      if (e.code === 'Space') {
+        const stageEl = document.getElementById('vtPresStage');
+        const nextVeiled = stageEl && stageEl.querySelector('.vt-eclipse-step.is-veiled');
+        if (nextVeiled) {
+          e.preventDefault();
+          nextVeiled.classList.remove('is-veiled');
+        }
+      }
+    });
   }
 
   function getCommentRoleBadge(cm) {
@@ -2772,12 +3346,13 @@
     });
     tocEntries.push({ id: 'vtLessonQaSection', label: '💬 Hỏi – Đáp bài học' });
 
-    const tocSidebarHtml = '<aside class="vt-lesson-toc" aria-label="Mục lục bài giảng">' +
-      '<div class="vt-lesson-toc-title">Mục lục bài giảng</div>' +
+    const tocSidebarHtml = '<aside class="vt-lesson-toc vt-orbital-rail" aria-label="Quỹ đạo tiến trình bài giảng">' +
+      '<div class="vt-orbital-progress-head"><span>✦ Quỹ đạo bài giảng</span><span id="vtOrbitalPct" style="color:var(--primary);">0%</span></div>' +
+      '<div class="vt-orbital-track">' +
       tocEntries.map(function (t, i) {
         return '<button type="button" class="vt-toc-link' + (i === 0 ? ' active' : '') + '" data-toc-target="' + escapeAttr(t.id) + '">' + escapeHtml(t.label) + '</button>';
       }).join('') +
-    '</aside>';
+    '</div></aside>';
 
     const mobileJumpHtml = '<div class="vt-lesson-mobile-jump" aria-label="Chuyển nhanh phần bài giảng">' +
       tocEntries.map(function (t) {
@@ -2835,6 +3410,8 @@
 
     renderMathInElementSafe(bodyEl);
     initEmbeddedLabCanvasesInRoot(bodyEl, r, items);
+      wireEclipseAndScratchpads(bodyEl);
+      wireOrbitalTimelineProgress(bodyEl);
 
     bodyEl.querySelectorAll('[data-open-wb-idx]').forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -3167,8 +3744,16 @@
         innerFields =
           '<input type="text" data-blk-title="' + idx + '" value="' + escapeAttr(blk.title || '') + '" placeholder="Tiêu đề khối..." style="padding:7px 10px;border-radius:10px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);font-size:12.5px;font-weight:700;">' +
           symBar +
-          '<textarea rows="3" data-blk-text="' + idx + '" placeholder="Nhập nội dung (dùng $...$ hoặc $$...$$ cho công thức Toán học)..." style="padding:8px 10px;border-radius:10px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);font-size:12.8px;">' + escapeHtml(blk.text || '') + '</textarea>' +
-          solField +
+          '<div class="vt-ed-split-grid">' +
+            '<div style="display:flex;flex-direction:column;gap:8px;">' +
+              '<textarea rows="3" data-blk-text="' + idx + '" placeholder="Nhập nội dung (dùng $...$ hoặc $...$ cho công thức Toán học)..." style="padding:8px 10px;border-radius:10px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);font-size:12.8px;">' + escapeHtml(blk.text || '') + '</textarea>' +
+              solField +
+            '</div>' +
+            '<div class="vt-ed-live-preview" data-blk-live-prev="' + idx + '">' +
+              '<div style="font-size:11px;font-weight:800;color:var(--primary);margin-bottom:6px;">✦ Xem trước trực tiếp</div>' +
+              '<div data-blk-live-body="' + idx + '">' + renderSingleLessonBlockHtml(norm, idx, true) + '</div>' +
+            '</div>' +
+          '</div>' +
           '<div style="display:flex;align-items:center;justify-content:flex-start;">' +
             '<button type="button" class="btn btn-sm" data-blk-toggle-prev="' + idx + '">' + (isPrev ? '🙈 Ẩn xem trước công thức' : '👁️ Xem trước công thức') + '</button>' +
           '</div>' +
