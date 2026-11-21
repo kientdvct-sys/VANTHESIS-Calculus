@@ -13,8 +13,10 @@
   const DB_NAME = 'vanthesis_constellation_cache';
   const DB_VERSION = 2;
   const SYNC_CHANNEL_NAME = 'vanthesis_constellation_sync';
-  const HEARTBEAT_INTERVAL_MS = 8000;
-  const DEFAULT_API_TIMEOUT_MS = 25000;
+  const HEARTBEAT_INTERVAL_MS = 90000;
+  const HIDDEN_REVALIDATE_MS = 30000;
+  const USER_IDLE_WINDOW_MS = 180000;
+  const DEFAULT_API_TIMEOUT_MS = 15000;
 
   /* ==========================================================================
    * 0. FRIENDLY VIETNAMESE ERROR TRANSLATOR (ZERO TECHNICAL JARGON)
@@ -203,6 +205,44 @@
     }
   }
 
+  const inFlightRequests = new Map();
+  let lastUserActivityTs = Date.now();
+  let hiddenSinceTs = 0;
+  let visibilityWired = false;
+
+  function markUserActive() {
+    lastUserActivityTs = Date.now();
+  }
+
+  function wireSmartSyncListeners() {
+    if (visibilityWired || typeof document === 'undefined') return;
+    visibilityWired = true;
+    ['pointerdown', 'keydown', 'scroll'].forEach(function (evt) {
+      window.addEventListener(evt, markUserActive, { passive: true });
+    });
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'hidden') {
+        hiddenSinceTs = Date.now();
+      } else if (document.visibilityState === 'visible') {
+        markUserActive();
+        const awayMs = hiddenSinceTs ? (Date.now() - hiddenSinceTs) : 0;
+        hiddenSinceTs = 0;
+        if (awayMs >= HIDDEN_REVALIDATE_MS && auth.isSignedIn()) {
+          api.post('sync_heartbeat', {}, { timeoutMs: 10000, silent: true }).catch(function () {});
+        }
+      }
+    });
+  }
+
+  function buildDedupeKey(action, payload, opts) {
+    if (opts && opts.dedupeKey) return String(opts.dedupeKey);
+    try {
+      return action + ':' + JSON.stringify(payload || {});
+    } catch (e) {
+      return action + ':' + Date.now();
+    }
+  }
+
   const api = {
     getSyncRev: function () {
       return currentSyncRev;
@@ -214,61 +254,125 @@
         return { ok: false, error: translateFriendlyError('UNAUTHORIZED_TOKEN'), rawError: 'UNAUTHORIZED_TOKEN' };
       }
 
+      const useDedupe = opts.dedupe !== false && !opts._retried;
+      const dedupeKey = useDedupe ? buildDedupeKey(action, payload, opts) : '';
+
+      if (useDedupe && inFlightRequests.has(dedupeKey)) {
+        const prev = inFlightRequests.get(dedupeKey);
+        if (opts.cancelPrevious && prev.controller) {
+          try { prev.controller.abort(); } catch (e) {}
+          inFlightRequests.delete(dedupeKey);
+        } else {
+          return prev.promise;
+        }
+      }
+
       const timeoutMs = Math.max(3000, Number(opts.timeoutMs) || DEFAULT_API_TIMEOUT_MS);
       const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-      const timer = controller ? setTimeout(function () { controller.abort(); }, timeoutMs) : null;
+      let timedOut = false;
+      const timer = controller ? setTimeout(function () {
+        timedOut = true;
+        try { controller.abort(); } catch (e) {}
+      }, timeoutMs) : null;
 
-      try {
-        const reqBody = Object.assign({ action: action, accessToken: sess.accessToken }, payload || {});
-        const resp = await fetch(sess.bridgeUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(reqBody),
-          signal: controller ? controller.signal : undefined
-        });
-        if (timer) clearTimeout(timer);
-
-        if (resp.status === 401 && !opts._retried) {
-          const refreshed = await auth.refreshToken();
-          if (refreshed) {
-            return api.post(action, payload, Object.assign({}, opts, { _retried: true }));
-          }
-          return { ok: false, error: translateFriendlyError('UNAUTHORIZED_TOKEN'), rawError: 'UNAUTHORIZED_TOKEN' };
-        }
-
-        const data = await resp.json();
-        if (data && !data.ok && data.error === 'UNAUTHORIZED_TOKEN' && !opts._retried) {
-          const refreshed = await auth.refreshToken();
-          if (refreshed) {
-            return api.post(action, payload, Object.assign({}, opts, { _retried: true }));
-          }
-        }
-        if (data && data.syncRev) {
-          updateSyncRevIfNewer(data.syncRev, action !== 'sync_heartbeat');
-        }
-        if (data && !data.ok) {
-          return Object.assign({}, data, {
-            rawError: data.error,
-            error: translateFriendlyError(data.error)
+      const execPromise = (async function () {
+        try {
+          const reqBody = Object.assign({ action: action, accessToken: sess.accessToken }, payload || {});
+          const resp = await fetch(sess.bridgeUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(reqBody),
+            signal: controller ? controller.signal : undefined
           });
+          if (timer) clearTimeout(timer);
+
+          if (resp.status === 401 && !opts._retried) {
+            const refreshed = await auth.refreshToken();
+            if (refreshed) {
+              return api.post(action, payload, Object.assign({}, opts, { _retried: true, dedupe: false }));
+            }
+            return { ok: false, error: translateFriendlyError('UNAUTHORIZED_TOKEN'), rawError: 'UNAUTHORIZED_TOKEN' };
+          }
+
+          const data = await resp.json();
+          if (data && !data.ok && data.error === 'UNAUTHORIZED_TOKEN' && !opts._retried) {
+            const refreshed = await auth.refreshToken();
+            if (refreshed) {
+              return api.post(action, payload, Object.assign({}, opts, { _retried: true, dedupe: false }));
+            }
+          }
+          if (data && data.syncRev) {
+            updateSyncRevIfNewer(data.syncRev, action !== 'sync_heartbeat');
+          }
+          if (data && !data.ok) {
+            return Object.assign({}, data, {
+              rawError: data.error,
+              error: translateFriendlyError(data.error)
+            });
+          }
+          return data;
+        } catch (err) {
+          if (timer) clearTimeout(timer);
+          const isAbort = err && err.name === 'AbortError';
+          if (isAbort && !timedOut) {
+            return { ok: false, aborted: true, error: '', rawError: 'ABORTED' };
+          }
+          const code = timedOut ? 'TIMEOUT_ERROR' : 'NETWORK_ERROR';
+          const friendly = translateFriendlyError(code);
+          if (timedOut && !opts.silent && typeof ui !== 'undefined' && ui && typeof ui.toast === 'function') {
+            const retryCb = typeof opts.onRetry === 'function'
+              ? opts.onRetry
+              : function () { api.post(action, payload, Object.assign({}, opts, { dedupe: false })); };
+            ui.toast(friendly, 'warning', { retryLabel: 'Thử lại', onRetry: retryCb });
+          }
+          return { ok: false, timedOut: timedOut, error: friendly, rawError: code };
+        } finally {
+          if (useDedupe && inFlightRequests.get(dedupeKey) && inFlightRequests.get(dedupeKey).controller === controller) {
+            inFlightRequests.delete(dedupeKey);
+          }
         }
-        return data;
-      } catch (err) {
-        if (timer) clearTimeout(timer);
-        const isAbort = err && err.name === 'AbortError';
-        const code = isAbort ? 'TIMEOUT_ERROR' : 'NETWORK_ERROR';
-        return { ok: false, error: translateFriendlyError(code), rawError: code };
+      })();
+
+      if (useDedupe) {
+        inFlightRequests.set(dedupeKey, { controller: controller, promise: execPromise });
       }
+      return execPromise;
+    },
+    staleWhileRevalidate: async function (opts) {
+      const o = opts || {};
+      let cached = null;
+      if (o.store && o.key) {
+        try {
+          cached = await db.get(o.store, o.key);
+          if (cached && typeof o.onData === 'function') {
+            o.onData(cached, { fromCache: true });
+          }
+        } catch (e) {}
+      }
+      const revalidatePromise = Promise.resolve().then(function () {
+        return typeof o.fetchFn === 'function' ? o.fetchFn() : null;
+      }).then(async function (fresh) {
+        if (fresh && fresh.ok !== false) {
+          if (o.store && o.key) {
+            try { await db.set(o.store, Object.assign({ key: o.key }, fresh)); } catch (e) {}
+          }
+          if (typeof o.onData === 'function') {
+            o.onData(fresh, { fromCache: false });
+          }
+        }
+        return fresh;
+      }).catch(function () { return null; });
+
+      return cached || revalidatePromise;
     },
     startHeartbeat: function () {
+      wireSmartSyncListeners();
       if (heartbeatTimer) return;
       heartbeatTimer = setInterval(async function () {
-        if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
-        if (!auth.isAuthenticated()) return;
-        const res = await api.post('sync_heartbeat', {}, { timeoutMs: 10000 });
-        if (res && res.ok && res.syncRev) {
-          updateSyncRevIfNewer(res.syncRev, true);
-        }
+        if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+        if (Date.now() - lastUserActivityTs > USER_IDLE_WINDOW_MS) return;
+        if (!auth.isSignedIn()) return;
+        await api.post('sync_heartbeat', {}, { timeoutMs: 10000, silent: true });
       }, HEARTBEAT_INTERVAL_MS);
     },
     stopHeartbeat: function () {
@@ -640,6 +744,36 @@
       folderIdCache[name] = cd.id;
       return cd.id;
     },
+    ensureSubFolder: async function (parentFolderName, subFolderName) {
+      const parentName = String(parentFolderName || 'VANTHESIS_Bang_Giang').trim();
+      const subName = String(subFolderName || '').trim();
+      if (!subName || subName === 'Chung') {
+        return drive.ensureFolder(parentName);
+      }
+      const cacheKey = parentName + '::' + subName;
+      if (folderIdCache[cacheKey]) return folderIdCache[cacheKey];
+
+      const parentId = await drive.ensureFolder(parentName);
+      const safeSub = subName.replace(/'/g, "\\'");
+      const q = encodeURIComponent("name='" + safeSub + "' and '" + parentId + "' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false");
+      const listResp = await driveFetch('https://www.googleapis.com/drive/v3/files?q=' + q + '&fields=files(id,name)&pageSize=1', { method: 'GET' });
+      if (listResp.ok) {
+        const ld = await listResp.json();
+        if (ld.files && ld.files[0] && ld.files[0].id) {
+          folderIdCache[cacheKey] = ld.files[0].id;
+          return ld.files[0].id;
+        }
+      }
+      const createResp = await driveFetch('https://www.googleapis.com/drive/v3/files?fields=id', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: subName, mimeType: 'application/vnd.google-apps.folder', parents: [parentId] })
+      });
+      if (!createResp.ok) throw new Error(translateFriendlyError('DRIVE_UPLOAD_FAILED'));
+      const cd = await createResp.json();
+      folderIdCache[cacheKey] = cd.id;
+      return cd.id;
+    },
     uploadFile: async function (opts, _retried) {
       const o = opts || {};
       const token = auth.getAccessToken();
@@ -657,7 +791,7 @@
         endpoint = 'https://www.googleapis.com/upload/drive/v3/files/' + encodeURIComponent(o.existingFileId) + '?uploadType=multipart&fields=id,name,mimeType';
         method = 'PATCH';
       } else {
-        const folderId = await drive.ensureFolder(o.folderName || 'VANTHESIS_Hoc_Lieu');
+        const folderId = o.subFolderName ? await drive.ensureSubFolder(o.folderName || 'VANTHESIS_Bang_Giang', o.subFolderName) : await drive.ensureFolder(o.folderName || 'VANTHESIS_Hoc_Lieu');
         metadata = { name: fileName, mimeType: mimeType, parents: [folderId] };
         endpoint = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,mimeType';
         method = 'POST';
@@ -726,18 +860,17 @@
         color-scheme: only light;
         --vt-cosmos-bg: #FAF8F3;
         --vt-cosmos-bg-deep: #F2ECE0;
-        --vt-cosmos-surface: rgba(255, 253, 248, 0.78);
-        --vt-cosmos-surface-strong: rgba(255, 254, 250, 0.92);
+        --vt-cosmos-surface: rgba(255, 253, 248, 0.94);
+        --vt-cosmos-surface-strong: rgba(255, 254, 250, 0.97);
         --vt-cosmos-text: #0F172A;
         --vt-cosmos-text-muted: #475569;
         --vt-cosmos-gold: #B45309;
         --vt-cosmos-cobalt: #1D4ED8;
         --vt-cosmos-meridian: rgba(180, 83, 9, 0.08);
-        --vt-cosmos-border: rgba(15, 23, 42, 0.10);
+        --vt-cosmos-border: rgba(15, 23, 42, 0.11);
+        --vt-cosmos-border-hover: rgba(29, 78, 216, 0.36);
         --vt-cosmos-border-top: rgba(255, 255, 255, 0.88);
-        --vt-cosmos-glow: rgba(29, 78, 216, 0.11);
-        --vt-cosmos-glow-gold: rgba(180, 83, 9, 0.09);
-        --vt-cosmos-shadow: 0 18px 46px -14px rgba(15, 23, 42, 0.12);
+        --vt-cosmos-shadow: 0 12px 32px -12px rgba(15, 23, 42, 0.10);
         --vt-cosmos-radius-outer: 30px;
         --vt-cosmos-radius-frame: 22px;
         --vt-cosmos-radius-card: 16px;
@@ -746,28 +879,25 @@
         --vt-cosmos-font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
         --vt-cosmos-font-mono: 'JetBrains Mono', ui-monospace, monospace;
         --vt-cosmos-ease: cubic-bezier(0.22, 1, 0.36, 1);
-        --vt-mx: 50vw;
-        --vt-my: 20vh;
       }
       html[data-theme="dark"] {
         color-scheme: dark;
         --vt-cosmos-bg: #030613;
         --vt-cosmos-bg-deep: #070E24;
-        --vt-cosmos-surface: rgba(10, 17, 38, 0.72);
-        --vt-cosmos-surface-strong: rgba(12, 20, 44, 0.88);
+        --vt-cosmos-surface: rgba(10, 17, 38, 0.92);
+        --vt-cosmos-surface-strong: rgba(12, 20, 44, 0.96);
         --vt-cosmos-text: #F1F5F9;
         --vt-cosmos-text-muted: #94A3B8;
         --vt-cosmos-gold: #FBBF24;
         --vt-cosmos-cobalt: #38BDF8;
         --vt-cosmos-meridian: rgba(148, 163, 184, 0.08);
-        --vt-cosmos-border: rgba(148, 163, 184, 0.18);
-        --vt-cosmos-border-top: rgba(255, 255, 255, 0.22);
-        --vt-cosmos-glow: rgba(56, 189, 248, 0.15);
-        --vt-cosmos-glow-gold: rgba(251, 191, 36, 0.10);
-        --vt-cosmos-shadow: 0 22px 56px -14px rgba(2, 6, 23, 0.65);
+        --vt-cosmos-border: rgba(148, 163, 184, 0.20);
+        --vt-cosmos-border-hover: rgba(56, 189, 248, 0.45);
+        --vt-cosmos-border-top: rgba(255, 255, 255, 0.20);
+        --vt-cosmos-shadow: 0 16px 38px -12px rgba(2, 6, 23, 0.56);
       }
 
-      /* Starlight Refractive Liquid Glass Cards */
+      /* 60fps Lightweight Translucent Cards (Zero backdrop-filter on repeating lists, pure CSS hover) */
       .vtc-glass-card, .vt-bento-card {
         position: relative;
         background: var(--vt-cosmos-surface);
@@ -775,27 +905,11 @@
         border-top: 1px solid var(--vt-cosmos-border-top);
         border-radius: var(--vt-cosmos-radius-frame);
         box-shadow: var(--vt-cosmos-shadow);
-        backdrop-filter: blur(22px) saturate(145%);
-        -webkit-backdrop-filter: blur(22px) saturate(145%);
-        transition: transform 0.24s var(--vt-cosmos-ease), border-color 0.24s var(--vt-cosmos-ease), box-shadow 0.24s var(--vt-cosmos-ease);
-        overflow: hidden;
+        transition: border-color 150ms ease, transform 150ms ease;
       }
-      .vtc-glass-card::before, .vt-bento-card::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        opacity: 0;
-        background: radial-gradient(380px circle at var(--vt-card-mx, 50%) var(--vt-card-my, 0%), var(--vt-cosmos-glow), transparent 62%);
-        transition: opacity 0.28s var(--vt-cosmos-ease);
-        z-index: 0;
-      }
-      .vtc-glass-card:hover::before, .vt-bento-card:hover::before {
-        opacity: 1;
-      }
-      .vtc-glass-card > *, .vt-bento-card > * {
-        position: relative;
-        z-index: 1;
+      .vtc-glass-card:hover, .vt-bento-card:hover {
+        border-color: var(--vt-cosmos-border-hover);
+        transform: translateY(-2px);
       }
       .vtc-glass-subcard {
         border-radius: var(--vt-cosmos-radius-card);
@@ -819,45 +933,57 @@
       }
       .vtc-toast {
         pointer-events: auto;
-        padding: 11px 20px;
+        padding: 10px 18px;
         border-radius: var(--vt-cosmos-radius-pill);
-        background: rgba(8, 14, 34, 0.88);
+        background: rgba(8, 14, 34, 0.92);
         color: #F8FAFC;
-        border: 1px solid rgba(148, 163, 184, 0.28);
-        border-top: 1px solid rgba(255, 255, 255, 0.24);
-        box-shadow: 0 20px 48px rgba(2, 6, 23, 0.44);
-        backdrop-filter: blur(22px) saturate(145%);
-        -webkit-backdrop-filter: blur(22px) saturate(145%);
+        border: 1px solid rgba(148, 163, 184, 0.30);
+        border-top: 1px solid rgba(255, 255, 255, 0.22);
+        box-shadow: 0 16px 38px rgba(2, 6, 23, 0.42);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
         font-family: var(--vt-cosmos-font-sans);
         font-size: 13.5px;
         font-weight: 700;
         line-height: 1.45;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
         opacity: 0;
-        transform: translateY(-12px) scale(0.97);
-        transition: opacity 0.22s var(--vt-cosmos-ease), transform 0.22s var(--vt-cosmos-ease);
+        transform: translateY(-10px);
+        transition: opacity 160ms ease, transform 160ms ease;
       }
       .vtc-toast.visible {
         opacity: 1;
-        transform: translateY(0) scale(1);
+        transform: translateY(0);
       }
       html[data-theme="light"] .vtc-toast {
-        background: rgba(255, 253, 248, 0.94);
+        background: rgba(255, 253, 248, 0.96);
         color: #0F172A;
-        border-color: rgba(15, 23, 42, 0.12);
-        border-top-color: rgba(255, 255, 255, 0.95);
-        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
+        border-color: rgba(15, 23, 42, 0.14);
+        box-shadow: 0 14px 34px rgba(15, 23, 42, 0.14);
       }
       .vtc-toast.success { border-color: rgba(16, 185, 129, 0.65); }
       .vtc-toast.warning { border-color: rgba(245, 158, 11, 0.68); }
       .vtc-toast.error { border-color: rgba(239, 68, 68, 0.72); }
+      .vtc-toast-retry {
+        padding: 4px 11px;
+        border-radius: 9999px;
+        border: 1px solid rgba(56, 189, 248, 0.55);
+        background: rgba(37, 99, 235, 0.18);
+        color: inherit;
+        font-size: 12px;
+        font-weight: 800;
+        cursor: pointer;
+      }
 
       .vtc-confirm-backdrop {
         position: fixed;
         inset: 0;
         z-index: 9998;
-        background: rgba(3, 6, 19, 0.56);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        background: rgba(3, 6, 19, 0.52);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -872,8 +998,6 @@
         border: 1px solid var(--vt-cosmos-border);
         border-top: 1px solid var(--vt-cosmos-border-top);
         box-shadow: var(--vt-cosmos-shadow);
-        backdrop-filter: blur(24px) saturate(145%);
-        -webkit-backdrop-filter: blur(24px) saturate(145%);
         font-family: var(--vt-cosmos-font-sans);
       }
       .vtc-confirm-title {
@@ -904,14 +1028,13 @@
         font-size: 13px;
         font-weight: 700;
         cursor: pointer;
-        transition: transform 0.16s var(--vt-cosmos-ease), filter 0.16s ease;
+        transition: border-color 150ms ease, transform 150ms ease;
       }
-      .vtc-btn:hover { transform: translateY(-1px); }
+      .vtc-btn:hover { transform: translateY(-1px); border-color: var(--vt-cosmos-border-hover); }
       .vtc-btn-primary {
         background: linear-gradient(135deg, #1D4ED8, #2563EB);
         color: #FFFFFF;
         border-color: transparent;
-        box-shadow: 0 8px 20px -6px rgba(29, 78, 216, 0.45);
       }
       .vtc-btn-danger {
         background: linear-gradient(135deg, #DC2626, #B91C1C);
@@ -939,49 +1062,11 @@
     document.head.appendChild(style);
   }
 
-  let starlightTrackerInitialized = false;
-  function initStarlightTracker() {
-    if (starlightTrackerInitialized || typeof window === 'undefined' || typeof document === 'undefined') return;
-    starlightTrackerInitialized = true;
-    ensureCoreStyles();
-
-    const isCoarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-    const canHover = window.matchMedia && window.matchMedia('(hover: hover)').matches;
-    if (isCoarse && !canHover) return;
-
-    let rafId = 0;
-    let lastX = 0;
-    let lastY = 0;
-    let lastTarget = null;
-
-    function flushPointer() {
-      rafId = 0;
-      document.documentElement.style.setProperty('--vt-mx', lastX + 'px');
-      document.documentElement.style.setProperty('--vt-my', lastY + 'px');
-      if (lastTarget && typeof lastTarget.closest === 'function') {
-        const card = lastTarget.closest('.vtc-glass-card, .vt-bento-card, .bento-card, .vt-res-card, .vt-cls-card');
-        if (card) {
-          const rect = card.getBoundingClientRect();
-          card.style.setProperty('--vt-card-mx', (lastX - rect.left) + 'px');
-          card.style.setProperty('--vt-card-my', (lastY - rect.top) + 'px');
-        }
-      }
-    }
-
-    window.addEventListener('pointermove', function (e) {
-      if (e.pointerType === 'touch') return;
-      lastX = e.clientX;
-      lastY = e.clientY;
-      lastTarget = e.target;
-      if (!rafId) rafId = requestAnimationFrame(flushPointer);
-    }, { passive: true });
-  }
-
   if (typeof document !== 'undefined') {
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initStarlightTracker);
+      document.addEventListener('DOMContentLoaded', ensureCoreStyles);
     } else {
-      initStarlightTracker();
+      ensureCoreStyles();
     }
   }
 
@@ -1028,7 +1113,7 @@
   }
 
   const ui = {
-    toast: function (message, type) {
+    toast: function (message, type, actionOpts) {
       if (typeof document === 'undefined') return;
       ensureCoreStyles();
       let host = document.getElementById('vtcToastHost');
@@ -1044,14 +1129,27 @@
       host.innerHTML = '';
       const el = document.createElement('div');
       el.className = 'vtc-toast ' + kind;
-      el.textContent = String(message || '');
+      const span = document.createElement('span');
+      span.textContent = String(message || '');
+      el.appendChild(span);
+      if (actionOpts && typeof actionOpts.onRetry === 'function') {
+        const retryBtn = document.createElement('button');
+        retryBtn.type = 'button';
+        retryBtn.className = 'vtc-toast-retry';
+        retryBtn.textContent = actionOpts.retryLabel || 'Thử lại';
+        retryBtn.addEventListener('click', function () {
+          if (el.parentNode) el.parentNode.removeChild(el);
+          actionOpts.onRetry();
+        });
+        el.appendChild(retryBtn);
+      }
       host.appendChild(el);
       requestAnimationFrame(function () { el.classList.add('visible'); });
       clearTimeout(activeToastTimer);
       activeToastTimer = setTimeout(function () {
         el.classList.remove('visible');
-        setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 220);
-      }, 3200);
+        setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 200);
+      }, actionOpts && actionOpts.onRetry ? 6500 : 3200);
     },
     confirm: function (opts) {
       if (typeof document === 'undefined') return Promise.resolve(false);
@@ -1098,7 +1196,6 @@
       }
       return '<div class="vtc-skeleton-wrap" aria-hidden="true">' + rows + '</div>';
     },
-    initStarlightTracker: initStarlightTracker,
     renderMathText: renderMathText,
     renderMath: function (container) {
       if (!container) return;
