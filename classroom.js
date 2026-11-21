@@ -5025,30 +5025,56 @@
     }
   });
 
-  // Auto-sync via VANTHESIS_CORE.bus (Sticky Replay + Live SyncRev)
-  function handleSessionChanged() {
-    updateTopUserLine();
-    if (state.isOpen && !state.loadingBootstrap && getSessionContext()) {
-      loadBootstrap();
-    }
+  // Centralized v2.0 Sector Lifecycle (VANTHESIS_CORE.registerSector)
+  function isCoreSignedInClassroom() {
+    const C = window.VANTHESIS_CORE;
+    if (C && C.auth && typeof C.auth.isSignedIn === 'function') return C.auth.isSignedIn();
+    return Boolean(getSessionContext());
   }
-  const coreBus = window.VANTHESIS_CORE && window.VANTHESIS_CORE.bus;
-  if (coreBus) {
-    coreBus.on('session-changed', handleSessionChanged);
-    coreBus.on('sector-changed', function (detail) {
-      if (detail && detail.sector === 'classroom' && getSessionContext()) {
+
+  function registerClassroomSector() {
+    const C = window.VANTHESIS_CORE;
+    if (!C || typeof C.registerSector !== 'function') return false;
+
+    C.registerSector('classroom', {
+      containerId: 'sectorClassroom',
+      mount: async function (container) {
+        if (!isCoreSignedInClassroom()) return;
+        const placeholder = container && container.querySelector('.lcms-mount-wrap');
+        if (placeholder) {
+          placeholder.innerHTML = '<div class="lcms-welcome-banner"><div><h2>Không gian Lớp học &amp; Hồ sơ Học sinh 360°</h2><p>Đang mở giao diện quản trị lớp học, sổ điểm kép và tiến độ học tập.</p></div><button type="button" class="btn btn-primary" id="vtCrReopenInlineBtn">Mở không gian Lớp học</button></div>';
+          const btn = placeholder.querySelector('#vtCrReopenInlineBtn');
+          if (btn) btn.addEventListener('click', function () { open(); });
+        }
         open();
+      },
+      refresh: async function () {
+        if (!isCoreSignedInClassroom()) return;
+        if (!state.isOpen) open();
+        else if (!state.loadingBootstrap) loadBootstrap();
+      },
+      unmount: function () {
+        close();
       }
-    }, { replay: false });
-    coreBus.on('sync-rev-changed', function (info) {
-      if (state.isOpen && info && Number(info.syncRev) > state.localSyncRev) {
-        handleIncomingServerRev(Number(info.syncRev));
-      }
-    }, { replay: false });
-  } else {
-    window.addEventListener('vantesis:session-changed', handleSessionChanged);
-    window.addEventListener('vanthesis:session-changed', handleSessionChanged);
+    });
+
+    if (C.bus) {
+      C.bus.on('session-changed', function () {
+        updateTopUserLine();
+        if (state.isOpen && !state.loadingBootstrap && isCoreSignedInClassroom()) {
+          loadBootstrap();
+        }
+      });
+      C.bus.on('sync-rev-changed', function (info) {
+        if (state.isOpen && isCoreSignedInClassroom() && info && Number(info.syncRev) > state.localSyncRev) {
+          handleIncomingServerRev(Number(info.syncRev));
+        }
+      }, { replay: false });
+    }
+    return true;
   }
+
+  registerClassroomSector();
 
   window.VANTHESIS_CLASSROOM = Object.freeze({
     version: EXPECTED_BACKEND_VERSION,
