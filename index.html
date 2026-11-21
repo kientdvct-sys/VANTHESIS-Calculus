@@ -6085,7 +6085,9 @@
   .lcms-sector:not(.is-active) * {
     animation-play-state: paused !important;
   }
+  .lcms-sector.active,
   .lcms-sector.is-active {
+    display: flex !important;
     position: relative;
     z-index: 2;
     animation: vtCosmosSectorReveal 180ms var(--vt-cosmos-ease) both !important;
@@ -14220,17 +14222,15 @@
     let _pendingRefreshResolve = null;
 
     function publishSessionContext(ctxObj) {
-      window.VANTHESIS_SESSION_CONTEXT = ctxObj ? Object.freeze(ctxObj) : null;
+      const frozen = ctxObj ? Object.freeze(ctxObj) : null;
+      window.VANTHESIS_SESSION_CONTEXT = frozen;
       if (window.VANTHESIS_CORE && window.VANTHESIS_CORE.auth && typeof window.VANTHESIS_CORE.auth.setSession === 'function') {
-        window.VANTHESIS_CORE.auth.setSession(window.VANTHESIS_SESSION_CONTEXT);
+        window.VANTHESIS_CORE.auth.setSession(frozen);
       }
       if (typeof window.__vtSyncScopeBadges === 'function') {
         window.__vtSyncScopeBadges();
       }
-      if (window.VANTHESIS_CORE && window.VANTHESIS_CORE.bus) {
-        window.VANTHESIS_CORE.bus.emit('session-changed', window.VANTHESIS_SESSION_CONTEXT);
-      }
-      window.dispatchEvent(new CustomEvent('vantesis:session-changed', { detail: window.VANTHESIS_SESSION_CONTEXT }));
+      window.dispatchEvent(new CustomEvent('vantesis:session-changed', { detail: frozen }));
     }
 
     function resolvePendingRefresh(ok) {
@@ -18421,63 +18421,47 @@
   }
 
   let vtCurrentActiveSector = 'resources';
+  const VT_SECTOR_TITLES = {
+    dashboard: '◎ Tổng quan & Lộ trình',
+    resources: '✦ Kho Chòm sao',
+    exams: '🏆 Đấu trường Đề',
+    lab: '∫ Phòng Thí nghiệm 2D/3D',
+    slate: '✒️ Bảng Giảng Thiên Văn',
+    classroom: '🏫 Lớp học & Hồ sơ 360°'
+  };
+
+  function syncSectorShellChrome(target) {
+    vtCurrentActiveSector = target;
+    const shell = $('appShell');
+    if (shell) shell.setAttribute('data-active-sector', target);
+    document.querySelectorAll('[data-sector]').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-sector') === target);
+    });
+    const topTitleEl = $('vtTopbarSectorTitle');
+    if (topTitleEl) topTitleEl.textContent = VT_SECTOR_TITLES[target] || '✦ Kho Chòm sao';
+  }
+
   window.VANTHESIS_SWITCH_SECTOR = function (sectorName) {
     const valid = ['dashboard', 'resources', 'exams', 'lab', 'slate', 'classroom'];
     const target = valid.includes(sectorName) ? sectorName : 'resources';
     const prevSector = vtCurrentActiveSector;
-    vtCurrentActiveSector = target;
-    const shell = $('appShell');
-    if (shell) shell.setAttribute('data-active-sector', target);
+    syncSectorShellChrome(target);
 
-    const mapIds = {
-      dashboard: 'sectorDashboard',
-      resources: 'sectorResources',
-      exams: 'sectorExams',
-      lab: 'sectorLab',
-      slate: 'sectorSlate',
-      classroom: 'sectorClassroom'
-    };
-    valid.forEach(k => {
-      const sec = $(mapIds[k]);
-      if (sec) sec.classList.toggle('active', k === target);
-    });
-    document.querySelectorAll('[data-sector]').forEach(btn => {
-      btn.classList.toggle('active', btn.getAttribute('data-sector') === target);
-    });
-
-    const sectorTitles = {
-      dashboard: '◎ Tổng quan & Lộ trình',
-      resources: '✦ Kho Chòm sao',
-      exams: '🏆 Đấu trường Đề',
-      lab: '∫ Phòng Thí nghiệm 2D/3D',
-      slate: '✒️ Bảng Giảng Thiên Văn',
-      classroom: '🏫 Lớp học & Hồ sơ 360°'
-    };
-    const topTitleEl = $('vtTopbarSectorTitle');
-    if (topTitleEl) topTitleEl.textContent = sectorTitles[target] || '✦ Kho Chòm sao';
-
-    if (prevSector === 'slate' && target !== 'slate') {
-      try {
-        if (window.VANTHESIS_SLATE && typeof window.VANTHESIS_SLATE.onDeactivate === 'function') {
-          window.VANTHESIS_SLATE.onDeactivate();
-        }
-      } catch {}
-    }
-
-    if (target === 'lab') {
-      setTimeout(() => { try { resizeCanvases(); redrawAll(); } catch {} }, 45);
-    } else if (target === 'slate') {
-      setTimeout(() => {
-        try {
-          if (window.VANTHESIS_SLATE && typeof window.VANTHESIS_SLATE.onActivate === 'function') {
-            window.VANTHESIS_SLATE.onActivate();
-          }
-        } catch {}
-      }, 30);
-    } else if (target === 'classroom') {
-      if (window.VANTHESIS_CLASSROOM && typeof window.VANTHESIS_CLASSROOM.open === 'function') {
-        window.VANTHESIS_CLASSROOM.open();
-      }
+    if (window.VANTHESIS_CORE && typeof window.VANTHESIS_CORE.activateSector === 'function') {
+      window.VANTHESIS_CORE.activateSector(target);
+    } else {
+      const mapIds = {
+        dashboard: 'sectorDashboard',
+        resources: 'sectorResources',
+        exams: 'sectorExams',
+        lab: 'sectorLab',
+        slate: 'sectorSlate',
+        classroom: 'sectorClassroom'
+      };
+      valid.forEach(k => {
+        const sec = $(mapIds[k]);
+        if (sec) sec.classList.toggle('is-active', k === target);
+      });
     }
 
     if (window.VANTHESIS_CORE && window.VANTHESIS_CORE.bus) {
@@ -18488,8 +18472,17 @@
   };
 
   document.querySelectorAll('[data-sector]').forEach(btn => {
-    btn.addEventListener('click', () => window.VANTHESIS_SWITCH_SECTOR(btn.getAttribute('data-sector')));
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-sector');
+      if (window.VANTHESIS_CORE && typeof window.VANTHESIS_CORE.activateSector === 'function') {
+        syncSectorShellChrome(id);
+        window.VANTHESIS_CORE.activateSector(id);
+      } else {
+        window.VANTHESIS_SWITCH_SECTOR(id);
+      }
+    });
   });
+
   if ($('vtRailCollapseBtn')) {
     $('vtRailCollapseBtn').addEventListener('click', () => {
       const rail = $('vtSectorRail');
@@ -18498,9 +18491,7 @@
   }
   if ($('btnSectorOpenClassroom')) {
     $('btnSectorOpenClassroom').addEventListener('click', () => {
-      if (window.VANTHESIS_CLASSROOM && typeof window.VANTHESIS_CLASSROOM.open === 'function') {
-        window.VANTHESIS_CLASSROOM.open();
-      }
+      window.VANTHESIS_SWITCH_SECTOR('classroom');
     });
   }
 
@@ -18546,9 +18537,9 @@
       if (typeof renderExprListUI === 'function') renderExprListUI();
       if (typeof renderCustomPointsUI === 'function') renderCustomPointsUI();
       if (typeof recompileAndAnalyze === 'function') recompileAndAnalyze();
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         try { resizeCanvases(); redrawAll(); renderVariationTableAndCards(); } catch {}
-      }, 60);
+      });
       return true;
     } catch {
       return false;
@@ -18589,7 +18580,7 @@
         out.height = baseCanvas.height;
         const ctx = out.getContext('2d');
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        ctx.fillStyle = isDark ? '#060B19' : '#FAF9F6';
+        ctx.fillStyle = isDark ? '#040816' : '#FAF8F3';
         ctx.fillRect(0, 0, out.width, out.height);
         ctx.drawImage(baseCanvas, 0, 0);
         if (!isTrigVisible && annotEl && annotEl.width > 0 && annotEl.height > 0) {
@@ -18602,18 +18593,25 @@
     const firstExpr = snap && Array.isArray(snap.exprs) && snap.exprs[0] && snap.exprs[0].expr
       ? String(snap.exprs[0].expr).trim()
       : '';
+    const caption = firstExpr ? ('Đồ thị y = ' + firstExpr) : 'Hình vẽ từ Phòng Thí nghiệm 2D/3D';
     const capturePayload = {
+      dataUrl: imageDataUrl,
       imageDataUrl: imageDataUrl,
-      title: firstExpr ? ('Đồ thị y = ' + firstExpr) : 'Hình vẽ từ Phòng Thí nghiệm 2D/3D',
+      caption: caption,
+      title: caption,
       snapshot: snap,
       capturedAt: new Date().toISOString()
     };
 
-    window.VANTHESIS_SWITCH_SECTOR('slate');
     if (window.VANTHESIS_CORE && window.VANTHESIS_CORE.bus) {
       window.VANTHESIS_CORE.bus.emit('slate-insert-lab', capturePayload);
-    } else if (window.VANTHESIS_SLATE && typeof window.VANTHESIS_SLATE.insertLabCapture === 'function') {
-      window.VANTHESIS_SLATE.insertLabCapture(capturePayload);
+      syncSectorShellChrome('slate');
+      window.VANTHESIS_CORE.activateSector('slate');
+    } else {
+      window.VANTHESIS_SWITCH_SECTOR('slate');
+      if (window.VANTHESIS_SLATE && typeof window.VANTHESIS_SLATE.insertLabCapture === 'function') {
+        window.VANTHESIS_SLATE.insertLabCapture(capturePayload);
+      }
     }
     showAppToast('✓ Đã gửi hình vẽ sang Bảng Giảng Thiên Văn.');
     return capturePayload;
@@ -18623,16 +18621,21 @@
     if (!docPayload || typeof docPayload !== 'object') return false;
     const payload = {
       title: String(docPayload.title || 'Tài liệu học tập'),
-      driveFileId: String(docPayload.driveFileId || ''),
+      fileId: String(docPayload.fileId || docPayload.driveFileId || ''),
+      driveFileId: String(docPayload.driveFileId || docPayload.fileId || ''),
       previewUrl: String(docPayload.previewUrl || ''),
       mimeType: String(docPayload.mimeType || ''),
       sourceResourceId: String(docPayload.sourceResourceId || '')
     };
-    window.VANTHESIS_SWITCH_SECTOR('slate');
     if (window.VANTHESIS_CORE && window.VANTHESIS_CORE.bus) {
       window.VANTHESIS_CORE.bus.emit('slate-open-document', payload);
-    } else if (window.VANTHESIS_SLATE && typeof window.VANTHESIS_SLATE.openDocumentOnBoard === 'function') {
-      window.VANTHESIS_SLATE.openDocumentOnBoard(payload);
+      syncSectorShellChrome('slate');
+      window.VANTHESIS_CORE.activateSector('slate');
+    } else {
+      window.VANTHESIS_SWITCH_SECTOR('slate');
+      if (window.VANTHESIS_SLATE && typeof window.VANTHESIS_SLATE.openDocumentOnBoard === 'function') {
+        window.VANTHESIS_SLATE.openDocumentOnBoard(payload);
+      }
     }
     return true;
   };
@@ -18653,6 +18656,33 @@
 
   window.addEventListener('DOMContentLoaded', () => {
     syncScopeBadgesFromCore();
+    if (window.VANTHESIS_CORE && typeof window.VANTHESIS_CORE.registerSector === 'function') {
+      // Register 2D/3D Calculus Lab into centralized v2.0 lifecycle
+      window.VANTHESIS_CORE.registerSector('lab', {
+        mount: () => {
+          requestAnimationFrame(() => { try { resizeCanvases(); redrawAll(); } catch {} });
+        },
+        refresh: () => {
+          requestAnimationFrame(() => { try { resizeCanvases(); redrawAll(); } catch {} });
+        },
+        unmount: () => {}
+      });
+      // Register bridge adapters for Slate & Classroom so activateSector works seamlessly
+      window.VANTHESIS_CORE.registerSector('slate', {
+        mount: () => { if (window.VANTHESIS_SLATE && typeof window.VANTHESIS_SLATE.onActivate === 'function') window.VANTHESIS_SLATE.onActivate(); },
+        refresh: () => { if (window.VANTHESIS_SLATE && typeof window.VANTHESIS_SLATE.onActivate === 'function') window.VANTHESIS_SLATE.onActivate(); },
+        unmount: () => { if (window.VANTHESIS_SLATE && typeof window.VANTHESIS_SLATE.onDeactivate === 'function') window.VANTHESIS_SLATE.onDeactivate(); }
+      });
+      window.VANTHESIS_CORE.registerSector('classroom', {
+        mount: () => { if (window.VANTHESIS_CLASSROOM && typeof window.VANTHESIS_CLASSROOM.open === 'function') window.VANTHESIS_CLASSROOM.open(); },
+        refresh: () => { if (window.VANTHESIS_CLASSROOM && typeof window.VANTHESIS_CLASSROOM.open === 'function') window.VANTHESIS_CLASSROOM.open(); },
+        unmount: () => {}
+      });
+      window.VANTHESIS_CORE.bus.on('sector-activated', (ev) => {
+        if (ev && ev.sectorId) syncSectorShellChrome(ev.sectorId);
+      });
+      window.VANTHESIS_CORE.activateSector(vtCurrentActiveSector);
+    }
   });
 
     resizeAll();
