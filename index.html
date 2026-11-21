@@ -3458,7 +3458,7 @@
    * ========================================================================= */
   #publicLandingView {
     --lv-bg: #FAF9F6;
-    --lv-surface: rgba(255, 255, 255, 0.86);
+    --lv-surface: rgba(255, 255, 255, 0.88);
     --lv-ink: #0F172A;
     --lv-muted: #475569;
     --lv-soft: #64748B;
@@ -4398,7 +4398,7 @@
     --bg: #FAF9F6;
     --surface: #FFFFFF;
     --surface-alt: #F3F4F6;
-    --surface-glass: rgba(255, 255, 255, 0.86);
+    --surface-glass: rgba(255, 255, 255, 0.88);
     --border: rgba(15, 23, 42, 0.10);
     --border-strong: rgba(15, 23, 42, 0.18);
     --text: #0F172A;
@@ -4424,7 +4424,7 @@
     color: #0F172A !important;
   }
   html[data-theme="light"] #publicLandingView .bento-card {
-    background: rgba(255, 255, 255, 0.86) !important;
+    background: rgba(255, 255, 255, 0.88) !important;
     -webkit-backdrop-filter: blur(16px) saturate(140%);
     backdrop-filter: blur(16px) saturate(140%);
     border-color: rgba(15, 23, 42, 0.10) !important;
@@ -4433,7 +4433,7 @@
   html[data-theme="light"] #publicLandingView .landing-footer,
   html[data-theme="light"] #publicLandingView .telemetry-pill,
   html[data-theme="light"] #publicLandingView .landing-cta-secondary {
-    background: rgba(255, 255, 255, 0.86) !important;
+    background: rgba(255, 255, 255, 0.88) !important;
     -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
     border-color: rgba(15, 23, 42, 0.10) !important;
@@ -12971,6 +12971,42 @@
       }, delayMs);
     }
 
+    let _pendingRefreshPromise = null;
+    let _pendingRefreshResolve = null;
+
+    function publishSessionContext(ctxObj) {
+      window.VANTHESIS_SESSION_CONTEXT = ctxObj ? Object.freeze(ctxObj) : null;
+      window.dispatchEvent(new CustomEvent('vantesis:session-changed', { detail: window.VANTHESIS_SESSION_CONTEXT }));
+    }
+
+    function resolvePendingRefresh(ok) {
+      if (_pendingRefreshResolve) {
+        const fn = _pendingRefreshResolve;
+        _pendingRefreshResolve = null;
+        _pendingRefreshPromise = null;
+        fn(ok ? _accessToken : null);
+      }
+    }
+
+    window.VANTHESIS_REFRESH_TOKEN = async function () {
+      if (!_authorized) return null;
+      if (!initTokenClient()) return null;
+      if (_pendingRefreshPromise) return _pendingRefreshPromise;
+      _pendingRefreshPromise = new Promise(resolve => {
+        const timer = setTimeout(() => resolvePendingRefresh(false), 12000);
+        _pendingRefreshResolve = val => {
+          clearTimeout(timer);
+          resolve(val);
+        };
+        try {
+          _tokenClient.requestAccessToken({ prompt: '' });
+        } catch {
+          resolvePendingRefresh(false);
+        }
+      });
+      return _pendingRefreshPromise;
+    };
+
     function initTokenClient() {
       if (_tokenClient) return true;
       if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) return false;
@@ -12980,6 +13016,7 @@
         callback: async resp => {
           if (resp.error) {
             setBtnLoading(false);
+            resolvePendingRefresh(false);
             if (_authorized) {
               $('tokenRefreshBanner').classList.add('visible');
             } else {
@@ -12987,10 +13024,12 @@
             }
             return;
           }
-          await verifyAndEstablishSession(resp.access_token, Number(resp.expires_in) || 3600, false);
+          const ok = await verifyAndEstablishSession(resp.access_token, Number(resp.expires_in) || 3600, false);
+          resolvePendingRefresh(Boolean(ok));
         },
         error_callback: () => {
           setBtnLoading(false);
+          resolvePendingRefresh(false);
           if (!_authorized) {
             showPortalNotice('Cửa sổ chọn tài khoản Google đã bị đóng hoặc bị trình duyệt chặn popup. Vui lòng cho phép popup và thử lại.', true);
           }
@@ -13067,7 +13106,7 @@
         // Silent token refresh / 401 re-auth while already working: keep canvas untouched!
         if (wasAlreadyUnlocked) {
           if (window.VANTHESIS_SESSION_CONTEXT) {
-            window.VANTHESIS_SESSION_CONTEXT = Object.freeze({
+            publishSessionContext({
               ...window.VANTHESIS_SESSION_CONTEXT,
               accessToken: _accessToken
             });
@@ -13098,7 +13137,7 @@
             picture: _profile.picture,
             roleMeta: RBAC_ROLE_REGISTRY.SUPER_ADMIN
           });
-          window.VANTHESIS_SESSION_CONTEXT = Object.freeze({
+          publishSessionContext({
             bridgeUrl: AUTH_CONFIG.APPROVAL_BRIDGE_URL,
             accessToken: _accessToken,
             email: _profile.email,
@@ -13125,7 +13164,7 @@
         _userProfile = null;
         _accessDecision = 'NONE';
         window.VANTHESIS_ACTIVE_USER = null;
-        window.VANTHESIS_SESSION_CONTEXT = null;
+        publishSessionContext(null);
         lockAppShell();
         renderTopbarAccount();
         setBtnLoading(true, 'Đang kiểm tra trạng thái phê duyệt tài khoản...');
@@ -13221,7 +13260,7 @@
       _profile = null;
       _signingIn = false;
       window.VANTHESIS_ACTIVE_USER = null;
-      window.VANTHESIS_SESSION_CONTEXT = null;
+      publishSessionContext(null);
       if (window.VANTHESIS_CLASSROOM && typeof window.VANTHESIS_CLASSROOM.close === 'function') {
         window.VANTHESIS_CLASSROOM.close();
       }
@@ -13306,7 +13345,7 @@
           picture: _profile.picture,
           roleMeta
         });
-        window.VANTHESIS_SESSION_CONTEXT = Object.freeze({
+        publishSessionContext({
           bridgeUrl: AUTH_CONFIG.APPROVAL_BRIDGE_URL,
           accessToken: _accessToken,
           email: _profile.email,
