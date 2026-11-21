@@ -1,8 +1,8 @@
 /**
- * VANTHESIS Calculus — Cosmic Liquid Glass Classroom & Dual Gradebook Hub
+ * VANTHESIS Calculus — Cosmic Liquid Glass Classroom & Dual Gradebook Hub v4.0
  * File: classroom.js (placed alongside index.html)
  * Namespace: window.VANTHESIS_CLASSROOM
- * Design Language: Apple Concentric Squircle + Liquid Glass + Cosmic Observatory
+ * Design Language: Apple Concentric Squircle + Liquid Glass + Mobile/iPad Responsive + Self-Healing Client
  *
  * Depends on window.VANTHESIS_SESSION_CONTEXT:
  *   { bridgeUrl, accessToken, email, role, fullName, avatar, status }
@@ -12,11 +12,17 @@
 
   const STYLE_ID = 'vanthesis-classroom-styles';
   const MODAL_ID = 'vtClassroomModal';
+  const EXPECTED_BACKEND_VERSION = '4.0';
   const MAX_BULK_IMPORT = 60;
 
   const state = {
     isOpen: false,
     cosmicDark: false,
+    drawerOpen: false,
+    backendVersion: '',
+    backendWarning: '',
+    linkFilter: 'all',       // 'all' | 'linked' | 'unlinked'
+    transferringStudent: null,
     loadingBootstrap: false,
     loadingRoster: false,
     loadingMatrix: false,
@@ -752,13 +758,305 @@
         transform: translate(-50%, 0) scale(1);
       }
 
-      @media (max-width: 860px) {
-        #${MODAL_ID} { padding: 0; }
-        .vt-cr-shell { border-radius: 0; }
-        .vt-cr-layout { flex-direction: column; }
-        .vt-cr-sidebar { width: 100%; max-height: 200px; border-right: none; border-bottom: 1px solid var(--cr-border); }
-        .vt-cr-main { padding: 14px; }
-        .vt-cr-banner-kpis, .vt-cr-form-grid, .vt-stu-kpi-grid, .vt-faculty-grid { grid-template-columns: 1fr; }
+      /* ===== v4.0 WEBKIT COLOR-SCHEME LOCK (ANTI-DARKENING ON iOS/iPadOS SAFARI) ===== */
+      #${MODAL_ID} {
+        color-scheme: light !important;
+      }
+      #${MODAL_ID}:not(.vt-cosmic-dark) .vt-cr-shell {
+        background: rgba(250, 249, 246, 0.90);
+        -webkit-backdrop-filter: blur(24px) saturate(165%);
+        backdrop-filter: blur(24px) saturate(165%);
+      }
+      #${MODAL_ID}:not(.vt-cosmic-dark) .vt-cr-card,
+      #${MODAL_ID}:not(.vt-cosmic-dark) .vt-cr-submodal {
+        background: rgba(255, 255, 255, 0.92);
+        -webkit-backdrop-filter: blur(18px);
+        backdrop-filter: blur(18px);
+      }
+      #${MODAL_ID}.vt-cosmic-dark {
+        color-scheme: dark !important;
+      }
+
+      /* ===== v4.0 SUPER_ADMIN COSMIC OVERVIEW KPI CARDS & AUDIT TIMELINE ===== */
+      .vt-sys-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .vt-sys-kpi-card {
+        position: relative;
+        background: var(--cr-surface);
+        border: 1px solid var(--cr-border);
+        border-radius: var(--vt-r-card);
+        padding: 14px 16px;
+        box-shadow: var(--cr-shadow-sm);
+        transition: transform 0.2s var(--vt-spring-smooth), border-color 0.2s ease, box-shadow 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .vt-sys-kpi-card.clickable {
+        cursor: pointer;
+        border-color: rgba(29, 78, 216, 0.24);
+      }
+      .vt-sys-kpi-card.clickable:hover {
+        transform: translateY(-2px);
+        border-color: var(--cr-cobalt);
+        box-shadow: 0 10px 24px -8px rgba(29, 78, 216, 0.22);
+      }
+      .vt-sys-kpi-label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--cr-soft);
+      }
+      .vt-sys-kpi-val {
+        font-family: var(--cr-mono);
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--cr-ink);
+        line-height: 1.2;
+      }
+      .vt-sys-kpi-sub {
+        font-size: 11.5px;
+        color: var(--cr-muted);
+      }
+
+      /* Audit Log Timeline List */
+      .vt-audit-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-height: 56dvh;
+        overflow-y: auto;
+        padding-right: 4px;
+      }
+      .vt-audit-item {
+        background: var(--cr-surface-soft);
+        border: 1px solid var(--cr-border);
+        border-radius: var(--vt-r-row);
+        padding: 10px 13px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .vt-audit-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        flex-wrap: wrap;
+        font-size: 11px;
+        color: var(--cr-soft);
+        font-family: var(--cr-mono);
+      }
+      .vt-audit-action-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: var(--vt-r-pill);
+        background: var(--cr-cobalt-soft);
+        color: var(--cr-cobalt);
+        font-weight: 700;
+        font-size: 10.5px;
+      }
+      .vt-audit-summary {
+        font-size: 12.8px;
+        color: var(--cr-ink);
+        font-weight: 500;
+      }
+
+      /* Version Diagnostic Banner / Card */
+      .vt-diag-card {
+        background: rgba(254, 243, 199, 0.90);
+        border: 1px solid rgba(217, 119, 6, 0.42);
+        border-radius: var(--vt-r-card);
+        padding: 16px 18px;
+        margin-bottom: 16px;
+        color: #78350F;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      #${MODAL_ID}.vt-cosmic-dark .vt-diag-card {
+        background: rgba(120, 53, 15, 0.28);
+        border-color: rgba(251, 191, 36, 0.42);
+        color: #FDE68A;
+      }
+
+      /* Mobile/iPad Constellation Drawer Trigger & Backdrop */
+      .vt-cr-drawer-toggle {
+        display: none;
+      }
+      .vt-cr-drawer-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(6, 11, 25, 0.50);
+        -webkit-backdrop-filter: blur(4px);
+        backdrop-filter: blur(4px);
+        z-index: 55;
+      }
+      .vt-cr-drawer-backdrop.open {
+        display: block;
+      }
+
+      /* Roster Filter Select */
+      .vt-cr-filter-select {
+        height: 40px;
+        padding: 0 12px;
+        border-radius: var(--vt-r-input);
+        border: 1px solid var(--cr-border);
+        background: var(--cr-surface);
+        color: var(--cr-ink);
+        font-family: var(--cr-sans);
+        font-size: 12.8px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      /* Horizontally scrollable Segmented Control Tabs */
+      .vt-cr-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        max-width: 100%;
+      }
+      .vt-cr-tabs::-webkit-scrollbar {
+        display: none;
+      }
+      .vt-cr-tab {
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      /* ===== IPAD & TABLET (<= 1180px) ===== */
+      @media (max-width: 1180px) {
+        .vt-sys-kpi-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      /* ===== IPAD PORTRAIT & MOBILE (<= 1024px): SLIDE-OVER CONSTELLATION DRAWER + STICKY GRADEBOOK ===== */
+      @media (max-width: 1024px) {
+        #${MODAL_ID} {
+          padding: 0;
+        }
+        .vt-cr-shell {
+          border-radius: 0;
+          height: 100dvh;
+          max-height: 100dvh;
+        }
+        .vt-cr-topbar {
+          padding: max(10px, env(safe-area-inset-top, 10px)) 14px 10px;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+        .vt-cr-drawer-toggle {
+          display: inline-flex !important;
+        }
+        .vt-cr-layout {
+          position: relative;
+        }
+        .vt-cr-sidebar {
+          position: fixed !important;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          width: min(320px, 86vw) !important;
+          max-width: 86vw !important;
+          max-height: 100dvh !important;
+          z-index: 60;
+          transform: translateX(-105%);
+          transition: transform 0.34s var(--vt-spring-smooth);
+          box-shadow: 0 24px 56px rgba(6, 11, 25, 0.35);
+          padding-top: max(16px, env(safe-area-inset-top, 16px));
+          padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+        }
+        .vt-cr-sidebar.drawer-open {
+          transform: translateX(0);
+        }
+        .vt-cr-main {
+          width: 100%;
+          padding: 14px 14px calc(24px + env(safe-area-inset-bottom, 0px));
+        }
+
+        /* Touch-Optimized Sticky First 2 Columns (STT + Họ và tên) on Gradebook Tables */
+        .vt-grade-table .vt-col-id {
+          display: none;
+        }
+        .vt-grade-table th:nth-child(1),
+        .vt-grade-table td:nth-child(1) {
+          position: sticky;
+          left: 0;
+          z-index: 3;
+          width: 42px;
+          min-width: 42px;
+          background: var(--cr-surface);
+        }
+        .vt-grade-table th.vt-col-name,
+        .vt-grade-table td.vt-col-name {
+          position: sticky;
+          left: 42px;
+          z-index: 3;
+          min-width: 148px;
+          max-width: 180px;
+          background: var(--cr-surface);
+          box-shadow: 4px 0 10px -4px rgba(15, 23, 42, 0.14);
+        }
+        .vt-grade-table thead th:nth-child(1),
+        .vt-grade-table thead th.vt-col-name {
+          z-index: 5;
+          background: var(--cr-surface-soft);
+        }
+      }
+
+      /* ===== MOBILE (< 768px): ANTI-ZOOM 16px INPUTS + SINGLE COLUMN CARDS ===== */
+      @media (max-width: 767px) {
+        #${MODAL_ID} input,
+        #${MODAL_ID} select,
+        #${MODAL_ID} textarea {
+          font-size: 16px !important;
+        }
+        .vt-cr-brand-sub {
+          display: none;
+        }
+        .vt-cr-top-actions {
+          width: 100%;
+          justify-content: flex-end;
+        }
+        .vt-sys-kpi-grid,
+        .vt-cr-banner-kpis,
+        .vt-cr-form-grid,
+        .vt-stu-kpi-grid,
+        .vt-faculty-grid {
+          grid-template-columns: 1fr;
+        }
+        .vt-cr-toolbar {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .vt-cr-search,
+        .vt-cr-filter-select {
+          width: 100%;
+        }
+        .vt-cr-submodal-backdrop {
+          align-items: flex-end;
+          padding: 0;
+        }
+        .vt-cr-submodal {
+          width: 100% !important;
+          max-width: 100% !important;
+          border-radius: 24px 24px 0 0 !important;
+          max-height: 92dvh !important;
+          overflow-y: auto;
+          padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+        }
       }
     `;
     document.head.appendChild(style);
@@ -768,10 +1066,18 @@
    * 2. UTILITIES, MATH HELPERS, CSV EXPORT & BRIDGE API CLIENT (100% PRESERVED)
    * ========================================================================== */
 
-  function esc(str) {
+  function escapeHtml(str) {
     return String(str == null ? '' : str)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function escapeAttr(str) {
+    return escapeHtml(str).replace(/`/g, '&#96;');
+  }
+
+  function esc(str) {
+    return escapeHtml(str);
   }
 
   function getInitials(name) {
@@ -878,8 +1184,12 @@
     return ctx;
   }
 
-  async function callBridge(action, extraBody) {
-    const ctx = getSessionContext();
+  async function callBridge(action, extraBody, _isRetry) {
+    let ctx = getSessionContext();
+    if (!ctx && !_isRetry && typeof window.VANTHESIS_REFRESH_TOKEN === 'function') {
+      try { await window.VANTHESIS_REFRESH_TOKEN(); } catch (e) {}
+      ctx = getSessionContext();
+    }
     if (!ctx) return { ok: false, error: 'Chưa có phiên đăng nhập Google hợp lệ.' };
     try {
       const payload = Object.assign({ action: action, accessToken: ctx.accessToken }, extraBody || {});
@@ -889,7 +1199,27 @@
         body: JSON.stringify(payload)
       });
       const text = await res.text();
-      try { return JSON.parse(text); } catch (e) { return { ok: false, error: 'Phản hồi từ máy chủ không hợp lệ.' }; }
+      let parsed = null;
+      try {
+        parsed = JSON.parse(text);
+      } catch (e) {
+        return { ok: false, error: 'Phản hồi từ máy chủ không hợp lệ.' };
+      }
+
+      // Auto-Retry Silent Token Refresh on UNAUTHORIZED_TOKEN (max 1 retry)
+      if (parsed && !parsed.ok && parsed.error === 'UNAUTHORIZED_TOKEN' && !_isRetry && typeof window.VANTHESIS_REFRESH_TOKEN === 'function') {
+        try {
+          await window.VANTHESIS_REFRESH_TOKEN();
+          return await callBridge(action, extraBody, true);
+        } catch (refreshErr) {
+          return parsed;
+        }
+      }
+
+      if (parsed && parsed.version) {
+        state.backendVersion = String(parsed.version);
+      }
+      return parsed;
     } catch (err) {
       return { ok: false, error: 'Lỗi kết nối mạng tới Google Apps Script Bridge.' };
     }
@@ -942,6 +1272,7 @@
             </div>
           </div>
           <div class="vt-cr-top-actions">
+            <button id="vtCrDrawerToggle" class="vt-cr-btn vt-cr-btn-sm vt-cr-drawer-toggle" type="button" aria-label="Mở danh sách Khối và Lớp">☰ Chọn Khối / Lớp</button>
             <button id="vtCrThemeToggle" class="vt-cr-btn vt-cr-btn-sm" type="button" title="Chuyển chế độ Sáng Học thuật / Đêm Vũ trụ">🌙 Đêm Vũ trụ</button>
             <button id="vtCrBtnRefresh" class="vt-cr-btn vt-cr-btn-sm" type="button">↻ Làm mới</button>
             <button id="vtCrBtnClose" class="vt-cr-btn vt-cr-btn-sm" type="button">✕ Đóng về Xưởng</button>
@@ -949,6 +1280,7 @@
         </header>
 
         <div class="vt-cr-layout">
+          <div class="vt-cr-drawer-backdrop" id="vtCrDrawerBackdrop"></div>
           <aside class="vt-cr-sidebar" id="vtCrSidebar" aria-label="Bản đồ Chòm sao Khối và Lớp"></aside>
           <main class="vt-cr-main" id="vtCrMain"></main>
         </div>
@@ -1112,6 +1444,45 @@
         </div>
       </div>
 
+      <!-- Sub-Modal 6: Transfer Student to Another Class (v4.0) -->
+      <div class="vt-cr-submodal-backdrop" id="vtCrTransferModal">
+        <div class="vt-cr-submodal" style="max-width:460px;">
+          <div class="vt-cr-submodal-head">
+            <div class="vt-cr-submodal-title">⇄ Chuyển lớp Học sinh</div>
+            <button class="vt-cr-btn vt-cr-btn-sm" type="button" data-close-sub="vtCrTransferModal">×</button>
+          </div>
+          <p id="vtCrTransferStudentInfo" style="font-size:13px;color:var(--cr-muted);margin:0 0 12px;"></p>
+          <form id="vtCrTransferForm" novalidate>
+            <div class="vt-cr-field" style="margin-bottom:14px;">
+              <label for="vtCrTransferTarget">Chọn Lớp đích *</label>
+              <select id="vtCrTransferTarget" required></select>
+            </div>
+            <div style="font-size:11.8px;color:var(--cr-soft);margin-bottom:14px;">
+              Mã học sinh và liên kết Gmail sẽ được giữ nguyên; hệ thống tự động đồng bộ tên lớp mới trên hồ sơ tài khoản.
+            </div>
+            <div class="vt-cr-submodal-foot">
+              <button class="vt-cr-btn" type="button" data-close-sub="vtCrTransferModal">Hủy</button>
+              <button class="vt-cr-btn vt-cr-btn-primary" type="submit">Xác nhận Chuyển lớp</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Sub-Modal 7: System Audit Logs Viewer (SUPER_ADMIN v4.0) -->
+      <div class="vt-cr-submodal-backdrop" id="vtCrAuditModal">
+        <div class="vt-cr-submodal" style="max-width:680px;">
+          <div class="vt-cr-submodal-head">
+            <div class="vt-cr-submodal-title">✦ Nhật ký Hoạt động Hệ thống (30 gần nhất)</div>
+            <button class="vt-cr-btn vt-cr-btn-sm" type="button" data-close-sub="vtCrAuditModal">×</button>
+          </div>
+          <div id="vtCrAuditList" class="vt-audit-list"></div>
+          <div class="vt-cr-submodal-foot" style="margin-top:12px;">
+            <button class="vt-cr-btn vt-cr-btn-primary" type="button" data-close-sub="vtCrAuditModal">Đóng</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dynamic Island Floating Toast -->
       <div id="vtCrToast" role="status" aria-live="polite"></div>
     `;
 
@@ -1226,16 +1597,34 @@
     state.loadingBootstrap = false;
 
     if (!res || !res.ok) {
-      showToast('⚠ ' + ((res && res.error) || 'Không thể tải dữ liệu lớp học.'), true);
+      const errCode = (res && res.error) ? String(res.error) : 'CONNECTION_ERROR';
+      const isVersionOrUnknown = errCode === 'UNKNOWN_ACTION' || (res && res.version && String(res.version) !== EXPECTED_BACKEND_VERSION);
+      showToast('⚠ ' + errCode, true);
       document.getElementById('vtCrMain').innerHTML = `
-        <div class="vt-cr-card" style="text-align:center;padding:36px;">
-          <div style="font-size:32px;margin-bottom:8px;">⚠️</div>
-          <div style="font-weight:700;margin-bottom:6px;">Không thể tải Trung tâm Lớp học</div>
-          <div style="font-size:12.5px;color:var(--cr-muted);">${esc((res && res.error) || 'Vui lòng kiểm tra kết nối và thử lại.')}</div>
+        <div class="vt-cr-card" style="max-width:640px;margin:18px auto;padding:28px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="font-size:28px;">${isVersionOrUnknown ? '🛠️' : '⚠️'}</span>
+            <div>
+              <div style="font-weight:700;font-size:16px;">${isVersionOrUnknown ? 'Cần cập nhật Google Apps Script Bridge lên phiên bản v4.0' : 'Không thể tải Trung tâm Lớp học'}</div>
+              <div class="vt-cr-mono" style="font-size:11.5px;color:var(--cr-soft);">Mã chẩn đoán: ${escapeHtml(errCode)} • Backend: ${escapeHtml((res && res.version) || 'Chưa xác định')} (Yêu cầu: v${EXPECTED_BACKEND_VERSION})</div>
+            </div>
+          </div>
+          ${isVersionOrUnknown ? `
+            <div style="font-size:13px;color:var(--cr-muted);line-height:1.65;margin-bottom:16px;">
+              Hệ thống phát hiện máy chủ Apps Script hiện tại chưa chạy phiên bản <b>v4.0</b> hoặc chưa được xuất bản lại bản triển khai mới.<br>
+              <b>Cách khắc phục nhanh:</b> Mở dự án Apps Script → dán <code>Code.gs</code> v4.0 → chọn <b>Triển khai (Deploy) → Quản lý các bản triển khai → Chỉnh sửa (✎) → Phiên bản mới (New version) → Triển khai</b>.
+            </div>` : `<div style="font-size:13px;color:var(--cr-muted);margin-bottom:16px;">${escapeHtml(errCode)}</div>`}
+          <button id="vtCrBtnRetryDiag" class="vt-cr-btn vt-cr-btn-primary" type="button">↻ Thử kết nối lại</button>
         </div>`;
+      const retryBtn = document.getElementById('vtCrBtnRetryDiag');
+      if (retryBtn) retryBtn.addEventListener('click', loadBootstrap);
       return;
     }
 
+    state.backendVersion = String(res.version || '');
+    state.backendWarning = (state.backendVersion !== EXPECTED_BACKEND_VERSION)
+      ? ('Backend hiện đang chạy phiên bản ' + (state.backendVersion || 'cũ') + ' (khuyến nghị cập nhật Code.gs v' + EXPECTED_BACKEND_VERSION + ' bằng New version trên Google Apps Script để dùng Chuyển lớp & Nhật ký Hoạt động).')
+      : '';
     state.bootstrap = res;
     state.role = res.role || '';
     updateTopUserLine();
@@ -1558,6 +1947,7 @@
 
     side.querySelectorAll('[data-select-class]').forEach(function (btn) {
       btn.addEventListener('click', function () {
+        toggleDrawer(false);
         state.sidebarMode = 'classes';
         state.selectedClassId = btn.getAttribute('data-select-class') || '';
         state.selectedSubject = btn.getAttribute('data-select-subject') || '';
@@ -1708,7 +2098,50 @@
     else if (state.activeTab === 'summary') bodyHtml = renderSummaryMatrixHtml();
     else if (state.activeTab === 'mygrades') bodyHtml = renderStudentPersonalGradesHtml();
 
+    let diagBannerHtml = '';
+    if (state.backendWarning) {
+      diagBannerHtml = `
+        <div class="vt-diag-card">
+          <div style="font-size:12.8px;line-height:1.55;">
+            <b>🛠️ Cảnh báo phiên bản Backend:</b> ${escapeHtml(state.backendWarning)}
+          </div>
+          <button id="vtCrBtnRetryBanner" class="vt-cr-btn vt-cr-btn-sm" type="button">↻ Thử kết nối lại</button>
+        </div>`;
+    }
+
+    let adminKpiHtml = '';
+    if (state.role === 'SUPER_ADMIN' && state.bootstrap && state.bootstrap.systemStats) {
+      const st = state.bootstrap.systemStats;
+      const linkPct = st.totalActiveStudents > 0 ? Math.round((st.linkedStudentsCount / st.totalActiveStudents) * 100) : 0;
+      const logCount = Array.isArray(state.bootstrap.recentAuditLogs) ? state.bootstrap.recentAuditLogs.length : 0;
+      adminKpiHtml = `
+        <section class="vt-sys-kpi-grid" aria-label="Thống kê tổng quan toàn hệ thống">
+          <div class="vt-sys-kpi-card">
+            <span class="vt-sys-kpi-label">✦ Tổng số Khối / Lớp</span>
+            <span class="vt-sys-kpi-val">${escapeHtml(st.totalClasses)}</span>
+            <span class="vt-sys-kpi-sub">${Object.keys(state.bootstrap.gradeBlocks || {}).length} khối • ${escapeHtml(st.totalTeachers)} giáo viên</span>
+          </div>
+          <div class="vt-sys-kpi-card">
+            <span class="vt-sys-kpi-label">👥 Tổng Học sinh</span>
+            <span class="vt-sys-kpi-val">${escapeHtml(st.totalActiveStudents)}</span>
+            <span class="vt-sys-kpi-sub">${escapeHtml(st.pendingUsersCount)} hồ sơ đang chờ duyệt</span>
+          </div>
+          <div class="vt-sys-kpi-card">
+            <span class="vt-sys-kpi-label">🔗 Tỷ lệ Liên kết Gmail</span>
+            <span class="vt-sys-kpi-val" style="color:var(--cr-emerald);">${linkPct}%</span>
+            <span class="vt-sys-kpi-sub">${escapeHtml(st.linkedStudentsCount)} / ${escapeHtml(st.totalActiveStudents)} học sinh</span>
+          </div>
+          <div class="vt-sys-kpi-card clickable" id="vtCrOpenAuditCard" role="button" tabindex="0" title="Xem 30 nhật ký hoạt động gần nhất">
+            <span class="vt-sys-kpi-label">📋 Nhật ký Hoạt động</span>
+            <span class="vt-sys-kpi-val" style="color:var(--cr-cobalt);">${logCount}</span>
+            <span class="vt-sys-kpi-sub">Nhấn để xem Audit Logs →</span>
+          </div>
+        </section>`;
+    }
+
     main.innerHTML = `
+      ${diagBannerHtml}
+      ${adminKpiHtml}
       <!-- Cosmic Class Command Banner (22px Concentric Squircle) -->
       <section class="vt-cr-banner">
         <svg class="vt-cr-banner-svg" viewBox="0 0 280 200" fill="none" aria-hidden="true">
@@ -1751,7 +2184,10 @@
 
   function renderRosterTabHtml() {
     const q = state.searchQuery.trim().toLowerCase();
+    const linkFilter = state.linkFilter || 'all';
     const filtered = state.roster.filter(function (st) {
+      if (linkFilter === 'linked' && !st.linkedEmail) return false;
+      if (linkFilter === 'unlinked' && st.linkedEmail) return false;
       if (!q) return true;
       return (
         String(st.fullName || '').toLowerCase().indexOf(q) !== -1 ||
@@ -1796,10 +2232,12 @@
              </div>`
           : `<span class="vt-cr-badge unlinked">◌ Chưa liên kết Gmail</span>`;
 
+        const canTransfer = (state.role === 'SUPER_ADMIN' || state.role === 'HOMEROOM_TEACHER') && state.canEditRoster;
         const actionCell = state.canEditRoster
           ? `<td style="text-align:right;white-space:nowrap;">
-               <button type="button" class="vt-cr-btn vt-cr-btn-sm" data-edit-stu="${esc(st.studentId)}">✎ Sửa</button>
-               <button type="button" class="vt-cr-btn vt-cr-btn-sm vt-cr-btn-danger" data-del-stu="${esc(st.studentId)}">✕ Xóa</button>
+               ${canTransfer ? '<button type="button" class="vt-cr-btn vt-cr-btn-sm" data-transfer-stu="' + escapeAttr(st.studentId) + '" title="Chuyển học sinh sang lớp khác">⇄ Chuyển lớp</button> ' : ''}
+               <button type="button" class="vt-cr-btn vt-cr-btn-sm" data-edit-stu="${escapeAttr(st.studentId)}">✎ Sửa</button>
+               <button type="button" class="vt-cr-btn vt-cr-btn-sm vt-cr-btn-danger" data-del-stu="${escapeAttr(st.studentId)}">✕ Xóa</button>
              </td>`
           : '';
 
@@ -1824,7 +2262,15 @@
     return `
       ${topNotice}
       <div class="vt-cr-toolbar">
-        <input id="vtCrSearchInput" class="vt-cr-search" type="text" value="${esc(state.searchQuery)}" placeholder="🔍 Tìm theo họ tên hoặc mã học sinh...">
+        <div style="display:flex;gap:8px;flex:1;min-width:220px;flex-wrap:wrap;">
+          <input id="vtCrSearchInput" class="vt-cr-search" type="text" value="${escapeAttr(state.searchQuery)}" placeholder="🔍 Tìm theo họ tên hoặc mã học sinh...">
+          ${!isStudent ? `
+          <select id="vtCrLinkFilter" class="vt-cr-filter-select" aria-label="Lọc theo trạng thái liên kết Gmail">
+            <option value="all" ${linkFilter === 'all' ? 'selected' : ''}>Tất cả trạng thái</option>
+            <option value="linked" ${linkFilter === 'linked' ? 'selected' : ''}>● Đã liên kết Gmail</option>
+            <option value="unlinked" ${linkFilter === 'unlinked' ? 'selected' : ''}>◌ Chưa liên kết Gmail</option>
+          </select>` : ''}
+        </div>
         ${editButtonsHtml}
       </div>
       <div class="vt-cr-table-wrap">
@@ -1934,8 +2380,8 @@
       body += `
         <tr>
           <td class="vt-cr-mono" style="color:var(--cr-soft);">${rIdx + 1}</td>
-          <td><span class="vt-cr-id-pill">◉ ${esc(st.studentId)}</span></td>
-          <td style="font-weight:700;white-space:nowrap;">${esc(st.fullName)}</td>
+          <td class="vt-col-id"><span class="vt-cr-id-pill">◉ ${escapeHtml(st.studentId)}</span></td>
+          <td class="vt-col-name" style="font-weight:700;white-space:nowrap;">${escapeHtml(st.fullName)}</td>
           ${inputsHtml}
           <td class="vt-avg-cell ${avgColorClass(avg)}" id="vtStdAvg_${esc(st.studentId)}">${avg !== '' ? Number(avg).toFixed(1) : '—'}</td>
         </tr>`;
@@ -1944,10 +2390,10 @@
     return `
       ${saveBar}
       <div class="vt-cr-table-wrap">
-        <table class="vt-cr-table">
+        <table class="vt-cr-table vt-grade-table">
           <thead>
             <tr>
-              <th>STT</th><th>Mã HS</th><th>Họ và tên</th>
+              <th>STT</th><th class="vt-col-id">Mã HS</th><th class="vt-col-name">Họ và tên</th>
               <th>ĐGTX 1 (HS1)</th><th>ĐGTX 2 (HS1)</th><th>ĐGTX 3 (HS1)</th>
               <th>Giữa kỳ (HS2)</th><th>Cuối kỳ (HS3)</th>
               <th style="text-align:center;">ĐTB Môn</th>
@@ -2014,8 +2460,8 @@
       body += `
         <tr>
           <td class="vt-cr-mono" style="color:var(--cr-soft);">${rIdx + 1}</td>
-          <td><span class="vt-cr-id-pill">◉ ${esc(st.studentId)}</span></td>
-          <td style="font-weight:700;white-space:nowrap;">${esc(st.fullName)}</td>
+          <td class="vt-col-id"><span class="vt-cr-id-pill">◉ ${escapeHtml(st.studentId)}</span></td>
+          <td class="vt-col-name" style="font-weight:700;white-space:nowrap;">${escapeHtml(st.fullName)}</td>
           ${cells}
           <td class="vt-avg-cell ${avgColorClass(avg)}" id="vtTrkAvg_${esc(st.studentId)}">${avg !== '' ? Number(avg).toFixed(1) : '—'}</td>
         </tr>`;
@@ -2024,8 +2470,8 @@
     return `
       ${toolbar}
       <div class="vt-cr-table-wrap">
-        <table class="vt-cr-table">
-          <thead><tr><th>STT</th><th>Mã HS</th><th>Họ và tên</th>${dynHeaders}<th style="text-align:center;">TB Theo dõi</th></tr></thead>
+        <table class="vt-cr-table vt-grade-table">
+          <thead><tr><th>STT</th><th class="vt-col-id">Mã HS</th><th class="vt-col-name">Họ và tên</th>${dynHeaders}<th style="text-align:center;">TB Theo dõi</th></tr></thead>
           <tbody>${body}</tbody>
         </table>
       </div>
@@ -2214,6 +2660,59 @@
     openSubModal('vtCrBulkModal');
   }
 
+  function toggleDrawer(forceOpen) {
+    const sb = document.getElementById('vtCrSidebar');
+    const bd = document.getElementById('vtCrDrawerBackdrop');
+    if (!sb || !bd) return;
+    const next = typeof forceOpen === 'boolean' ? forceOpen : !state.drawerOpen;
+    state.drawerOpen = next;
+    sb.classList.toggle('drawer-open', next);
+    bd.classList.toggle('open', next);
+  }
+
+  function openTransferModal(student) {
+    if (!student || !state.activeClassInfo) return;
+    const allClasses = (state.bootstrap && Array.isArray(state.bootstrap.classes)) ? state.bootstrap.classes : [];
+    const targetClasses = allClasses.filter(function (c) { return c.classId !== state.activeClassInfo.classId; });
+    if (!targetClasses.length) {
+      showToast('⚠ Chưa có lớp đích khác để chuyển học sinh.', true);
+      return;
+    }
+    state.transferringStudent = student;
+    const infoEl = document.getElementById('vtCrTransferStudentInfo');
+    if (infoEl) {
+      infoEl.innerHTML = 'Chuyển học sinh <b>' + escapeHtml(student.fullName) + '</b> (<span class="vt-cr-mono">' + escapeHtml(student.studentId) + '</span>) từ lớp <b>' + escapeHtml(state.activeClassInfo.className) + '</b> sang:';
+    }
+    const sel = document.getElementById('vtCrTransferTarget');
+    if (sel) {
+      sel.innerHTML = targetClasses.map(function (c) {
+        return '<option value="' + escapeAttr(c.classId) + '">' + escapeHtml(c.className) + ' (' + escapeHtml(c.gradeBlock || '') + ')</option>';
+      }).join('');
+    }
+    openSubModal('vtCrTransferModal');
+  }
+
+  function openAuditLogsModal() {
+    const listEl = document.getElementById('vtCrAuditList');
+    if (!listEl) return;
+    const logs = (state.bootstrap && Array.isArray(state.bootstrap.recentAuditLogs)) ? state.bootstrap.recentAuditLogs : [];
+    if (!logs.length) {
+      listEl.innerHTML = '<div style="text-align:center;padding:24px;color:var(--cr-soft);">Chưa có nhật ký hoạt động nào được ghi nhận.</div>';
+    } else {
+      listEl.innerHTML = logs.map(function (lg) {
+        const ts = lg.timestamp ? String(lg.timestamp).replace('T', ' ').slice(0, 19) : '';
+        return '<div class="vt-audit-item">' +
+          '<div class="vt-audit-meta">' +
+            '<span class="vt-audit-action-pill">' + escapeHtml(lg.action) + '</span>' +
+            '<span>' + escapeHtml(lg.actorEmail) + ' • ' + escapeHtml(ts) + '</span>' +
+          '</div>' +
+          '<div class="vt-audit-summary">' + escapeHtml(lg.summary) + '</div>' +
+        '</div>';
+      }).join('');
+    }
+    openSubModal('vtCrAuditModal');
+  }
+
   function openTrackColModal(colId) {
     const found = colId ? state.trackingColumns.find(function (c) { return c.id === colId; }) : null;
     state.editingTrackColId = found ? found.id : null;
@@ -2280,6 +2779,33 @@
   function wireStaticEvents(root) {
     document.getElementById('vtCrBtnClose').addEventListener('click', close);
     document.getElementById('vtCrBtnRefresh').addEventListener('click', loadBootstrap);
+    const drawerBtn = document.getElementById('vtCrDrawerToggle');
+    if (drawerBtn) drawerBtn.addEventListener('click', function () { toggleDrawer(); });
+    const drawerBd = document.getElementById('vtCrDrawerBackdrop');
+    if (drawerBd) drawerBd.addEventListener('click', function () { toggleDrawer(false); });
+
+    const transferForm = document.getElementById('vtCrTransferForm');
+    if (transferForm) {
+      transferForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        if (!state.transferringStudent || !state.activeClassInfo) return;
+        const toClassId = document.getElementById('vtCrTransferTarget').value;
+        if (!toClassId) return;
+        const res = await callBridge('class_transfer_student', {
+          studentId: state.transferringStudent.studentId,
+          fromClassId: state.activeClassInfo.classId,
+          toClassId: toClassId
+        });
+        if (!res || !res.ok) {
+          showToast('⚠ ' + ((res && res.error) || 'Không thể chuyển lớp học sinh.'), true);
+          return;
+        }
+        closeSubModal('vtCrTransferModal');
+        showToast('✓ Đã chuyển ' + state.transferringStudent.fullName + ' sang lớp ' + (res.toClassName || '') + '.');
+        state.transferringStudent = null;
+        await loadBootstrap();
+      });
+    }
 
     // Quick Toggle: Daylight Observatory / Cosmic Night Mode
     document.getElementById('vtCrThemeToggle').addEventListener('click', function () {
@@ -2424,6 +2950,15 @@
   }
 
   function wireMainDynamicEvents(cls) {
+    const retryBanner = document.getElementById('vtCrBtnRetryBanner');
+    if (retryBanner) retryBanner.addEventListener('click', loadBootstrap);
+    const auditCard = document.getElementById('vtCrOpenAuditCard');
+    if (auditCard) {
+      auditCard.addEventListener('click', openAuditLogsModal);
+      auditCard.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openAuditLogsModal(); }
+      });
+    }
     document.querySelectorAll('#vtClassroomModal [data-crtab]').forEach(function (tab) {
       tab.addEventListener('click', function () {
         const nextTab = tab.getAttribute('data-crtab') || 'roster';
@@ -2626,6 +3161,36 @@
   }
 
   function wireRosterOnlyEvents(cls) {
+    const linkFilterEl = document.getElementById('vtCrLinkFilter');
+    if (linkFilterEl) {
+      linkFilterEl.addEventListener('change', function (e) {
+        state.linkFilter = e.target.value || 'all';
+        const tabContent = document.getElementById('vtCrTabContent');
+        if (tabContent) {
+          tabContent.innerHTML = renderRosterTabHtml();
+          const sInp = document.getElementById('vtCrSearchInput');
+          if (sInp) {
+            sInp.addEventListener('input', function (ev) {
+              state.searchQuery = ev.target.value;
+              tabContent.innerHTML = renderRosterTabHtml();
+              wireRosterOnlyEvents(cls);
+              const nextInp = document.getElementById('vtCrSearchInput');
+              if (nextInp) { nextInp.focus(); nextInp.setSelectionRange(nextInp.value.length, nextInp.value.length); }
+            });
+          }
+          wireRosterOnlyEvents(cls);
+        }
+      });
+    }
+
+    document.querySelectorAll('#vtClassroomModal [data-transfer-stu]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const sid = btn.getAttribute('data-transfer-stu');
+        const found = state.roster.find(function (s) { return s.studentId === sid; });
+        if (found) openTransferModal(found);
+      });
+    });
+
     const btnAdd = document.getElementById('vtCrBtnAddStudent');
     if (btnAdd) btnAdd.addEventListener('click', function () { openStudentFormModal(null); });
     const btnBulk = document.getElementById('vtCrBtnBulkImport');
@@ -2682,7 +3247,37 @@
     state.isOpen = false;
   }
 
+  // Global Ctrl+S / Cmd+S Quick Save Shortcut while Classroom Modal is open
+  document.addEventListener('keydown', function (e) {
+    if (!state.isOpen) return;
+    if ((e.ctrlKey || e.metaKey) && String(e.key || '').toLowerCase() === 's') {
+      e.preventDefault();
+      if (state.activeTab === 'gradebook' || state.activeTab === 'tracking_view') {
+        if (state.gradeSubTab === 'standard' && Object.keys(state.standardDirty).length > 0) {
+          const btnSaveStd = document.getElementById('vtCrBtnSaveStd');
+          if (btnSaveStd) { btnSaveStd.click(); return; }
+        }
+        if (state.gradeSubTab === 'tracking' && Object.keys(state.trackingDirty).length > 0) {
+          const btnSaveTrk = document.getElementById('vtCrBtnSaveTrk');
+          if (btnSaveTrk) { btnSaveTrk.click(); return; }
+        }
+        showToast('✓ Bảng điểm hiện tại không có thay đổi chưa lưu.');
+      }
+    }
+  });
+
+  // Auto-sync session context when index.html broadcasts session updates
+  function handleSessionChanged() {
+    updateTopUserLine();
+    if (state.isOpen && !state.loadingBootstrap && !state.bootstrap && getSessionContext()) {
+      loadBootstrap();
+    }
+  }
+  window.addEventListener('vantesis:session-changed', handleSessionChanged);
+  window.addEventListener('vanthesis:session-changed', handleSessionChanged);
+
   window.VANTHESIS_CLASSROOM = Object.freeze({
+    version: EXPECTED_BACKEND_VERSION,
     open: open,
     close: close,
     refresh: loadBootstrap,
