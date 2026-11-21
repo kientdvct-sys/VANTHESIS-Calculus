@@ -5101,45 +5101,103 @@
   }
 
   /* ==========================================================================
-   * 10. LIFECYCLE BINDING & PUBLIC API
+   * 10. CENTRALIZED v2.0 SECTOR LIFECYCLE (VANTHESIS_CORE.registerSector)
    * ========================================================================== */
 
-  function onSessionReady() {
-    if (getSession()) {
-      initHub();
-    }
+  function isCoreSignedIn() {
+    const C = getCore();
+    if (C && C.auth && typeof C.auth.isSignedIn === 'function') return C.auth.isSignedIn();
+    return Boolean(getSession());
   }
 
-  function handleSectorChanged(detailOrEv) {
-    const sec = (detailOrEv && detailOrEv.sector) || (detailOrEv && detailOrEv.detail && detailOrEv.detail.sector);
-    if (sec !== 'lab') {
-      showReturnToLessonPill(false);
-    }
-    if ((sec === 'dashboard' || sec === 'resources') && getSession()) {
-      if (!state.loaded) initHub();
-      else { renderDashboard(); renderResourcesHub(); }
-    } else if (sec === 'exams' && getSession()) {
-      fetchExamsHub();
-    }
+  function ensureHubInitialized() {
+    if (!isCoreSignedIn()) return Promise.resolve();
+    injectStyles();
+    ensureOverlaysDOM();
+    if (!state.loaded) return initHub();
+    return Promise.resolve();
   }
 
-  const coreBus = window.VANTHESIS_CORE && window.VANTHESIS_CORE.bus;
-  if (coreBus) {
-    coreBus.on('session-changed', onSessionReady);
-    coreBus.on('sector-changed', handleSectorChanged);
-    coreBus.on('sync-rev-changed', function (info) {
-      if (info && Number(info.syncRev) > state.localSyncRev && getSession()) {
-        state.localSyncRev = Number(info.syncRev);
-        fetchHubFromServer(true);
+  function registerResourcesSectors() {
+    const C = getCore();
+    if (!C || typeof C.registerSector !== 'function') return false;
+
+    C.registerSector('dashboard', {
+      containerId: 'sectorDashboard',
+      mount: async function () {
+        if (!isCoreSignedIn()) return;
+        const m = document.getElementById('vtDashboardMount');
+        if (m) m.innerHTML = '';
+        await ensureHubInitialized();
+        renderDashboard();
+      },
+      refresh: async function () {
+        if (!isCoreSignedIn()) return;
+        if (!state.loaded) await ensureHubInitialized();
+        renderDashboard();
+      },
+      unmount: function () {
+        showReturnToLessonPill(false);
       }
-    }, { replay: false });
-  } else {
-    window.addEventListener('vantesis:session-changed', onSessionReady);
-    window.addEventListener('vanthesis:session-changed', onSessionReady);
-    window.addEventListener('vantesis:sector-changed', handleSectorChanged);
-    window.addEventListener('vanthesis:sector-changed', handleSectorChanged);
-    if (getSession()) onSessionReady();
+    });
+
+    C.registerSector('resources', {
+      containerId: 'sectorResources',
+      mount: async function () {
+        if (!isCoreSignedIn()) return;
+        const m = document.getElementById('vtResourcesMount');
+        if (m) m.innerHTML = '';
+        await ensureHubInitialized();
+        renderResourcesHub();
+      },
+      refresh: async function () {
+        if (!isCoreSignedIn()) return;
+        if (!state.loaded) await ensureHubInitialized();
+        renderResourcesHub();
+      },
+      unmount: function () {
+        showReturnToLessonPill(false);
+      }
+    });
+
+    C.registerSector('exams', {
+      containerId: 'sectorExams',
+      mount: async function () {
+        if (!isCoreSignedIn()) return;
+        const m = document.getElementById('vtExamsMount');
+        if (m) m.innerHTML = '';
+        injectStyles();
+        ensureOverlaysDOM();
+        await fetchExamsHub();
+      },
+      refresh: async function () {
+        if (!isCoreSignedIn()) return;
+        if (state.activeExamSession) {
+          renderExamsSector();
+        } else {
+          await fetchExamsHub();
+        }
+      },
+      unmount: function () {
+        if (typeof stopExamTimers === 'function') stopExamTimers();
+      }
+    });
+
+    if (C.bus) {
+      C.bus.on('sync-rev-changed', function (info) {
+        if (info && Number(info.syncRev) > state.localSyncRev && isCoreSignedIn() && state.loaded) {
+          state.localSyncRev = Number(info.syncRev);
+          fetchHubFromServer(true);
+        }
+      }, { replay: false });
+      C.bus.on('resources-updated', function () {
+        if (isCoreSignedIn() && state.loaded) fetchHubFromServer(true);
+      }, { replay: false });
+    }
+    return true;
   }
+
+  registerResourcesSectors();
 
   window.VANTHESIS_RESOURCES = Object.freeze({
     refresh: function () { return fetchHubFromServer(false); },
