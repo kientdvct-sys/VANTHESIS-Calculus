@@ -16,7 +16,7 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%231D4ED8'/%3E%3Cstop offset='100%25' stop-color='%232563EB'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='34' height='34' rx='9' fill='url(%23g)'/%3E%3Crect x='1' y='1' width='32' height='32' rx='8' fill='none' stroke='rgba(255,255,255,0.22)' stroke-width='1'/%3E%3Cpath d='M8.5 11.5 L15.2 24.2 C16.3 26.1 18.2 25.8 19.2 23.6 C20.8 20.1 21.8 14.2 25.5 11.2' fill='none' stroke='%23FFFFFF' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='25.5' cy='11.2' r='2.3' fill='%23FFFFFF'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=STIX+Two+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=STIX+Two+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -5632,9 +5632,47 @@
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
+  @keyframes vtSectorFade {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
   .lcms-sector.active {
     display: flex;
     flex-direction: column;
+    animation: vtSectorFade 160ms ease;
+  }
+  .vt-sector-rail.is-collapsed {
+    width: 72px !important;
+    padding: 10px 6px !important;
+    align-items: center;
+  }
+  .vt-sector-rail.is-collapsed .vt-rail-scope-pill,
+  .vt-sector-rail.is-collapsed .vt-sector-lbl {
+    display: none;
+  }
+  .vt-sector-rail.is-collapsed .vt-sector-btn {
+    justify-content: center;
+    padding: 12px 0;
+  }
+  .vt-rail-collapse-btn {
+    margin-top: auto;
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .vt-rail-collapse-btn:hover {
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--primary);
   }
   #sectorLab.active {
     overflow: hidden;
@@ -5707,6 +5745,36 @@
   }
 
   /* Mobile 5-Sector Bottom Bar (iOS style, visible ONLY < 768px) */
+  #sectorSlate {
+    height: calc(100dvh - var(--vt-topbar-h, 58px));
+    min-height: 540px;
+    position: relative;
+    overflow: hidden;
+  }
+  .vt-wb-host {
+    width: 100%;
+    height: 100%;
+    min-height: 540px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  .vt-wb-standby {
+    margin: auto;
+    max-width: 520px;
+    padding: 28px 30px;
+    border-radius: var(--vt-r-banner, 22px);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.12);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
   .vt-mobile-sector-nav {
     display: none;
   }
@@ -5746,17 +5814,18 @@
       grid-template-columns: 1fr;
     }
     .vt-mobile-sector-nav {
-      display: flex !important;
+      display: grid !important;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
       position: fixed;
       left: 0;
       right: 0;
       bottom: 0;
       height: calc(64px + env(safe-area-inset-bottom, 0px));
-      padding: 4px 6px env(safe-area-inset-bottom, 0px);
+      padding: 4px 4px env(safe-area-inset-bottom, 0px);
       background: var(--surface);
       border-top: 1px solid var(--border-strong);
       z-index: 85;
-      gap: 4px;
+      gap: 2px;
       align-items: center;
     }
     html[data-theme="light"] .vt-mobile-sector-nav {
@@ -5770,17 +5839,22 @@
       backdrop-filter: blur(18px);
     }
     .vt-msector-btn {
-      flex: 1;
+      width: 100%;
       min-width: 0 !important;
       height: 52px !important;
       min-height: 48px !important;
+      padding: 2px 1px !important;
       border: none;
-      border-radius: 14px;
+      border-radius: 12px;
       background: transparent;
       color: var(--text-muted);
       font-family: var(--font-sans);
       font-size: 10.5px;
       font-weight: 700;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -5812,6 +5886,248 @@
     }
     .app-shell[data-active-sector="lab"] .workspace {
       padding-bottom: 48px !important;
+    }
+  }
+</style>
+<style id="vtCosmosObservatoryCSS">
+  /* ========================================================================
+   * VANTHESIS CELESTIAL OBSERVATORY & DEEP COSMOS VISUAL SYSTEM
+   * ======================================================================== */
+  :root, html[data-theme="light"] {
+    color-scheme: only light !important;
+    --bg: #FAF8F3;
+    --surface: rgba(255, 253, 248, 0.84);
+    --surface-alt: rgba(245, 240, 230, 0.78);
+    --text: #0F172A;
+    --text-muted: #475569;
+    --primary: #1D4ED8;
+    --accent-gold: #B45309;
+    --font-display: 'Cormorant Garamond', 'Newsreader', Georgia, serif;
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --vt-cosmos-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  html[data-theme="dark"] {
+    color-scheme: dark !important;
+    --bg: #030613;
+    --surface: rgba(10, 17, 38, 0.76);
+    --surface-alt: rgba(16, 26, 56, 0.68);
+    --text: #F1F5F9;
+    --text-muted: #94A3B8;
+    --primary: #38BDF8;
+    --accent-gold: #FBBF24;
+  }
+
+  /* Day Royal Observatory Canvas: Warm Ivory + Ultra-Fine Brass Meridian Grid */
+  html[data-theme="light"] body,
+  html[data-theme="light"] #publicLandingView,
+  html[data-theme="light"] .vt-sector-host {
+    background-color: #FAF8F3 !important;
+    background-image:
+      radial-gradient(900px circle at 14% 8%, rgba(180, 83, 9, 0.06), transparent 60%),
+      radial-gradient(820px circle at 88% 12%, rgba(29, 78, 216, 0.06), transparent 58%),
+      linear-gradient(to right, rgba(180, 83, 9, 0.08) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(180, 83, 9, 0.08) 1px, transparent 1px) !important;
+    background-size: 100% 100%, 100% 100%, 56px 56px, 56px 56px !important;
+  }
+
+  /* Night Deep Cosmos Canvas: Layered Space Depth + Soft Nebulae (Zero Flat Black) */
+  html[data-theme="dark"] body,
+  html[data-theme="dark"] #publicLandingView,
+  html[data-theme="dark"] .vt-sector-host {
+    background-color: #030613 !important;
+    background-image:
+      radial-gradient(760px circle at 16% 12%, rgba(56, 189, 248, 0.11), transparent 60%),
+      radial-gradient(840px circle at 84% 20%, rgba(129, 140, 248, 0.09), transparent 62%),
+      radial-gradient(640px circle at 52% 92%, rgba(251, 191, 36, 0.07), transparent 58%),
+      linear-gradient(180deg, #030613 0%, #070E24 100%) !important;
+  }
+
+  /* Luxury Academic Typography */
+  .landing-hero-title,
+  .landing-section-title,
+  .brand-calc-word,
+  .lcms-sector h1,
+  .lcms-sector h2,
+  .vt-cosmos-heading {
+    font-family: 'Cormorant Garamond', 'Newsreader', Georgia, serif !important;
+    letter-spacing: -0.012em;
+  }
+  .landing-brand-badge,
+  .vt-topbar-scope-pill,
+  .vt-slate-page-pill,
+  code, pre, .mono-metric {
+    font-family: 'JetBrains Mono', ui-monospace, monospace !important;
+  }
+
+  /* Orbital Astrolabe Rings (0.5px ultra-thin, 90s slow celestial rotation) */
+  .vt-astrolabe-backdrop {
+    position: absolute;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+    opacity: 0.62;
+  }
+  .vt-astrolabe-backdrop.is-landing {
+    top: -120px;
+    right: -140px;
+    width: min(680px, 78vw);
+    height: min(680px, 78vw);
+  }
+  .vt-astrolabe-backdrop.is-shell {
+    bottom: -180px;
+    right: -160px;
+    width: min(560px, 60vw);
+    height: min(560px, 60vw);
+    opacity: 0.42;
+  }
+  .vt-astrolabe-svg {
+    width: 100%;
+    height: 100%;
+    animation: vtAstrolabeOrbit 90s linear infinite;
+    transform-origin: center;
+  }
+  .vt-astrolabe-ring-inner {
+    animation: vtAstrolabeOrbitReverse 140s linear infinite;
+    transform-origin: 250px 250px;
+  }
+  html[data-theme="light"] .vt-astrolabe-svg { color: rgba(180, 83, 9, 0.34); }
+  html[data-theme="dark"] .vt-astrolabe-svg { color: rgba(56, 189, 248, 0.28); }
+  @keyframes vtAstrolabeOrbit {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes vtAstrolabeOrbitReverse {
+    from { transform: rotate(360deg); }
+    to { transform: rotate(0deg); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .vt-astrolabe-svg, .vt-astrolabe-ring-inner { animation: none !important; }
+  }
+
+  /* Starlight Refractive Glass on Landing Header, Bento Cards, Topbar & Command Rail */
+  .landing-header,
+  .bento-card,
+  .vt-bento-card,
+  .vtc-glass-card {
+    backdrop-filter: blur(22px) saturate(145%) !important;
+    -webkit-backdrop-filter: blur(22px) saturate(145%) !important;
+    border-top: 1px solid var(--vt-cosmos-border-top, rgba(255, 255, 255, 0.22)) !important;
+  }
+  .bento-card, .vt-bento-card {
+    border-radius: 22px !important;
+    position: relative;
+    overflow: hidden;
+  }
+  .bento-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(360px circle at var(--vt-card-mx, 50%) var(--vt-card-my, 0%), var(--vt-cosmos-glow, rgba(56,189,248,0.14)), transparent 60%);
+    transition: opacity 0.26s var(--vt-cosmos-ease);
+  }
+  .bento-card:hover::after { opacity: 1; }
+
+  /* Observatory Command Rail (Desktop / iPad) with Luminous Starlight Indicator */
+  .vt-sector-rail {
+    backdrop-filter: blur(22px) saturate(145%) !important;
+    -webkit-backdrop-filter: blur(22px) saturate(145%) !important;
+    border-top: 1px solid var(--vt-cosmos-border-top, rgba(255, 255, 255, 0.22));
+  }
+  html[data-theme="light"] .vt-sector-rail {
+    background: rgba(255, 253, 248, 0.84) !important;
+    border-right: 1px solid rgba(180, 83, 9, 0.14) !important;
+  }
+  html[data-theme="dark"] .vt-sector-rail {
+    background: rgba(7, 13, 31, 0.82) !important;
+    border-right: 1px solid rgba(56, 189, 248, 0.18) !important;
+  }
+  .vt-sector-btn {
+    position: relative;
+    border-radius: 16px !important;
+    transition: all 0.22s var(--vt-cosmos-ease) !important;
+  }
+  .vt-sector-btn.active::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: 20%;
+    bottom: 20%;
+    width: 3.5px;
+    border-radius: 9999px;
+    background: linear-gradient(180deg, #38BDF8, #818CF8, #FBBF24);
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.72);
+  }
+  html[data-theme="light"] .vt-sector-btn.active {
+    background: linear-gradient(135deg, rgba(29, 78, 216, 0.10), rgba(180, 83, 9, 0.08)) !important;
+    color: #1D4ED8 !important;
+    border-color: rgba(180, 83, 9, 0.30) !important;
+  }
+  html[data-theme="light"] .vt-sector-btn.active::before {
+    background: linear-gradient(180deg, #1D4ED8, #B45309);
+    box-shadow: 0 0 10px rgba(29, 78, 216, 0.42);
+  }
+  html[data-theme="dark"] .vt-sector-btn.active {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.16), rgba(129, 140, 248, 0.12)) !important;
+    color: #F8FAFC !important;
+    border-color: rgba(56, 189, 248, 0.36) !important;
+    box-shadow: 0 0 22px -6px rgba(56, 189, 248, 0.42) !important;
+  }
+
+  /* 6-Column Balanced iOS Mobile Dock */
+  @media (max-width: 767px) {
+    .vt-mobile-sector-nav {
+      grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+      backdrop-filter: blur(22px) saturate(145%) !important;
+      -webkit-backdrop-filter: blur(22px) saturate(145%) !important;
+      border-top: 1px solid var(--vt-cosmos-border-top, rgba(255,255,255,0.22)) !important;
+    }
+    .vt-msector-btn {
+      position: relative;
+      border-radius: 14px !important;
+      transition: transform 0.2s var(--vt-cosmos-ease), color 0.2s ease !important;
+    }
+    .vt-msector-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: 3px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 18px;
+      height: 3px;
+      border-radius: 9999px;
+      background: linear-gradient(90deg, #38BDF8, #FBBF24);
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.65);
+    }
+  }
+
+  /* Telescope Lens Transition across Landing -> 360° Desk-Lamp Portal -> 6 Sectors */
+  #publicLandingView, #authPortalOverlay {
+    transition: opacity 0.42s var(--vt-cosmos-ease), transform 0.42s var(--vt-cosmos-ease), filter 0.42s var(--vt-cosmos-ease);
+  }
+  #authPortalOverlay.portal-hidden {
+    transform: scale(1.03);
+    filter: blur(6px);
+  }
+  #authPortalOverlay:not(.portal-hidden) {
+    transform: scale(1);
+    filter: blur(0);
+  }
+  .lcms-sector.is-active {
+    position: relative;
+    z-index: 2;
+    animation: vtCosmosSectorReveal 220ms var(--vt-cosmos-ease) both !important;
+  }
+  @keyframes vtCosmosSectorReveal {
+    from {
+      opacity: 0;
+      transform: translateY(7px) scale(0.996);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
     }
   }
 </style>
@@ -5911,16 +6227,33 @@
 
   <!-- 5-SECTOR UNIFIED COMMAND SHELL (VANTHESIS Constellation LCMS) -->
   <div class="lcms-shell-body">
-    <aside class="vt-sector-rail" id="vtSectorRail" aria-label="Điều hướng 5 phân khu học tập">
+    <aside class="vt-sector-rail" id="vtSectorRail" aria-label="Điều hướng 6 phân khu học tập">
       <div class="vt-rail-scope-pill" id="vtRailScopeBadge">Không gian Học tập</div>
       <button class="vt-sector-btn" type="button" data-sector="dashboard"><span class="vt-sector-ico">◎</span><span class="vt-sector-lbl">Tổng quan</span></button>
       <button class="vt-sector-btn active" type="button" data-sector="resources"><span class="vt-sector-ico">✦</span><span class="vt-sector-lbl">Kho Chòm sao</span></button>
       <button class="vt-sector-btn" type="button" data-sector="exams"><span class="vt-sector-ico">🏆</span><span class="vt-sector-lbl">Đấu trường Đề</span></button>
       <button class="vt-sector-btn" type="button" data-sector="lab"><span class="vt-sector-ico">∫</span><span class="vt-sector-lbl">Phòng Thí nghiệm</span></button>
+      <button class="vt-sector-btn" type="button" data-sector="slate"><span class="vt-sector-ico">✒️</span><span class="vt-sector-lbl">Bảng Giảng</span></button>
       <button class="vt-sector-btn" type="button" data-sector="classroom"><span class="vt-sector-ico">🏫</span><span class="vt-sector-lbl">Lớp học &amp; 360°</span></button>
+      <button class="vt-rail-collapse-btn" id="vtRailCollapseBtn" type="button" title="Thu gọn / mở rộng thanh điều hướng"><span>⇄</span><span class="vt-sector-lbl">Thu gọn</span></button>
     </aside>
 
     <div class="vt-sector-host" id="vtSectorHost">
+      <div class="vt-astrolabe-backdrop is-shell" aria-hidden="true"><svg class="vt-astrolabe-svg" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <circle cx="250" cy="250" r="236" stroke="currentColor" stroke-width="0.55" stroke-dasharray="3 5"/>
+    <circle cx="250" cy="250" r="204" stroke="currentColor" stroke-width="0.5"/>
+    <circle cx="250" cy="250" r="158" stroke="currentColor" stroke-width="0.5" stroke-dasharray="1 6"/>
+    <g class="vt-astrolabe-ring-inner">
+      <circle cx="250" cy="250" r="118" stroke="currentColor" stroke-width="0.55"/>
+      <ellipse cx="250" cy="250" rx="204" ry="86" stroke="currentColor" stroke-width="0.45" transform="rotate(-24 250 250)"/>
+      <ellipse cx="250" cy="250" rx="204" ry="86" stroke="currentColor" stroke-width="0.45" transform="rotate(36 250 250)"/>
+      <line x1="250" y1="14" x2="250" y2="486" stroke="currentColor" stroke-width="0.45"/>
+      <line x1="14" y1="250" x2="486" y2="250" stroke="currentColor" stroke-width="0.45"/>
+      <circle cx="250" cy="46" r="2.6" fill="currentColor"/>
+      <circle cx="454" cy="250" r="2.2" fill="currentColor"/>
+      <circle cx="132" cy="250" r="2" fill="currentColor"/>
+    </g>
+  </svg></div>
       <!-- Sector 1: Tổng quan & Lộ trình -->
       <section class="lcms-sector" id="sectorDashboard" aria-label="Tổng quan và Lộ trình">
         <div class="lcms-mount-wrap" id="vtDashboardMount">
@@ -6542,7 +6875,18 @@
   </div>
       </section>
 
-      <!-- Sector 5: Lớp học, Sổ điểm & Hồ sơ 360° -->
+      <!-- Sector 5: Bảng Giảng Thiên Văn -->
+      <section class="lcms-sector" id="sectorSlate" aria-label="Bảng Giảng Thiên Văn">
+        <div class="vt-wb-host" id="vtSlateMount">
+          <div class="vt-wb-standby">
+            <div style="font-size:32px;line-height:1;">✒️</div>
+            <h2 style="font-family:'Newsreader',serif;font-size:22px;margin:0;">Bảng Giảng Thiên Văn</h2>
+            <p style="margin:0;font-size:13.5px;color:var(--text-muted);line-height:1.6;">Không gian Bảng Giảng Thiên Văn đang sẵn sàng...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sector 6: Lớp học, Sổ điểm & Hồ sơ 360° -->
       <section class="lcms-sector" id="sectorClassroom" aria-label="Lớp học, Sổ điểm và Hồ sơ 360 độ">
         <div class="lcms-mount-wrap" id="vtClassroomSectorMount">
           <div class="lcms-welcome-banner">
@@ -6557,12 +6901,13 @@
     </div>
   </div>
 
-  <!-- Mobile 5-Sector Bottom Navigation Bar (< 768px) -->
-  <nav class="vt-mobile-sector-nav" id="vtMobileSectorNav" aria-label="Điều hướng 5 phân khu di động">
+  <!-- Mobile 6-Sector Bottom Navigation Bar (< 768px) -->
+  <nav class="vt-mobile-sector-nav" id="vtMobileSectorNav" aria-label="Điều hướng 6 phân khu di động">
     <button class="vt-msector-btn" type="button" data-sector="dashboard"><span>◎</span><span>Tổng quan</span></button>
     <button class="vt-msector-btn active" type="button" data-sector="resources"><span>✦</span><span>Chòm sao</span></button>
-    <button class="vt-msector-btn" type="button" data-sector="exams"><span>🏆</span><span>Đề thi</span></button>
+    <button class="vt-msector-btn" type="button" data-sector="exams"><span>🏆</span><span>Đấu trường</span></button>
     <button class="vt-msector-btn" type="button" data-sector="lab"><span>∫</span><span>Thí nghiệm</span></button>
+    <button class="vt-msector-btn" type="button" data-sector="slate"><span>✒️</span><span>Bảng giảng</span></button>
     <button class="vt-msector-btn" type="button" data-sector="classroom"><span>🏫</span><span>Lớp học</span></button>
   </nav>
 </div>
@@ -6589,6 +6934,7 @@
   <button id="btnExportPng" class="btn tb-pop-menu-item" type="button">🖼️ Tải ảnh PNG (Độ nét cao)</button>
   <button id="btnExportSvg" class="btn tb-pop-menu-item" type="button">📐 Tải ảnh Vector (SVG)</button>
   <button id="btnShareQr" class="btn btn-primary tb-pop-menu-item" type="button">🔗 Chia sẻ Liên kết &amp; Mã QR</button>
+  <button id="btnSendLabToSlate" class="btn tb-pop-menu-item" type="button">✍️ Gửi sang Bảng Giảng Thiên Văn</button>
   <button id="btnPackageToResource" class="btn tb-pop-menu-item" type="button">📚 Đóng gói thành Học liệu</button>
 </div>
 
@@ -6608,6 +6954,7 @@
   <button id="mToolAutoFit" class="btn btn-sm">⌖ Căn khung đồ thị</button>
   <button id="mToolBlank" class="btn btn-sm">+ Trang trắng mới</button>
   <button id="mToolShareQr" class="btn btn-sm btn-primary">🔗 Chia sẻ &amp; Mã QR</button>
+  <button id="mToolSendToSlate" class="btn btn-sm" type="button">✍️ Gửi sang Bảng Giảng</button>
   <button id="mToolPng" class="btn btn-sm">🖼 Tải ảnh PNG</button>
   <button id="mToolSvg" class="btn btn-sm">📐 Tải ảnh Vector (SVG)</button>
 </div>
@@ -6647,6 +6994,21 @@
 <!-- PUBLIC LANDING PAGE (#publicLandingView) — Academic Mathematical Luxury -->
 <div id="publicLandingView" data-cosmic="day" aria-label="Trang chủ giới thiệu VANTHESIS Calculus">
   <canvas id="landingCelestialCanvas" aria-hidden="true"></canvas>
+  <div class="vt-astrolabe-backdrop is-landing" aria-hidden="true"><svg class="vt-astrolabe-svg" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <circle cx="250" cy="250" r="236" stroke="currentColor" stroke-width="0.55" stroke-dasharray="3 5"/>
+    <circle cx="250" cy="250" r="204" stroke="currentColor" stroke-width="0.5"/>
+    <circle cx="250" cy="250" r="158" stroke="currentColor" stroke-width="0.5" stroke-dasharray="1 6"/>
+    <g class="vt-astrolabe-ring-inner">
+      <circle cx="250" cy="250" r="118" stroke="currentColor" stroke-width="0.55"/>
+      <ellipse cx="250" cy="250" rx="204" ry="86" stroke="currentColor" stroke-width="0.45" transform="rotate(-24 250 250)"/>
+      <ellipse cx="250" cy="250" rx="204" ry="86" stroke="currentColor" stroke-width="0.45" transform="rotate(36 250 250)"/>
+      <line x1="250" y1="14" x2="250" y2="486" stroke="currentColor" stroke-width="0.45"/>
+      <line x1="14" y1="250" x2="486" y2="250" stroke="currentColor" stroke-width="0.45"/>
+      <circle cx="250" cy="46" r="2.6" fill="currentColor"/>
+      <circle cx="454" cy="250" r="2.2" fill="currentColor"/>
+      <circle cx="132" cy="250" r="2" fill="currentColor"/>
+    </g>
+  </svg></div>
   <!-- 1. Floating Glass Header -->
   <div class="landing-header-wrap">
     <header class="landing-header">
@@ -13895,8 +14257,14 @@
 
     function publishSessionContext(ctxObj) {
       window.VANTHESIS_SESSION_CONTEXT = ctxObj ? Object.freeze(ctxObj) : null;
-      if (window.VANTHESIS_POLICY && typeof window.VANTHESIS_POLICY.setContext === 'function') {
-        window.VANTHESIS_POLICY.setContext(window.VANTHESIS_SESSION_CONTEXT, _userProfile);
+      if (window.VANTHESIS_CORE && window.VANTHESIS_CORE.auth && typeof window.VANTHESIS_CORE.auth.setSession === 'function') {
+        window.VANTHESIS_CORE.auth.setSession(window.VANTHESIS_SESSION_CONTEXT);
+      }
+      if (typeof window.__vtSyncScopeBadges === 'function') {
+        window.__vtSyncScopeBadges();
+      }
+      if (window.VANTHESIS_CORE && window.VANTHESIS_CORE.bus) {
+        window.VANTHESIS_CORE.bus.emit('session-changed', window.VANTHESIS_SESSION_CONTEXT);
       }
       window.dispatchEvent(new CustomEvent('vantesis:session-changed', { detail: window.VANTHESIS_SESSION_CONTEXT }));
     }
@@ -18063,117 +18431,37 @@
   /* =========================================================================
    * VANTHESIS CONSTELLATION LCMS — UNIFIED 3-TIER POLICY ENGINE & 5-SECTOR ROUTER
    * ========================================================================= */
-  window.VANTHESIS_POLICY = (() => {
-    let _ctx = null;
-    let _prof = null;
+  function syncScopeBadgesFromCore() {
+    const pol = (window.VANTHESIS_CORE && window.VANTHESIS_CORE.policy) || window.VANTHESIS_POLICY;
+    const badgeTxt = pol && typeof pol.getScopeBadge === 'function' ? pol.getScopeBadge() : 'Không gian Học tập';
+    const badgeEl = $('vtRailScopeBadge');
+    if (badgeEl) badgeEl.textContent = badgeTxt;
+    const topScopeEl = $('vtTopbarScopeBadge');
+    if (topScopeEl) topScopeEl.textContent = badgeTxt;
+    const pkgBtn = $('btnPackageToResource');
+    if (pkgBtn) pkgBtn.style.display = (pol && typeof pol.can === 'function' && pol.can('upload_resource')) ? '' : 'none';
+  }
+  window.__vtSyncScopeBadges = syncScopeBadgesFromCore;
 
-    function normU(v) { return String(v || '').trim().replace(/\s+/g, ' ').toUpperCase(); }
+  // Thin delegation wrapper to VANTHESIS_CORE.policy (zero duplicated RBAC logic)
+  if (!window.VANTHESIS_POLICY) {
+    window.VANTHESIS_POLICY = {
+      can: (action, target) => Boolean(window.VANTHESIS_CORE && window.VANTHESIS_CORE.policy.can(action, target)),
+      getScopeBadge: () => (window.VANTHESIS_CORE ? window.VANTHESIS_CORE.policy.getScopeBadge() : 'Không gian Học tập'),
+      isAdmin: () => Boolean(window.VANTHESIS_CORE && window.VANTHESIS_CORE.policy.isAdmin()),
+      isTeacher: () => Boolean(window.VANTHESIS_CORE && window.VANTHESIS_CORE.policy.isTeacher()),
+      isSubjectTeacher: () => Boolean(window.VANTHESIS_CORE && window.VANTHESIS_CORE.policy.isSubjectTeacher()),
+      isHomeroomTeacher: (cid) => Boolean(window.VANTHESIS_CORE && window.VANTHESIS_CORE.policy.isHomeroomTeacher(cid)),
+      isStudent: () => Boolean(window.VANTHESIS_CORE && window.VANTHESIS_CORE.policy.isStudent())
+    };
+  }
 
-    function parseAssignments() {
-      const list = (_prof && Array.isArray(_prof.teachingAssignments)) ? _prof.teachingAssignments : [];
-      return list.map(a => ({
-        subject: String(a.subject || '').trim(),
-        subjectKey: normU(a.subject),
-        classKeys: String(a.classes || '').split(/[,;]+/).map(c => normU(c)).filter(Boolean)
-      }));
-    }
-
-    function isAdmin() { return Boolean(_ctx && _ctx.role === 'SUPER_ADMIN'); }
-    function isTeacher() { return Boolean(_ctx && (_ctx.role === 'HOMEROOM_TEACHER' || _ctx.role === 'SUBJECT_TEACHER')); }
-    function isStudent() { return Boolean(_ctx && _ctx.role === 'STUDENT'); }
-
-    function isInTeacherScope(target) {
-      if (!isTeacher()) return false;
-      const t = target || {};
-      const hrKey = normU((_prof && _prof.homeroomClass) || '');
-      const targetClassKey = normU(t.className || t.classKey || '');
-      const targetSubjKey = normU(t.subject || '');
-
-      if (_ctx.role === 'HOMEROOM_TEACHER' && hrKey && targetClassKey && hrKey === targetClassKey && !targetSubjKey) {
-        return true;
-      }
-      const assigns = parseAssignments();
-      if (!targetClassKey && !targetSubjKey) return assigns.length > 0 || Boolean(hrKey);
-      return assigns.some(a => {
-        const subjOk = !targetSubjKey || a.subjectKey === targetSubjKey;
-        const clsOk = !targetClassKey || a.classKeys.includes(targetClassKey) || (_ctx.role === 'HOMEROOM_TEACHER' && hrKey === targetClassKey);
-        return subjOk && clsOk;
-      });
-    }
-
-    function can(action, target) {
-      if (!_ctx || _ctx.status !== 'APPROVED') return false;
-      if (isAdmin()) return true;
-
-      const act = String(action || '').trim().toLowerCase();
-      const t = target || {};
-      const customPerms = (_prof && _prof.customPermissions) || {};
-
-      // Super Admin exclusive actions
-      if (['manage_users', 'manage_permissions', 'manage_classes', 'moderate_any_resource', 'approve_school_resource'].includes(act)) {
-        return false;
-      }
-
-      if (isTeacher()) {
-        if (act === 'publish_school_resource') return Boolean(customPerms.publishSchoolDirect);
-        if (act === 'submit_school_resource') return true;
-        if (act === 'edit_resource' || act === 'delete_resource') {
-          const isOwner = t.authorEmail && String(t.authorEmail).toLowerCase() === String(_ctx.email || '').toLowerCase();
-          return Boolean(isOwner) && isInTeacherScope(t);
-        }
-        if (['create_resource', 'assign_class_resource', 'create_exam', 'edit_grades', 'log_behavior'].includes(act)) {
-          return isInTeacherScope(t);
-        }
-        if (act === 'manage_roster') {
-          return _ctx.role === 'HOMEROOM_TEACHER' && isInTeacherScope({ className: t.className });
-        }
-        if (['view_resource', 'use_lab', 'answer_question', 'view_class_summary'].includes(act)) return true;
-        return false;
-      }
-
-      if (isStudent()) {
-        return ['view_resource', 'take_exam', 'ask_question', 'use_lab', 'view_own_profile'].includes(act);
-      }
-      return false;
-    }
-
-    function getScopeBadge() {
-      if (!_ctx) return 'Chưa đăng nhập';
-      if (isAdmin()) return 'Quản trị • Toàn trường';
-      if (_ctx.role === 'HOMEROOM_TEACHER') {
-        const hr = (_prof && _prof.homeroomClass) ? 'Lớp ' + _prof.homeroomClass : 'Chủ nhiệm';
-        return 'GV Chủ nhiệm • ' + hr;
-      }
-      if (_ctx.role === 'SUBJECT_TEACHER') {
-        const assigns = parseAssignments();
-        const subjs = [...new Set(assigns.map(a => a.subject).filter(Boolean))].slice(0, 2).join(', ');
-        return 'GV Bộ môn' + (subjs ? ' • ' + subjs : '');
-      }
-      if (isStudent()) {
-        const cls = (_prof && (_prof.studentClass || _prof.className)) ? 'Lớp ' + (_prof.studentClass || _prof.className) : 'Học sinh';
-        return 'Học sinh • ' + cls;
-      }
-      return 'Thành viên';
-    }
-
-    function setContext(ctx, prof) {
-      _ctx = ctx || null;
-      _prof = prof || null;
-      const badgeTxt = getScopeBadge();
-      const badgeEl = $('vtRailScopeBadge');
-      if (badgeEl) badgeEl.textContent = badgeTxt;
-      const topScopeEl = $('vtTopbarScopeBadge');
-      if (topScopeEl) topScopeEl.textContent = badgeTxt;
-      const pkgBtn = $('btnPackageToResource');
-      if (pkgBtn) pkgBtn.style.display = (isAdmin() || isTeacher()) ? '' : 'none';
-    }
-
-    return Object.freeze({ setContext, can, getScopeBadge, isAdmin, isTeacher, isStudent });
-  })();
-
+  let vtCurrentActiveSector = 'resources';
   window.VANTHESIS_SWITCH_SECTOR = function (sectorName) {
-    const valid = ['dashboard', 'resources', 'exams', 'lab', 'classroom'];
+    const valid = ['dashboard', 'resources', 'exams', 'lab', 'slate', 'classroom'];
     const target = valid.includes(sectorName) ? sectorName : 'resources';
+    const prevSector = vtCurrentActiveSector;
+    vtCurrentActiveSector = target;
     const shell = $('appShell');
     if (shell) shell.setAttribute('data-active-sector', target);
 
@@ -18182,6 +18470,7 @@
       resources: 'sectorResources',
       exams: 'sectorExams',
       lab: 'sectorLab',
+      slate: 'sectorSlate',
       classroom: 'sectorClassroom'
     };
     valid.forEach(k => {
@@ -18197,25 +18486,52 @@
       resources: '✦ Kho Chòm sao',
       exams: '🏆 Đấu trường Đề',
       lab: '∫ Phòng Thí nghiệm 2D/3D',
+      slate: '✒️ Bảng Giảng Thiên Văn',
       classroom: '🏫 Lớp học & Hồ sơ 360°'
     };
     const topTitleEl = $('vtTopbarSectorTitle');
     if (topTitleEl) topTitleEl.textContent = sectorTitles[target] || '✦ Kho Chòm sao';
 
+    if (prevSector === 'slate' && target !== 'slate') {
+      try {
+        if (window.VANTHESIS_SLATE && typeof window.VANTHESIS_SLATE.onDeactivate === 'function') {
+          window.VANTHESIS_SLATE.onDeactivate();
+        }
+      } catch {}
+    }
+
     if (target === 'lab') {
       setTimeout(() => { try { resizeCanvases(); redrawAll(); } catch {} }, 45);
+    } else if (target === 'slate') {
+      setTimeout(() => {
+        try {
+          if (window.VANTHESIS_SLATE && typeof window.VANTHESIS_SLATE.onActivate === 'function') {
+            window.VANTHESIS_SLATE.onActivate();
+          }
+        } catch {}
+      }, 30);
     } else if (target === 'classroom') {
       if (window.VANTHESIS_CLASSROOM && typeof window.VANTHESIS_CLASSROOM.open === 'function') {
         window.VANTHESIS_CLASSROOM.open();
       }
     }
-    window.dispatchEvent(new CustomEvent('vantesis:sector-changed', { detail: { sector: target } }));
-    window.dispatchEvent(new CustomEvent('vanthesis:sector-changed', { detail: { sector: target } }));
+
+    if (window.VANTHESIS_CORE && window.VANTHESIS_CORE.bus) {
+      window.VANTHESIS_CORE.bus.emit('sector-changed', { sector: target, prevSector: prevSector });
+    }
+    window.dispatchEvent(new CustomEvent('vantesis:sector-changed', { detail: { sector: target, prevSector: prevSector } }));
+    window.dispatchEvent(new CustomEvent('vanthesis:sector-changed', { detail: { sector: target, prevSector: prevSector } }));
   };
 
   document.querySelectorAll('[data-sector]').forEach(btn => {
     btn.addEventListener('click', () => window.VANTHESIS_SWITCH_SECTOR(btn.getAttribute('data-sector')));
   });
+  if ($('vtRailCollapseBtn')) {
+    $('vtRailCollapseBtn').addEventListener('click', () => {
+      const rail = $('vtSectorRail');
+      if (rail) rail.classList.toggle('is-collapsed');
+    });
+  }
   if ($('btnSectorOpenClassroom')) {
     $('btnSectorOpenClassroom').addEventListener('click', () => {
       if (window.VANTHESIS_CLASSROOM && typeof window.VANTHESIS_CLASSROOM.open === 'function') {
@@ -18280,18 +18596,100 @@
   if ($('btnPackageToResource')) {
     $('btnPackageToResource').addEventListener('click', () => {
       closeToolbarPopovers();
-      if (!window.VANTHESIS_POLICY || (!window.VANTHESIS_POLICY.isAdmin() && !window.VANTHESIS_POLICY.isTeacher())) {
-        showAppToast('Tính năng đóng gói học liệu dành cho Giáo viên và Quản trị viên.');
+      const pol = (window.VANTHESIS_CORE && window.VANTHESIS_CORE.policy) || window.VANTHESIS_POLICY;
+      if (!pol || !pol.can('upload_resource')) {
+        showAppToast('Tính năng đóng gói học liệu dành cho Giáo viên Bộ môn và Quản trị viên.');
         return;
       }
       const snap = window.VANTHESIS_GET_LAB_SNAPSHOT();
       if (window.VANTHESIS_RESOURCES && typeof window.VANTHESIS_RESOURCES.createFromStudio === 'function') {
         window.VANTHESIS_RESOURCES.createFromStudio(snap);
       } else {
-        showAppToast('Kho Chòm sao & Học liệu đang sẵn sàng — hãy đặt tệp resources.js cùng thư mục để đóng gói bài giảng.');
+        showAppToast('Kho Chòm sao & Học liệu đang sẵn sàng — vui lòng thử lại sau giây lát.');
       }
     });
   }
+
+  window.VANTHESIS_CAPTURE_LAB_TO_SLATE = function () {
+    const snap = typeof window.VANTHESIS_GET_LAB_SNAPSHOT === 'function' ? window.VANTHESIS_GET_LAB_SNAPSHOT() : null;
+    let imageDataUrl = '';
+    try {
+      const trigEl = $('trigCanvas');
+      const mathEl = $('mathCanvas');
+      const annotEl = $('annotCanvas');
+      const isTrigVisible = Boolean(trigEl && trigEl.width > 0 && trigEl.height > 0 && trigEl.offsetParent !== null);
+      const baseCanvas = isTrigVisible ? trigEl : mathEl;
+      if (baseCanvas && baseCanvas.width > 0 && baseCanvas.height > 0) {
+        const out = document.createElement('canvas');
+        out.width = baseCanvas.width;
+        out.height = baseCanvas.height;
+        const ctx = out.getContext('2d');
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        ctx.fillStyle = isDark ? '#060B19' : '#FAF9F6';
+        ctx.fillRect(0, 0, out.width, out.height);
+        ctx.drawImage(baseCanvas, 0, 0);
+        if (!isTrigVisible && annotEl && annotEl.width > 0 && annotEl.height > 0) {
+          ctx.drawImage(annotEl, 0, 0, out.width, out.height);
+        }
+        imageDataUrl = out.toDataURL('image/png');
+      }
+    } catch {}
+
+    const firstExpr = snap && Array.isArray(snap.exprs) && snap.exprs[0] && snap.exprs[0].expr
+      ? String(snap.exprs[0].expr).trim()
+      : '';
+    const capturePayload = {
+      imageDataUrl: imageDataUrl,
+      title: firstExpr ? ('Đồ thị y = ' + firstExpr) : 'Hình vẽ từ Phòng Thí nghiệm 2D/3D',
+      snapshot: snap,
+      capturedAt: new Date().toISOString()
+    };
+
+    window.VANTHESIS_SWITCH_SECTOR('slate');
+    if (window.VANTHESIS_CORE && window.VANTHESIS_CORE.bus) {
+      window.VANTHESIS_CORE.bus.emit('slate-insert-lab', capturePayload);
+    } else if (window.VANTHESIS_SLATE && typeof window.VANTHESIS_SLATE.insertLabCapture === 'function') {
+      window.VANTHESIS_SLATE.insertLabCapture(capturePayload);
+    }
+    showAppToast('✓ Đã gửi hình vẽ sang Bảng Giảng Thiên Văn.');
+    return capturePayload;
+  };
+
+  window.VANTHESIS_OPEN_IN_SLATE = function (docPayload) {
+    if (!docPayload || typeof docPayload !== 'object') return false;
+    const payload = {
+      title: String(docPayload.title || 'Tài liệu học tập'),
+      driveFileId: String(docPayload.driveFileId || ''),
+      previewUrl: String(docPayload.previewUrl || ''),
+      mimeType: String(docPayload.mimeType || ''),
+      sourceResourceId: String(docPayload.sourceResourceId || '')
+    };
+    window.VANTHESIS_SWITCH_SECTOR('slate');
+    if (window.VANTHESIS_CORE && window.VANTHESIS_CORE.bus) {
+      window.VANTHESIS_CORE.bus.emit('slate-open-document', payload);
+    } else if (window.VANTHESIS_SLATE && typeof window.VANTHESIS_SLATE.openDocumentOnBoard === 'function') {
+      window.VANTHESIS_SLATE.openDocumentOnBoard(payload);
+    }
+    return true;
+  };
+
+  if ($('btnSendLabToSlate')) {
+    $('btnSendLabToSlate').addEventListener('click', () => {
+      closeToolbarPopovers();
+      window.VANTHESIS_CAPTURE_LAB_TO_SLATE();
+    });
+  }
+  if ($('mToolSendToSlate')) {
+    $('mToolSendToSlate').addEventListener('click', () => {
+      const mMenu = $('mobileToolsMenu');
+      if (mMenu) mMenu.classList.remove('open');
+      window.VANTHESIS_CAPTURE_LAB_TO_SLATE();
+    });
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    syncScopeBadgesFromCore();
+  });
 
     resizeAll();
     sync();
@@ -18299,7 +18697,9 @@
   })();
 })();
 </script>
+<script src="./vanthesis-core.js" defer></script>
 <script src="./classroom.js" defer></script>
 <script src="./resources.js" defer></script>
+<script src="./astral-slate.js" defer></script>
 </body>
 </html>
