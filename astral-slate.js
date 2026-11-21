@@ -4074,10 +4074,39 @@
     state.active = false;
     if (state.isFullscreen) setFullscreenMode(false);
     clearHoldTimer();
+    if (activeDirtyRaf) { cancelAnimationFrame(activeDirtyRaf); activeDirtyRaf = 0; }
+    if (state.laserRafId) { cancelAnimationFrame(state.laserRafId); state.laserRafId = 0; }
+    state.laserTrails = [];
     saveLocalDraftNow();
   }
 
   const C0 = getCore();
+  if (C0 && typeof C0.registerSector === 'function') {
+    C0.registerSector('slate', {
+      containerId: 'sectorSlate',
+      mount: async function () {
+        if (C0.auth && !C0.auth.isSignedIn()) return;
+        const host = document.getElementById('vtSlateMount');
+        if (host && !state.mounted) host.innerHTML = '';
+        await onActivate();
+        requestAnimationFrame(function () {
+          resizeSlateLayers();
+          fitPageToViewport();
+        });
+      },
+      refresh: async function () {
+        if (C0.auth && !C0.auth.isSignedIn()) return;
+        await onActivate();
+        requestAnimationFrame(function () {
+          resizeSlateLayers();
+          fitPageToViewport();
+        });
+      },
+      unmount: function () {
+        onDeactivate();
+      }
+    });
+  }
   if (C0 && C0.bus) {
     C0.bus.on('session-changed', function () {
       syncRolePermissionsUI();
