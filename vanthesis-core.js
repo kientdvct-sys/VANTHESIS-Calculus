@@ -40,7 +40,12 @@
       TIMEOUT_ERROR: 'Kết nối phản hồi chậm hơn dự kiến. Vui lòng kiểm tra đường truyền và thử lại.',
       NETWORK_ERROR: 'Không thể kết nối tới máy chủ học tập. Vui lòng kiểm tra kết nối mạng.',
       DRIVE_UPLOAD_FAILED: 'Không thể tải tệp lên Google Drive lúc này. Vui lòng thử lại sau giây lát.',
-      DRIVE_DOWNLOAD_FAILED: 'Không thể tải tệp từ Google Drive. Vui lòng kiểm tra quyền truy cập tệp.'
+      DRIVE_DOWNLOAD_FAILED: 'Không thể tải tệp từ Google Drive. Vui lòng kiểm tra quyền truy cập tệp.',
+      INVALID_COSMOS_SCOPE_KEY: 'Định danh cấp độ học liệu không hợp lệ.',
+      MISSING_VAULT_ITEM_TITLE: 'Vui lòng nhập tiêu đề cho học liệu.',
+      INVALID_LINK_URL: 'Liên kết cần bắt đầu bằng http:// hoặc https://.',
+      VAULT_ITEM_NOT_FOUND: 'Không tìm thấy mục học liệu cần cập nhật.',
+      VAULT_SCOPE_MISMATCH: 'Mục học liệu không thuộc cấp độ đang chọn.'
     };
     if (map[code]) return map[code];
     if (/^(401|403|404|500|502|503)$/.test(code)) {
@@ -64,6 +69,79 @@
     return String(str || '')
       .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
       .replace(/&#39;/g, "'").replace(/&quot;/g, '"');
+  }
+
+  /* ==========================================================================
+   * 0B. SAFE STORAGE LAYER (SafeStore) & VIETNAMESE NORMALIZATION (normVi)
+   * ========================================================================== */
+
+  const SafeStore = (function () {
+    const _mem = new Map();
+    const _sessionMem = new Map();
+    function getLS() { try { return window.localStorage || null; } catch (e) { return null; } }
+    function getSS() { try { return window.sessionStorage || null; } catch (e) { return null; } }
+    return Object.freeze({
+      getItem: function (key, fallback) {
+        const fb = fallback === undefined ? null : fallback;
+        try {
+          const ls = getLS();
+          if (ls) {
+            const v = ls.getItem(key);
+            if (v !== null && v !== undefined) return v;
+          }
+        } catch (e) {}
+        return _mem.has(key) ? _mem.get(key) : fb;
+      },
+      setItem: function (key, value) {
+        const s = String(value);
+        _mem.set(key, s);
+        try { const ls = getLS(); if (ls) ls.setItem(key, s); } catch (e) {}
+      },
+      removeItem: function (key) {
+        _mem.delete(key);
+        try { const ls = getLS(); if (ls) ls.removeItem(key); } catch (e) {}
+      },
+      getJSON: function (key, fallback) {
+        const raw = this.getItem(key, null);
+        if (!raw) return fallback === undefined ? null : fallback;
+        try { return JSON.parse(raw); } catch (e) { return fallback === undefined ? null : fallback; }
+      },
+      setJSON: function (key, value) {
+        try { this.setItem(key, JSON.stringify(value)); } catch (e) {}
+      },
+      getSession: function (key, fallback) {
+        const fb = fallback === undefined ? null : fallback;
+        try {
+          const ss = getSS();
+          if (ss) {
+            const v = ss.getItem(key);
+            if (v !== null && v !== undefined) return v;
+          }
+        } catch (e) {}
+        return _sessionMem.has(key) ? _sessionMem.get(key) : fb;
+      },
+      setSession: function (key, value) {
+        const s = String(value);
+        _sessionMem.set(key, s);
+        try { const ss = getSS(); if (ss) ss.setItem(key, s); } catch (e) {}
+      },
+      clearAll: function () {
+        _mem.clear();
+        _sessionMem.clear();
+        try { const ls = getLS(); if (ls) ls.clear(); } catch (e) {}
+        try { const ss = getSS(); if (ss) ss.clear(); } catch (e) {}
+      }
+    });
+  })();
+
+  function normVi(text) {
+    return String(text || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/Đ/g, 'D')
+      .toLowerCase()
+      .trim();
   }
 
   /* ==========================================================================
@@ -930,6 +1008,46 @@
         --vt-cosmos-border-top: rgba(255, 255, 255, 0.20);
         --vt-cosmos-shadow: 0 16px 38px -12px rgba(2, 6, 23, 0.56);
       }
+      :root {
+        --vt-spec-thcs: #10B981;
+        --vt-spec-thpt: #38BDF8;
+        --vt-spec-uni: #A78BFA;
+        --vt-spec-exam: #F59E0B;
+        --vt-spec-intl: #FB7185;
+      }
+      html[data-atmosphere="deep"] {
+        color-scheme: dark;
+        --vt-cosmos-bg: #040712;
+        --vt-cosmos-bg-deep: #070E24;
+        --vt-cosmos-surface: rgba(10, 16, 34, 0.86);
+        --vt-cosmos-surface-strong: rgba(12, 20, 44, 0.94);
+        --vt-cosmos-text: #F1F5F9;
+        --vt-cosmos-text-muted: #94A3B8;
+        --vt-cosmos-border: rgba(148, 163, 184, 0.20);
+        --vt-cosmos-border-top: rgba(255, 255, 255, 0.18);
+      }
+      html[data-atmosphere="aurora"] {
+        color-scheme: dark;
+        --vt-cosmos-bg: #070D1F;
+        --vt-cosmos-bg-deep: #0D1B34;
+        --vt-cosmos-surface: rgba(13, 25, 48, 0.86);
+        --vt-cosmos-surface-strong: rgba(16, 30, 58, 0.94);
+        --vt-cosmos-text: #F0FDF4;
+        --vt-cosmos-text-muted: #A7F3D0;
+        --vt-cosmos-border: rgba(52, 211, 153, 0.26);
+        --vt-cosmos-border-top: rgba(167, 243, 208, 0.24);
+      }
+      html[data-atmosphere="light"] {
+        color-scheme: only light;
+        --vt-cosmos-bg: #F3F6FB;
+        --vt-cosmos-bg-deep: #E8EEF7;
+        --vt-cosmos-surface: rgba(255, 255, 255, 0.86);
+        --vt-cosmos-surface-strong: rgba(255, 255, 255, 0.95);
+        --vt-cosmos-text: #0F172A;
+        --vt-cosmos-text-muted: #475569;
+        --vt-cosmos-border: rgba(15, 23, 42, 0.12);
+        --vt-cosmos-border-top: rgba(255, 255, 255, 0.92);
+      }
 
       /* 60fps Lightweight Translucent Cards (Zero backdrop-filter on repeating lists, pure CSS hover) */
       .vtc-glass-card, .vt-bento-card {
@@ -1488,7 +1606,7 @@
       }
     });
     bd.querySelector('[data-diag-clear]').addEventListener('click', async function () {
-      try { localStorage.clear(); } catch (e) {}
+      SafeStore.clearAll();
       try {
         if (typeof indexedDB !== 'undefined' && indexedDB.deleteDatabase) {
           indexedDB.deleteDatabase(DB_NAME);
@@ -1509,12 +1627,471 @@
     });
   }
 
+
+  /* ==========================================================================
+   * 5D. CHẶNG 1 (v3.0): SHARED 162-GALAXY CATALOG, 4-LEVEL COSMOS VAULT,
+   *     PERSONALIZATION PREFS (PINS · TOP 5 RECENT · 3 ATMOSPHERES) & DEEP LINKS
+   * ========================================================================== */
+
+  const COSMOS_WORKSPACE_FILE = 'vanthesis_workspace_v1.json';
+  const COSMOS_VAULT_KEY = 'vanthesis_cosmos_vault_v1';
+  const COSMOS_PREFS_KEY = 'vanthesis_cosmos_prefs_v1';
+  const COSMOS_ATMO_KEY = 'vanthesis_atmosphere_v1';
+  const COSMOS_PIN_KEY = 'vanthesis_pinned_galaxies_v1';
+  const COSMOS_RECENT_KEY = 'vanthesis_recent_galaxies_v1';
+
+  const SPECTRAL_GROUPS = Object.freeze({
+    THCS: Object.freeze({ key: 'THCS', label: 'Trung học Cơ sở (THCS)', color: '#10B981' }),
+    THPT: Object.freeze({ key: 'THPT', label: 'Trung học Phổ thông (THPT)', color: '#38BDF8' }),
+    UNI: Object.freeze({ key: 'UNI', label: 'Đại học & CNTT', color: '#A78BFA' }),
+    EXAM: Object.freeze({ key: 'EXAM', label: 'Kì thi riêng & ĐGNL', color: '#F59E0B' }),
+    INTL: Object.freeze({ key: 'INTL', label: 'Chứng chỉ Quốc tế', color: '#FB7185' })
+  });
+
+  // Compact 162-Galaxy Shared Index: [id, catalogCode, title, domain, group, chapterCount, lessonCount]
+  const COMPACT_GALAXY_INDEX_162 = [["GAL_TOAN_10","M51","Toán 10","HIGH_SCHOOL","THPT",9,36],["GAL_TOAN_11","M33","Toán 11","HIGH_SCHOOL","THPT",9,42],["GAL_TOAN_12","M31","Toán 12","HIGH_SCHOOL","THPT",6,25],["GAL_TOAN_6","M74","Toán 6","MIDDLE_SCHOOL","THCS",9,52],["GAL_TOAN_7","M101","Toán 7","MIDDLE_SCHOOL","THCS",10,47],["GAL_TOAN_8","NGC 3949","Toán 8","MIDDLE_SCHOOL","THCS",10,49],["GAL_TOAN_9","NGC 3726","Toán 9","MIDDLE_SCHOOL","THCS",10,42],["GAL_VATLI_10","M104","Vật lí 10","HIGH_SCHOOL","THPT",7,34],["GAL_VATLI_11","NGC 1385","Vật lí 11","HIGH_SCHOOL","THPT",4,26],["GAL_VATLI_12","NGC 4013","Vật lí 12","HIGH_SCHOOL","THPT",4,24],["GAL_HOA_10","M81","Hóa học 10","HIGH_SCHOOL","THPT",7,23],["GAL_HOA_11","M63","Hóa học 11","HIGH_SCHOOL","THPT",6,25],["GAL_HOA_12","M106","Hóa học 12","HIGH_SCHOOL","THPT",8,30],["GAL_SINH_10","M82","Sinh học 10","HIGH_SCHOOL","THPT",6,26],["GAL_SINH_11","NGC 2613","Sinh học 11","HIGH_SCHOOL","THPT",4,27],["GAL_SINH_12","NGC 4217","Sinh học 12","HIGH_SCHOOL","THPT",7,31],["GAL_KHTN_6","NGC 4676","KHTN 6","MIDDLE_SCHOOL","THCS",10,55],["GAL_KHTN_7","NGC 4039","KHTN 7","MIDDLE_SCHOOL","THCS",10,42],["GAL_KHTN_8","NGC 2535","KHTN 8","MIDDLE_SCHOOL","THCS",8,47],["GAL_KHTN_9","IC 2163","KHTN 9","MIDDLE_SCHOOL","THCS",13,51],["GAL_GT_1","M87","Giải tích 1","UNIVERSITY","UNI",6,19],["GAL_GT_2","M108","Giải tích 2","UNIVERSITY","UNI",4,10],["GAL_GT_3","M109","Giải tích 3","UNIVERSITY","UNI",5,10],["GAL_GT_4","NGC 7582","Giải tích 4","UNIVERSITY","UNI",5,7],["GAL_DSTT_1","M64","Đại số Tuyến tính 1","UNIVERSITY","UNI",6,12],["GAL_DSTT_2","NGC 4438","Đại số Tuyến tính 2","UNIVERSITY","UNI",7,16],["GAL_PPT","NGC 6814","Giải tích số (Phương pháp tính)","UNIVERSITY","UNI",6,12],["GAL_XSTK","NGC 5775","Xác suất Thống kê","UNIVERSITY","UNI",6,17],["GAL_CTDL_GT","NGC 278","Cấu trúc Dữ liệu & Giải thuật","UNIVERSITY","UNI",8,21],["GAL_TRIET_MLN","NGC 3379","Triết học Mác - Lênin","UNIVERSITY","UNI",3,10],["GAL_TIN_10","NGC 5195","Tin học 10","HIGH_SCHOOL","THPT",6,34],["GAL_TIN_11","NGC 4254","Tin học 11","HIGH_SCHOOL","THPT",8,42],["GAL_TIN_12","NGC 4689","Tin học 12","HIGH_SCHOOL","THPT",7,37],["GAL_TIN_6","NGC 3623","Tin học 6","MIDDLE_SCHOOL","THCS",6,17],["GAL_TIN_7","NGC 3511","Tin học 7","MIDDLE_SCHOOL","THCS",5,16],["GAL_TIN_8","NGC 3115","Tin học 8","MIDDLE_SCHOOL","THCS",6,20],["GAL_TIN_9","NGC 2654","Tin học 9","MIDDLE_SCHOOL","THCS",6,21],["GAL_SU_10","NGC 1326","Lịch sử 10","HIGH_SCHOOL","THPT",7,14],["GAL_SU_11","NGC 1097","Lịch sử 11","HIGH_SCHOOL","THPT",6,13],["GAL_SU_12","NGC 1559","Lịch sử 12","HIGH_SCHOOL","THPT",6,17],["GAL_DIA_10","NGC 2985","Địa lí 10","HIGH_SCHOOL","THPT",13,38],["GAL_DIA_11","NGC 3359","Địa lí 11","HIGH_SCHOOL","THPT",10,31],["GAL_DIA_12","NGC 4725","Địa lí 12","HIGH_SCHOOL","THPT",4,32],["GAL_VAN_10","NGC 628","Ngữ văn 10","HIGH_SCHOOL","THPT",9,54],["GAL_VAN_11","NGC 5701","Ngữ văn 11","HIGH_SCHOOL","THPT",9,52],["GAL_VAN_12","NGC 5905","Ngữ văn 12","HIGH_SCHOOL","THPT",9,49],["GAL_VAN_6","NGC 5921","Ngữ văn 6","MIDDLE_SCHOOL","THCS",10,58],["GAL_VAN_7","NGC 4206","Ngữ văn 7","MIDDLE_SCHOOL","THCS",10,60],["GAL_VAN_8","NGC 4781","Ngữ văn 8","MIDDLE_SCHOOL","THCS",10,58],["GAL_VAN_9","NGC 4038","Ngữ văn 9","MIDDLE_SCHOOL","THCS",10,58],["GAL_DIA_6","NGC 4651","Địa lí 6","MIDDLE_SCHOOL","THCS",7,28],["GAL_DIA_7","NGC 4826","Địa lí 7","MIDDLE_SCHOOL","THCS",6,23],["GAL_DIA_8","NGC 4845","Địa lí 8","MIDDLE_SCHOOL","THCS",4,14],["GAL_DIA_9","NGC 4958","Địa lí 9","MIDDLE_SCHOOL","THCS",4,22],["GAL_SU_6","NGC 5170","Lịch sử 6","MIDDLE_SCHOOL","THCS",5,20],["GAL_SU_7","NGC 5204","Lịch sử 7","MIDDLE_SCHOOL","THCS",5,18],["GAL_SU_8","NGC 5247","Lịch sử 8","MIDDLE_SCHOOL","THCS",7,20],["GAL_SU_9","NGC 5585","Lịch sử 9","MIDDLE_SCHOOL","THCS",7,22],["GAL_ANH_10","NGC 7755","Tiếng Anh 10","HIGH_SCHOOL","THPT",4,14],["GAL_ANH_11","NGC 7332","Tiếng Anh 11","HIGH_SCHOOL","THPT",4,14],["GAL_ANH_12","NGC 3079","Tiếng Anh 12","HIGH_SCHOOL","THPT",4,14],["GAL_ANH_6","NGC 2903","Tiếng Anh 6","MIDDLE_SCHOOL","THCS",4,16],["GAL_ANH_7","NGC 3184","Tiếng Anh 7","MIDDLE_SCHOOL","THCS",4,16],["GAL_ANH_8","NGC 3351","Tiếng Anh 8","MIDDLE_SCHOOL","THCS",4,16],["GAL_ANH_9","NGC 3627","Tiếng Anh 9","MIDDLE_SCHOOL","THCS",4,16],["GAL_GDKTPL_10","NGC 4753","GDKT&PL 10","HIGH_SCHOOL","THPT",9,20],["GAL_GDKTPL_11","NGC 5371","GDKT&PL 11","HIGH_SCHOOL","THPT",9,21],["GAL_GDKTPL_12","NGC 5668","GDKT&PL 12","HIGH_SCHOOL","THPT",8,16],["GAL_GDCD_6","NGC 4151","GDCD 6","MIDDLE_SCHOOL","THCS",3,12],["GAL_GDCD_7","NGC 4395","GDCD 7","MIDDLE_SCHOOL","THCS",3,12],["GAL_GDCD_8","NGC 4654","GDCD 8","MIDDLE_SCHOOL","THCS",3,10],["GAL_GDCD_9","NGC 4800","GDCD 9","MIDDLE_SCHOOL","THCS",3,10],["GAL_CN_10","NGC 5055","Công nghệ 10","HIGH_SCHOOL","THPT",6,23],["GAL_CN_11","NGC 7552","Công nghệ 11","HIGH_SCHOOL","THPT",6,25],["GAL_CN_12","NGC 5457","Công nghệ 12","HIGH_SCHOOL","THPT",8,26],["GAL_CN_6","NGC 5746","Công nghệ 6","MIDDLE_SCHOOL","THCS",4,11],["GAL_CN_7","NGC 5866","Công nghệ 7","MIDDLE_SCHOOL","THCS",4,14],["GAL_CN_8","NGC 6118","Công nghệ 8","MIDDLE_SCHOOL","THCS",4,17],["GAL_CN_9","NGC 6384","Công nghệ 9","MIDDLE_SCHOOL","THCS",4,14],["GAL_GDQPAN_10","NGC 6643","GDQP&AN 10","HIGH_SCHOOL","THPT",2,12],["GAL_GDQPAN_11","NGC 6822","GDQP&AN 11","HIGH_SCHOOL","THPT",2,10],["GAL_GDQPAN_12","NGC 7217","GDQP&AN 12","HIGH_SCHOOL","THPT",2,10],["GAL_AI_6","NGC 7479","Trí tuệ nhân tạo 6","MIDDLE_SCHOOL","THCS",5,15],["GAL_AI_7","NGC 7640","Trí tuệ nhân tạo 7","MIDDLE_SCHOOL","THCS",5,15],["GAL_AI_8","NGC 7793","Trí tuệ nhân tạo 8","MIDDLE_SCHOOL","THCS",5,16],["GAL_AI_9","NGC 7727","Trí tuệ nhân tạo 9","MIDDLE_SCHOOL","THCS",5,16],["GAL_AI_10","NGC 7090","Trí tuệ nhân tạo 10","HIGH_SCHOOL","THPT",6,18],["GAL_AI_11","NGC 1672","Trí tuệ nhân tạo 11","HIGH_SCHOOL","THPT",6,18],["GAL_AI_12","NGC 2442","Trí tuệ nhân tạo 12","HIGH_SCHOOL","THPT",6,18],["GAL_CD_TOAN","NGC 7314","Chuyên đề Toán học THPT","HIGH_SCHOOL_SPECIAL","THPT",3,9],["GAL_CD_VATLI","NGC 925","Chuyên đề Vật lí THPT","HIGH_SCHOOL_SPECIAL","THPT",3,9],["GAL_CD_HOA","NGC 1068","Chuyên đề Hóa học THPT","HIGH_SCHOOL_SPECIAL","THPT",3,9],["GAL_CD_SINH","NGC 6951","Chuyên đề Sinh học THPT","HIGH_SCHOOL_SPECIAL","THPT",3,9],["GAL_CD_TIN","NGC 1532","Chuyên đề Tin học THPT","HIGH_SCHOOL_SPECIAL","THPT",3,18],["GAL_CD_VAN","NGC 1566","Chuyên đề Ngữ văn THPT","HIGH_SCHOOL_SPECIAL","THPT",3,9],["GAL_CD_SU","NGC 1792","Chuyên đề Lịch sử THPT","HIGH_SCHOOL_SPECIAL","THPT",3,9],["GAL_CD_DIA","NGC 1808","Chuyên đề Địa lí THPT","HIGH_SCHOOL_SPECIAL","THPT",3,9],["GAL_CD_GDKTPL","NGC 1961","Chuyên đề GDKT&PL THPT","HIGH_SCHOOL_SPECIAL","THPT",3,9],["GAL_CNNN_10","NGC 2207","Công nghệ 10 (Trồng trọt)","HIGH_SCHOOL","THPT",6,25],["GAL_CNNN_11","NGC 2683","Công nghệ 11 (Chăn nuôi)","HIGH_SCHOOL","THPT",6,23],["GAL_CNNN_12","NGC 2997","Công nghệ 12 (Lâm nghiệp – Thủy sản)","HIGH_SCHOOL","THPT",10,25],["GAL_HDTN_THCS","NGC 3109","HĐTN, HN THCS (Lớp 6–9)","MIDDLE_SCHOOL","THCS",4,38],["GAL_HDTN_THPT","NGC 3227","HĐTN, HN THPT (Lớp 10–12)","HIGH_SCHOOL","THPT",3,31],["GAL_AMNHAC_K12","NGC 3344","Âm nhạc Phổ thông (Lớp 6–12)","ARTS_K12","THCS",7,41],["GAL_MITHUAT_K12","NGC 3521","Mĩ thuật Phổ thông (Lớp 6–12)","ARTS_K12","THCS",7,34],["GAL_GDTC_K12","NGC 7814","Giáo dục thể chất Phổ thông (Lớp 6–12)","ARTS_K12","THCS",7,27],["GAL_GDDP_K12","NGC 3810","Giáo dục địa phương Phổ thông (Lớp 6–12)","ARTS_K12","THCS",7,21],["GAL_TRUNG_K12","NGC 3938","Tiếng Trung Quốc Phổ thông (Lớp 6–12)","ARTS_K12","THCS",7,25],["GAL_KTCT_MLN","NGC 4051","Kinh tế chính trị Mác - Lênin","UNIVERSITY","UNI",6,17],["GAL_CNXHKH","NGC 4111","Chủ nghĩa xã hội khoa học","UNIVERSITY","UNI",7,19],["GAL_LSDCSVN","NGC 4216","Lịch sử Đảng Cộng sản Việt Nam","UNIVERSITY","UNI",4,8],["GAL_TTHCM","NGC 4244","Tư tưởng Hồ Chí Minh","UNIVERSITY","UNI",6,15],["GAL_PLDC","NGC 4314","Pháp luật đại cương","UNIVERSITY","UNI",6,12],["GAL_TAMLI_DC","NGC 4414","Tâm lí học đại cương","UNIVERSITY","UNI",7,18],["GAL_LOGIC_DC","NGC 4449","Logic học đại cương","UNIVERSITY","UNI",6,15],["GAL_PPNCKH","NGC 4490","Phương pháp nghiên cứu khoa học","UNIVERSITY","UNI",6,14],["GAL_CSVHVN","NGC 4526","Cơ sở văn hóa Việt Nam","UNIVERSITY","UNI",6,14],["GAL_XHH_DC","NGC 4559","Xã hội học đại cương","UNIVERSITY","UNI",6,12],["GAL_KHQLGD","NGC 7782","Khoa học quản lí giáo dục","UNIVERSITY","UNI",6,18],["GAL_GDH_DC","NGC 4631","Giáo dục học đại cương","UNIVERSITY","UNI",6,14],["GAL_LLDH_DC","NGC 4656","Lí luận dạy học đại cương","UNIVERSITY","UNI",6,14],["GAL_TRR","NGC 4889","Toán rời rạc và Lí thuyết đồ thị","UNIVERSITY","UNI",6,16],["GAL_OOP","NGC 4945","Lập trình hướng đối tượng","UNIVERSITY","UNI",6,12],["GAL_CSDL","NGC 5005","Cơ sở dữ liệu","UNIVERSITY","UNI",6,12],["GAL_HDH","NGC 5033","Hệ điều hành","UNIVERSITY","UNI",6,12],["GAL_MMT","NGC 5128","Mạng máy tính","UNIVERSITY","UNI",6,12],["GAL_SH_DSDC","NGC 5236","Số học và Đại số đại cương","UNIVERSITY","UNI",6,15],["GAL_PTVP","NGC 5248","Phương trình vi phân","UNIVERSITY","UNI",6,13],["GAL_GTP_GTH","NGC 5364","Giải tích phức và Giải tích hàm","UNIVERSITY","UNI",6,12],["GAL_KTMT","NGC 5427","Kiến trúc máy tính","UNIVERSITY","UNI",6,12],["GAL_AI_UNI","NGC 5566","Trí tuệ nhân tạo và Học máy (Bậc Đại học)","UNIVERSITY","UNI",6,13],["GAL_VLDC","NGC 6217","Vật lí đại cương","UNIVERSITY","UNI",6,12],["GAL_HHDC","NGC 7723","Hóa học đại cương","UNIVERSITY","UNI",6,12],["GAL_NMLT","NGC 3034","Nhập môn Lập trình","UNIVERSITY","UNI",6,12],["GAL_KTHDC","NGC 7606","Kinh tế học đại cương (Vi mô & Vĩ mô)","UNIVERSITY","UNI",6,13],["GAL_QTHDC","NGC 7817","Quản trị học đại cương","UNIVERSITY","UNI",6,12],["GAL_QHTT","NGC 5846","Tối ưu hóa và Quy hoạch tuyến tính","UNIVERSITY","UNI",6,12],["GAL_ATTT_MMH","NGC 5907","An toàn thông tin và Mật mã học","UNIVERSITY","UNI",6,12],["GAL_CNPM_TKHT","NGC 6240","Công nghệ phần mềm và Thiết kế hệ thống","UNIVERSITY","UNI",6,12],["GAL_NLKT","NGC 6503","Nguyên lí Kế toán","UNIVERSITY","UNI",6,12],["GAL_TCTT","NGC 6744","Tài chính – Tiền tệ","UNIVERSITY","UNI",6,12],["GAL_KHDL_BIGDATA","NGC 6946","Khoa học dữ liệu và Phân tích dữ liệu lớn","UNIVERSITY","UNI",6,12],["GAL_WEB_CLOUD","NGC 7331","Phát triển Ứng dụng Web và Điện toán đám mây","UNIVERSITY","UNI",6,12],["GAL_HHVP_TOPO","NGC 7418","Hình học vi phân và Tôpô đại cương","UNIVERSITY","UNI",6,12],["GAL_XLTH_XLA","NGC 7541","Xử lí tín hiệu số và Xử lí ảnh","UNIVERSITY","UNI",6,12],["GAL_HSA","NGC 104","Kì thi Đánh giá năng lực ĐHQGHN (HSA)","EXAM_PREP","EXAM",8,75],["GAL_TSA","NGC 224","Kì thi Đánh giá tư duy ĐHBK Hà Nội (TSA)","EXAM_PREP","EXAM",3,28],["GAL_VACT","NGC 598","Kì thi Đánh giá năng lực ĐHQG TP.HCM (V-ACT)","EXAM_PREP","EXAM",4,22],["GAL_SPT","NGC 1300","Kì thi Đánh giá năng lực Trường ĐHSP Hà Nội (SPT)","EXAM_PREP","EXAM",8,28],["GAL_HSCA","NGC 1365","Kì thi Đánh giá năng lực chuyên biệt Trường ĐHSP TP.HCM (H-SCA)","EXAM_PREP","EXAM",6,23],["GAL_BCA","NGC 1512","Kì thi Đánh giá của Bộ Công an (BCA)","EXAM_PREP","EXAM",6,17],["GAL_VSAT","NGC 4594","Kì thi Đánh giá đầu vào Đại học trên máy tính (V-SAT)","EXAM_PREP","EXAM",8,28],["GAL_THPTQG","NGC 253","Kì thi Tốt nghiệp THPT (THPTQG)","EXAM_PREP","EXAM",9,38],["GAL_IELTS","NGC 891","Chứng chỉ Tiếng Anh Quốc tế (IELTS Academic)","INTL_CERT","INTL",4,12],["GAL_SAT","NGC 5194","Chứng chỉ Chuẩn hóa Quốc tế (Digital SAT)","INTL_CERT","INTL",2,9],["GAL_ACT","NGC 4258","Chứng chỉ Chuẩn hóa Quốc tế (ACT)","INTL_CERT","INTL",5,14],["GAL_TOEFL","NGC 3628","Chứng chỉ Tiếng Anh Học thuật Quốc tế (TOEFL iBT)","INTL_CERT","INTL",4,11],["GAL_HSK","NGC 3031","Chứng chỉ Năng lực Hán ngữ Quốc tế (HSK & HSKK)","INTL_CERT","INTL",4,11],["GAL_VSTEP","NGC 2403","Chứng chỉ Năng lực Ngoại ngữ 6 bậc dùng cho Việt Nam (VSTEP)","INTL_CERT","INTL",4,10],["GAL_AP","NGC 4565","Chương trình Tú tài Nâng cao Quốc tế (AP)","INTL_CERT","INTL",8,21],["GAL_HSGQG","NGC 4736","Kì thi Chọn Học sinh giỏi Quốc gia (HSGQG)","EXAM_PREP","EXAM",9,28],["GAL_TOPIK","NGC 2841","Chứng chỉ Năng lực Tiếng Hàn Quốc tế (TOPIK)","INTL_CERT","INTL",3,8]];
+
+  const catalog = (function () {
+    const list = COMPACT_GALAXY_INDEX_162.map(function (row) {
+      const grp = SPECTRAL_GROUPS[row[4]] || SPECTRAL_GROUPS.THPT;
+      return Object.freeze({
+        id: row[0],
+        catalogCode: row[1],
+        title: row[2],
+        domain: row[3],
+        group: grp.key,
+        groupLabel: grp.label,
+        spectralColor: grp.color,
+        chapterCount: row[5],
+        lessonCount: row[6],
+        _searchKey: normVi(row[2] + ' ' + row[1] + ' ' + row[0] + ' ' + grp.label)
+      });
+    });
+    const byId = Object.create(null);
+    for (let i = 0; i < list.length; i++) byId[list[i].id] = list[i];
+
+    return Object.freeze({
+      total: list.length,
+      groups: SPECTRAL_GROUPS,
+      list: Object.freeze(list),
+      byId: byId,
+      normVi: normVi,
+      get: function (galaxyId) {
+        return byId[String(galaxyId || '').trim()] || null;
+      },
+      getSpectralColor: function (galaxyOrId) {
+        if (!galaxyOrId) return SPECTRAL_GROUPS.THPT.color;
+        if (typeof galaxyOrId === 'string') {
+          const hit = byId[galaxyOrId];
+          return hit ? hit.spectralColor : SPECTRAL_GROUPS.THPT.color;
+        }
+        if (galaxyOrId.spectralColor) return galaxyOrId.spectralColor;
+        const grp = SPECTRAL_GROUPS[galaxyOrId.group];
+        return grp ? grp.color : SPECTRAL_GROUPS.THPT.color;
+      },
+      search: function (query, groupFilter) {
+        const q = normVi(query);
+        const gf = String(groupFilter || 'ALL').toUpperCase();
+        return list.filter(function (g) {
+          if (gf !== 'ALL' && g.group !== gf) return false;
+          if (!q) return true;
+          return g._searchKey.indexOf(q) !== -1;
+        });
+      }
+    });
+  })();
+
+  /* ---- 4-Level Resource Vault (cosmosVault) ---- */
+
+  function buildVaultKey(galaxyId, chapterIdx, starIdx, planetIdx) {
+    const gid = String(galaxyId || '').trim();
+    if (!gid) return '';
+    if (chapterIdx === undefined || chapterIdx === null || chapterIdx === '') return gid;
+    const c = parseInt(chapterIdx, 10);
+    if (!isFinite(c) || c < 0) return gid;
+    let key = gid + '::c' + c;
+    if (starIdx === undefined || starIdx === null || starIdx === '') return key;
+    const s = parseInt(starIdx, 10);
+    if (!isFinite(s) || s < 0) return key;
+    key += '::s' + s;
+    if (planetIdx === undefined || planetIdx === null || planetIdx === '') return key;
+    const p = parseInt(planetIdx, 10);
+    if (!isFinite(p) || p < 0) return key;
+    return key + '::p' + p;
+  }
+
+  function parseVaultKey(scopeKey) {
+    const key = String(scopeKey || '').trim();
+    const m = key.match(/^([A-Z0-9_]{3,64})(?:::c(\d+)(?:::s(\d+)(?:::p(\d+))?)?)?$/);
+    if (!m) return null;
+    const chapterIdx = m[2] !== undefined ? parseInt(m[2], 10) : null;
+    const starIdx = m[3] !== undefined ? parseInt(m[3], 10) : null;
+    const planetIdx = m[4] !== undefined ? parseInt(m[4], 10) : null;
+    const level = planetIdx !== null ? 4 : (starIdx !== null ? 3 : (chapterIdx !== null ? 2 : 1));
+    return {
+      scopeKey: key,
+      galaxyId: m[1],
+      level: level,
+      chapterIndex: chapterIdx,
+      starIndex: starIdx,
+      planetIndex: planetIdx
+    };
+  }
+
+  function canManageVault() {
+    if (!auth.isSignedIn()) return true; // Chế độ cục bộ khi chưa đăng nhập
+    return policy.isAdmin() || policy.isTeacher();
+  }
+
+  function readLocalVaultMap() {
+    const raw = SafeStore.getJSON(COSMOS_VAULT_KEY, null);
+    return (raw && typeof raw === 'object' && !Array.isArray(raw)) ? raw : Object.create(null);
+  }
+
+  function writeLocalVaultMap(mapObj) {
+    SafeStore.setJSON(COSMOS_VAULT_KEY, mapObj);
+  }
+
+  function getVaultItems(scopeKey, opts) {
+    const o = opts || {};
+    const key = String(scopeKey || '').trim();
+    const vaultMap = readLocalVaultMap();
+    if (!key) {
+      const all = [];
+      Object.keys(vaultMap).forEach(function (k) {
+        const arr = Array.isArray(vaultMap[k]) ? vaultMap[k] : [];
+        for (let i = 0; i < arr.length; i++) all.push(arr[i]);
+      });
+      return all;
+    }
+    const direct = Array.isArray(vaultMap[key]) ? vaultMap[key].slice() : [];
+    if (!o.includeChildren) return direct;
+    const prefix = key + '::';
+    const out = direct.slice();
+    Object.keys(vaultMap).forEach(function (k) {
+      if (k.indexOf(prefix) === 0 && Array.isArray(vaultMap[k])) {
+        for (let i = 0; i < vaultMap[k].length; i++) out.push(vaultMap[k][i]);
+      }
+    });
+    return out;
+  }
+
+  function countVaultByGalaxy(galaxyId) {
+    const gid = String(galaxyId || '').trim();
+    const res = { direct: 0, children: 0, total: 0, byLevel: { 1: 0, 2: 0, 3: 0, 4: 0 } };
+    if (!gid) return res;
+    const vaultMap = readLocalVaultMap();
+    const prefix = gid + '::';
+    Object.keys(vaultMap).forEach(function (k) {
+      if (k !== gid && k.indexOf(prefix) !== 0) return;
+      const arr = Array.isArray(vaultMap[k]) ? vaultMap[k] : [];
+      const n = arr.length;
+      if (!n) return;
+      const parsed = parseVaultKey(k);
+      const lvl = parsed ? parsed.level : 1;
+      res.byLevel[lvl] = (res.byLevel[lvl] || 0) + n;
+      if (k === gid) res.direct += n;
+      else res.children += n;
+      res.total += n;
+    });
+    return res;
+  }
+
+  async function addVaultItem(scopeKey, itemPayload) {
+    if (!canManageVault()) {
+      return { ok: false, error: translateFriendlyError('FORBIDDEN_STUDENT_READ_ONLY'), rawError: 'FORBIDDEN_STUDENT_READ_ONLY' };
+    }
+    const parsed = parseVaultKey(scopeKey);
+    if (!parsed) {
+      return { ok: false, error: translateFriendlyError('INVALID_COSMOS_SCOPE_KEY'), rawError: 'INVALID_COSMOS_SCOPE_KEY' };
+    }
+    const p = itemPayload || {};
+    const title = String(p.title || '').trim();
+    if (!title) {
+      return { ok: false, error: translateFriendlyError('MISSING_VAULT_ITEM_TITLE'), rawError: 'MISSING_VAULT_ITEM_TITLE' };
+    }
+    const nowIso = new Date().toISOString();
+    const item = {
+      itemId: String(p.itemId || ('CVI_' + Date.now().toString(36).toUpperCase() + '_' + Math.floor(Math.random() * 900 + 100))),
+      scopeKey: parsed.scopeKey,
+      galaxyId: parsed.galaxyId,
+      level: parsed.level,
+      itemType: String(p.itemType || 'FILE').toUpperCase(),
+      category: String(p.category || 'LECTURE'),
+      title: title,
+      url: String(p.url || ''),
+      driveFileId: String(p.driveFileId || ''),
+      previewUrl: String(p.previewUrl || p.url || ''),
+      downloadUrl: String(p.downloadUrl || p.url || ''),
+      mimeType: String(p.mimeType || ''),
+      sizeBytes: Math.max(0, Number(p.sizeBytes) || 0),
+      noteContent: String(p.noteContent || ''),
+      authorEmail: auth.getEmail() || '',
+      createdAt: p.createdAt || nowIso,
+      updatedAt: nowIso
+    };
+
+    const vaultMap = readLocalVaultMap();
+    if (!Array.isArray(vaultMap[parsed.scopeKey])) vaultMap[parsed.scopeKey] = [];
+    vaultMap[parsed.scopeKey].unshift(item);
+    writeLocalVaultMap(vaultMap);
+    bus.emit('cosmos-vault-changed', { action: 'add', scopeKey: parsed.scopeKey, item: item }, { broadcast: true });
+
+    if (auth.isSignedIn()) {
+      const cloudRes = await api.post('cosmos_vault_add', { payload: item }, { dedupe: false });
+      if (cloudRes && cloudRes.ok && cloudRes.item) {
+        return { ok: true, item: cloudRes.item, synced: true };
+      }
+      return { ok: true, item: item, synced: false, syncError: cloudRes && cloudRes.error };
+    }
+    return { ok: true, item: item, synced: false };
+  }
+
+  async function renameVaultItem(scopeKey, itemId, newTitle, noteContent) {
+    if (!canManageVault()) {
+      return { ok: false, error: translateFriendlyError('FORBIDDEN_STUDENT_READ_ONLY'), rawError: 'FORBIDDEN_STUDENT_READ_ONLY' };
+    }
+    const key = String(scopeKey || '').trim();
+    const id = String(itemId || '').trim();
+    const cleanTitle = String(newTitle || '').trim();
+    if (!key || !id || !cleanTitle) {
+      return { ok: false, error: translateFriendlyError('MISSING_VAULT_ITEM_TITLE'), rawError: 'MISSING_VAULT_ITEM_TITLE' };
+    }
+
+    const vaultMap = readLocalVaultMap();
+    const list = Array.isArray(vaultMap[key]) ? vaultMap[key] : [];
+    let updatedItem = null;
+    for (let i = 0; i < list.length; i++) {
+      if (list[i] && list[i].itemId === id) {
+        list[i].title = cleanTitle;
+        if (noteContent !== undefined) list[i].noteContent = String(noteContent || '');
+        list[i].updatedAt = new Date().toISOString();
+        updatedItem = list[i];
+        break;
+      }
+    }
+    if (!updatedItem) {
+      return { ok: false, error: translateFriendlyError('VAULT_ITEM_NOT_FOUND'), rawError: 'VAULT_ITEM_NOT_FOUND' };
+    }
+    writeLocalVaultMap(vaultMap);
+    bus.emit('cosmos-vault-changed', { action: 'rename', scopeKey: key, item: updatedItem }, { broadcast: true });
+
+    if (auth.isSignedIn()) {
+      const payload = { scopeKey: key, itemId: id, newTitle: cleanTitle };
+      if (noteContent !== undefined) payload.noteContent = String(noteContent || '');
+      const cloudRes = await api.post('cosmos_vault_rename', { payload: payload }, { dedupe: false });
+      return { ok: true, item: (cloudRes && cloudRes.item) || updatedItem, synced: Boolean(cloudRes && cloudRes.ok) };
+    }
+    return { ok: true, item: updatedItem, synced: false };
+  }
+
+  async function deleteVaultItem(scopeKey, itemId) {
+    if (!canManageVault()) {
+      return { ok: false, error: translateFriendlyError('FORBIDDEN_STUDENT_READ_ONLY'), rawError: 'FORBIDDEN_STUDENT_READ_ONLY' };
+    }
+    const key = String(scopeKey || '').trim();
+    const id = String(itemId || '').trim();
+    const vaultMap = readLocalVaultMap();
+    const list = Array.isArray(vaultMap[key]) ? vaultMap[key] : [];
+    const nextList = list.filter(function (it) { return it && it.itemId !== id; });
+    if (nextList.length === list.length) {
+      return { ok: false, error: translateFriendlyError('VAULT_ITEM_NOT_FOUND'), rawError: 'VAULT_ITEM_NOT_FOUND' };
+    }
+    if (nextList.length > 0) vaultMap[key] = nextList;
+    else delete vaultMap[key];
+    writeLocalVaultMap(vaultMap);
+    bus.emit('cosmos-vault-changed', { action: 'delete', scopeKey: key, itemId: id }, { broadcast: true });
+
+    if (auth.isSignedIn()) {
+      const cloudRes = await api.post('cosmos_vault_delete', { payload: { scopeKey: key, itemId: id } }, { dedupe: false });
+      return { ok: true, deletedItemId: id, scopeKey: key, synced: Boolean(cloudRes && cloudRes.ok) };
+    }
+    return { ok: true, deletedItemId: id, scopeKey: key, synced: false };
+  }
+
+  /* ---- Personalization Preferences (cosmosPrefs: Pins, Top 5 Recent, 3 Atmospheres) ---- */
+
+  function getPrefs() {
+    const unified = SafeStore.getJSON(COSMOS_PREFS_KEY, null);
+    const legacyPins = SafeStore.getJSON(COSMOS_PIN_KEY, []);
+    const legacyRecent = SafeStore.getJSON(COSMOS_RECENT_KEY, []);
+    const legacyAtmo = SafeStore.getItem(COSMOS_ATMO_KEY, 'deep');
+    const pinned = Array.isArray(unified && unified.pinnedGalaxies) ? unified.pinnedGalaxies : (Array.isArray(legacyPins) ? legacyPins : []);
+    const recent = Array.isArray(unified && unified.recentGalaxies) ? unified.recentGalaxies : (Array.isArray(legacyRecent) ? legacyRecent : []);
+    const rawAtmo = String((unified && unified.atmosphere) || legacyAtmo || 'deep').toLowerCase();
+    const atmosphere = (rawAtmo === 'aurora' || rawAtmo === 'light') ? rawAtmo : 'deep';
+    return {
+      pinnedGalaxies: pinned.slice(0, 60),
+      recentGalaxies: recent.slice(0, 5),
+      atmosphere: atmosphere
+    };
+  }
+
+  function persistPrefsLocally(nextPrefs) {
+    SafeStore.setJSON(COSMOS_PREFS_KEY, nextPrefs);
+    SafeStore.setJSON(COSMOS_PIN_KEY, nextPrefs.pinnedGalaxies);
+    SafeStore.setJSON(COSMOS_RECENT_KEY, nextPrefs.recentGalaxies);
+    SafeStore.setItem(COSMOS_ATMO_KEY, nextPrefs.atmosphere);
+  }
+
+  function applyAtmosphereToDom(mode) {
+    const clean = (mode === 'aurora' || mode === 'light') ? mode : 'deep';
+    if (typeof document !== 'undefined' && document.documentElement) {
+      document.documentElement.setAttribute('data-atmosphere', clean);
+      document.documentElement.setAttribute('data-theme', clean === 'light' ? 'light' : 'dark');
+    }
+    return clean;
+  }
+
+  const prefs = Object.freeze({
+    get: getPrefs,
+    getAtmosphereLabel: function (mode) {
+      const m = mode || getPrefs().atmosphere;
+      if (m === 'aurora') return 'Cực Quang';
+      if (m === 'light') return 'Ánh Sáng';
+      return 'Thâm Không';
+    },
+    setAtmosphere: function (mode, skipCloud) {
+      const clean = applyAtmosphereToDom(mode);
+      const cur = getPrefs();
+      const next = Object.assign({}, cur, { atmosphere: clean });
+      persistPrefsLocally(next);
+      bus.emit('atmosphere-changed', { atmosphere: clean }, { broadcast: true });
+      bus.emit('cosmos-prefs-changed', next, { broadcast: true });
+      if (!skipCloud && auth.isSignedIn()) {
+        api.post('cosmos_prefs_save', { payload: next }, { silent: true, dedupe: false }).catch(function () {});
+      }
+      return next;
+    },
+    cycleAtmosphere: function () {
+      const order = ['deep', 'aurora', 'light'];
+      const cur = getPrefs().atmosphere;
+      const next = order[(order.indexOf(cur) + 1) % order.length];
+      return prefs.setAtmosphere(next);
+    },
+    togglePinGalaxy: function (galaxyId) {
+      const gid = String(galaxyId || '').trim();
+      if (!gid) return getPrefs();
+      const cur = getPrefs();
+      const exists = cur.pinnedGalaxies.indexOf(gid) !== -1;
+      const nextPins = exists
+        ? cur.pinnedGalaxies.filter(function (id) { return id !== gid; })
+        : [gid].concat(cur.pinnedGalaxies).slice(0, 60);
+      const next = Object.assign({}, cur, { pinnedGalaxies: nextPins });
+      persistPrefsLocally(next);
+      bus.emit('cosmos-prefs-changed', next, { broadcast: true });
+      if (auth.isSignedIn()) {
+        api.post('cosmos_prefs_save', { payload: next }, { silent: true, dedupe: false }).catch(function () {});
+      }
+      return next;
+    },
+    pushRecentGalaxy: function (galaxyId) {
+      const gid = String(galaxyId || '').trim();
+      if (!gid) return getPrefs();
+      const cur = getPrefs();
+      const nextRecent = [gid].concat(cur.recentGalaxies.filter(function (id) { return id !== gid; })).slice(0, 5);
+      const next = Object.assign({}, cur, { recentGalaxies: nextRecent });
+      persistPrefsLocally(next);
+      bus.emit('cosmos-prefs-changed', next, { broadcast: true });
+      if (auth.isSignedIn()) {
+        api.post('cosmos_prefs_save', { payload: next }, { silent: true, dedupe: false }).catch(function () {});
+      }
+      return next;
+    }
+  });
+
+  async function syncCosmosWorkspace() {
+    if (!auth.isSignedIn()) {
+      return { ok: true, source: 'local', cosmosVault: readLocalVaultMap(), cosmosPrefs: getPrefs(), canManageVault: canManageVault() };
+    }
+    const res = await api.post('cosmos_get_workspace', {}, { silent: true });
+    if (res && res.ok) {
+      if (res.cosmosVault && typeof res.cosmosVault === 'object') {
+        writeLocalVaultMap(res.cosmosVault);
+        bus.emit('cosmos-vault-changed', { action: 'sync', cosmosVault: res.cosmosVault }, { broadcast: false });
+      }
+      if (res.cosmosPrefs && typeof res.cosmosPrefs === 'object') {
+        const merged = {
+          pinnedGalaxies: Array.isArray(res.cosmosPrefs.pinnedGalaxies) ? res.cosmosPrefs.pinnedGalaxies : getPrefs().pinnedGalaxies,
+          recentGalaxies: Array.isArray(res.cosmosPrefs.recentGalaxies) ? res.cosmosPrefs.recentGalaxies.slice(0, 5) : getPrefs().recentGalaxies,
+          atmosphere: res.cosmosPrefs.atmosphere || getPrefs().atmosphere
+        };
+        persistPrefsLocally(merged);
+        applyAtmosphereToDom(merged.atmosphere);
+        bus.emit('cosmos-prefs-changed', merged, { broadcast: false });
+      }
+    }
+    return res;
+  }
+
+  const vault = Object.freeze({
+    workspaceFile: COSMOS_WORKSPACE_FILE,
+    buildKey: buildVaultKey,
+    parseKey: parseVaultKey,
+    canManage: canManageVault,
+    getVaultItems: getVaultItems,
+    addVaultItem: addVaultItem,
+    renameVaultItem: renameVaultItem,
+    deleteVaultItem: deleteVaultItem,
+    countVaultByGalaxy: countVaultByGalaxy,
+    syncWorkspace: syncCosmosWorkspace
+  });
+
+  /* ---- Deep Linking Helpers (?galaxy=<id>&chapter=<index>&star=<index>) ---- */
+
+  const nav = Object.freeze({
+    buildCosmosUrl: function (params) {
+      const p = params || {};
+      const base = String(p.basePath || 'cosmos.html');
+      const qs = [];
+      if (p.galaxy) qs.push('galaxy=' + encodeURIComponent(String(p.galaxy)));
+      if (p.chapter !== undefined && p.chapter !== null && p.chapter !== '') qs.push('chapter=' + encodeURIComponent(String(p.chapter)));
+      if (p.star !== undefined && p.star !== null && p.star !== '') qs.push('star=' + encodeURIComponent(String(p.star)));
+      if (p.planet !== undefined && p.planet !== null && p.planet !== '') qs.push('planet=' + encodeURIComponent(String(p.planet)));
+      return qs.length ? (base + '?' + qs.join('&')) : base;
+    },
+    parseCosmosParams: function (searchStr) {
+      const raw = typeof searchStr === 'string'
+        ? searchStr
+        : (typeof window !== 'undefined' && window.location ? window.location.search : '');
+      const sp = new URLSearchParams(raw || '');
+      const g = sp.get('galaxy') || '';
+      const c = sp.get('chapter');
+      const s = sp.get('star');
+      const pl = sp.get('planet');
+      return {
+        galaxy: g ? String(g).trim() : '',
+        chapter: c !== null && c !== '' && isFinite(Number(c)) ? parseInt(c, 10) : null,
+        star: s !== null && s !== '' && isFinite(Number(s)) ? parseInt(s, 10) : null,
+        planet: pl !== null && pl !== '' && isFinite(Number(pl)) ? parseInt(pl, 10) : null
+      };
+    },
+    openInCosmos: function (params) {
+      const url = nav.buildCosmosUrl(params);
+      if (typeof window !== 'undefined' && window.location) {
+        window.location.href = url;
+      }
+      return url;
+    }
+  });
+
+  // Apply persisted atmosphere on boot & listen for cross-tab atmosphere updates
+  applyAtmosphereToDom(getPrefs().atmosphere);
+  bus.on('atmosphere-changed', function (detail) {
+    if (detail && detail.atmosphere) applyAtmosphereToDom(detail.atmosphere);
+  }, { replay: false });
+  bus.on('session-changed', function (s) {
+    if (s && auth.isSignedIn()) {
+      syncCosmosWorkspace().catch(function () {});
+    }
+  }, { replay: false });
+
   /* ==========================================================================
    * 6. PUBLIC EXPORT (window.VANTHESIS_CORE)
    * ========================================================================== */
 
   window.VANTHESIS_CORE = Object.freeze({
-    version: '2.0',
+    version: '3.0',
     bus: bus,
     auth: auth,
     api: api,
@@ -1522,6 +2099,19 @@
     db: db,
     drive: drive,
     ui: ui,
+    storage: SafeStore,
+    catalog: catalog,
+    vault: vault,
+    prefs: prefs,
+    nav: nav,
+    // Phương thức chuẩn quản lí Kho học liệu 4 cấp dùng chung toàn hệ thống
+    buildVaultKey: buildVaultKey,
+    parseVaultKey: parseVaultKey,
+    getVaultItems: getVaultItems,
+    addVaultItem: addVaultItem,
+    renameVaultItem: renameVaultItem,
+    deleteVaultItem: deleteVaultItem,
+    countVaultByGalaxy: countVaultByGalaxy,
     registerSector: registerSector,
     activateSector: activateSector,
     diagnose: openDiagnosticsModal,
