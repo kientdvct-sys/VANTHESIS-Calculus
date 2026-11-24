@@ -96,7 +96,22 @@
     examBuilderQuestions: [],
     examBuilderDriveFile: null,
     examSplitMobileTab: 'paper', // 'paper' | 'sheet'
-    activeLabSkin: (function () { try { return localStorage.getItem('vt_lab_skin_v6') || 'default'; } catch (e) { return 'default'; } })()
+    activeLabSkin: (function () {
+      try {
+        if (window.VANTHESIS_CORE && window.VANTHESIS_CORE.storage) return window.VANTHESIS_CORE.storage.getItem('vt_lab_skin_v6', 'default');
+        return localStorage.getItem('vt_lab_skin_v6') || 'default';
+      } catch (e) { return 'default'; }
+    })(),
+
+    // CHẶNG 3: 162-Galaxy 4-Level Cosmos Vault Hub State
+    cosmosGroupFilter: 'ALL',
+    cosmosSearchQuery: '',
+    cosmosSelectedGalaxyId: 'GAL_TOAN_12',
+    cosmosScopeLevel: 1,
+    cosmosChapterIdx: 0,
+    cosmosStarIdx: 0,
+    cosmosPlanetIdx: 0,
+    cosmosPreviewItem: null
   };
 
   /* ==========================================================================
@@ -1462,6 +1477,91 @@
         .vt-orbital-node-btn { white-space: nowrap; width: auto; border: 1px solid var(--border); }
       }
 
+      /* === CHẶNG 3: 162-GALAXY 4-LEVEL COSMOS VAULT HUB === */
+      .vt-cv-spec-pills { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; }
+      .vt-cv-pill {
+        border: 1px solid var(--border-strong);
+        background: var(--surface);
+        color: var(--text-muted);
+        padding: 6px 13px;
+        border-radius: 9999px;
+        font-size: 12.2px;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.16s ease;
+      }
+      .vt-cv-pill.active {
+        color: #FFFFFF;
+        border-color: transparent;
+        background: var(--cv-pill-col, #2563EB);
+        box-shadow: 0 6px 16px -6px var(--cv-pill-col, rgba(37,99,235,0.45));
+      }
+      .vt-cv-layout {
+        display: grid;
+        grid-template-columns: minmax(280px, 0.95fr) minmax(0, 1.35fr);
+        gap: 14px;
+        align-items: start;
+      }
+      .vt-cv-gal-list {
+        max-height: 620px;
+        overflow-y: auto;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        padding-right: 4px;
+      }
+      .vt-cv-gal-card {
+        padding: 10px 12px;
+        border-radius: 15px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-left: 3.5px solid var(--cv-spec, #38BDF8);
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        transition: transform 0.15s ease, border-color 0.15s ease;
+      }
+      .vt-cv-gal-card:hover { transform: translateY(-1px); border-color: var(--cv-spec, #38BDF8); }
+      .vt-cv-gal-card.active {
+        border-color: var(--cv-spec, #38BDF8);
+        box-shadow: 0 0 0 2px color-mix(in srgb, var(--cv-spec, #38BDF8) 28%, transparent);
+      }
+      .vt-cv-detail-panel {
+        padding: 16px 18px;
+        border-radius: 20px;
+        background: var(--surface);
+        border: 1px solid var(--border-strong);
+        border-top: 3.5px solid var(--cv-spec, #38BDF8);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .vt-cv-level-row {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px;
+      }
+      .vt-cv-item-row {
+        padding: 10px 12px;
+        border-radius: 13px;
+        background: var(--surface-alt);
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      @media (max-width: 960px) {
+        .vt-cv-layout { grid-template-columns: 1fr; }
+        .vt-cv-gal-list { max-height: 300px; }
+        .vt-cv-level-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+
     `;
     document.head.appendChild(style);
   }
@@ -2084,18 +2184,24 @@
     await fetchHubFromServer(state.loaded);
   }
 
+  function normViSafe(text) {
+    const C = getCore();
+    if (C && C.catalog && typeof C.catalog.normVi === 'function') return C.catalog.normVi(text);
+    return String(text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().trim();
+  }
+
   function getFilteredResources() {
-    const q = state.searchQuery.trim().toLowerCase();
+    const q = normViSafe(state.searchQuery);
     return state.resources.filter(function (r) {
       if (state.filterGrade !== 'ALL' && r.gradeBlock !== state.filterGrade) return false;
       if (state.filterChapter !== 'ALL' && r.chapterConstellation !== state.filterChapter) return false;
       if (state.filterPattern !== 'ALL' && r.topicPattern !== state.filterPattern) return false;
       if (state.filterCognitive !== 'ALL' && r.cognitiveLevel !== state.filterCognitive) return false;
       if (!q) return true;
-      return String(r.title || '').toLowerCase().indexOf(q) !== -1 ||
-        String(r.summary || '').toLowerCase().indexOf(q) !== -1 ||
-        String(r.chapterConstellation || '').toLowerCase().indexOf(q) !== -1 ||
-        String(r.topicPattern || '').toLowerCase().indexOf(q) !== -1;
+      return normViSafe(r.title).indexOf(q) !== -1 ||
+        normViSafe(r.summary).indexOf(q) !== -1 ||
+        normViSafe(r.chapterConstellation).indexOf(q) !== -1 ||
+        normViSafe(r.topicPattern).indexOf(q) !== -1;
     });
   }
 
@@ -2279,6 +2385,7 @@
     const segTabsHtml = `
       <div class="vt-res-seg-tabs" role="tablist">
         <button class="vt-res-seg-btn ${state.viewMode === 'explore' ? 'active' : ''}" data-resview="explore" type="button">✦ Khám phá &amp; Chòm sao</button>
+        <button class="vt-res-seg-btn ${state.viewMode === 'cosmos_vault' ? 'active' : ''}" data-resview="cosmos_vault" type="button">🌌 Kho 162 Thiên hà (4 cấp)</button>
         ${canManage ? '<button class="vt-res-seg-btn ' + (state.viewMode === 'manage' ? 'active' : '') + '" data-resview="manage" type="button">📋 Quản lý Học liệu</button>' : ''}
         ${isAdmin() ? '<button class="vt-res-seg-btn ' + (state.viewMode === 'moderate' ? 'active' : '') + '" data-resview="moderate" type="button">🛡️ Duyệt Xuất bản (' + state.pendingModeration.length + ')</button>' : ''}
       </div>`;
@@ -2359,6 +2466,8 @@
         : '<div class="lcms-glass-tile" style="grid-column:1 / -1;text-align:center;padding:34px;color:var(--text-soft);">Chưa có học liệu nào phù hợp. Hãy thử đổi bộ lọc hoặc biên soạn học liệu mới.</div>';
 
       bodyHtml = filterBarHtml + constellationHtml + '<div class="vt-bento-obs-grid">' + cardsHtml + '</div>';
+    } else if (state.viewMode === 'cosmos_vault') {
+      bodyHtml = renderCosmosVault4LevelHtml();
     } else if (state.viewMode === 'manage') {
       const selCount = Object.keys(state.selectedBulkIds).filter(function (k) { return state.selectedBulkIds[k]; }).length;
       const rowsHtml = state.resources.map(function (r) {
@@ -2424,7 +2533,348 @@
     wireHubEvents(mount);
   }
 
+
+  function buildCurrentCosmosScopeKey() {
+    const C = getCore();
+    const gid = state.cosmosSelectedGalaxyId || 'GAL_TOAN_12';
+    const lvl = Number(state.cosmosScopeLevel) || 1;
+    if (C && typeof C.buildVaultKey === 'function') {
+      if (lvl === 1) return C.buildVaultKey(gid);
+      if (lvl === 2) return C.buildVaultKey(gid, state.cosmosChapterIdx);
+      if (lvl === 3) return C.buildVaultKey(gid, state.cosmosChapterIdx, state.cosmosStarIdx);
+      return C.buildVaultKey(gid, state.cosmosChapterIdx, state.cosmosStarIdx, state.cosmosPlanetIdx);
+    }
+    if (lvl === 1) return gid;
+    if (lvl === 2) return gid + '::c' + state.cosmosChapterIdx;
+    if (lvl === 3) return gid + '::c' + state.cosmosChapterIdx + '::s' + state.cosmosStarIdx;
+    return gid + '::c' + state.cosmosChapterIdx + '::s' + state.cosmosStarIdx + '::p' + state.cosmosPlanetIdx;
+  }
+
+  function renderCosmosVault4LevelHtml() {
+    const C = getCore();
+    if (!C || !C.catalog || !C.vault) {
+      return '<div class="lcms-glass-tile" style="padding:24px;text-align:center;">Đang đồng bộ danh mục 162 thiên hà...</div>';
+    }
+    const groups = [
+      { key: 'ALL', label: 'Tất cả (' + C.catalog.total + ')', color: '#2563EB' },
+      { key: 'THCS', label: 'THCS', color: '#10B981' },
+      { key: 'THPT', label: 'THPT', color: '#38BDF8' },
+      { key: 'UNI', label: 'Đại học & CNTT', color: '#A78BFA' },
+      { key: 'EXAM', label: 'Kì thi riêng & ĐGNL', color: '#F59E0B' },
+      { key: 'INTL', label: 'Chứng chỉ Quốc tế', color: '#FB7185' }
+    ];
+    const prefs = C.prefs ? C.prefs.get() : { pinnedGalaxies: [] };
+    const pinSet = new Set(prefs.pinnedGalaxies || []);
+    const matchedGalaxies = C.catalog.search(state.cosmosSearchQuery, state.cosmosGroupFilter);
+
+    // Ensure selected galaxy exists
+    let selGal = C.catalog.get(state.cosmosSelectedGalaxyId);
+    if (!selGal && matchedGalaxies.length) {
+      selGal = matchedGalaxies[0];
+      state.cosmosSelectedGalaxyId = selGal.id;
+    }
+
+    const pillsHtml = '<div class="vt-cv-spec-pills">' + groups.map(function (gr) {
+      return '<button type="button" class="vt-cv-pill ' + (state.cosmosGroupFilter === gr.key ? 'active' : '') + '" data-cv-group="' + gr.key + '" style="--cv-pill-col:' + gr.color + ';">' + escapeHtml(gr.label) + '</button>';
+    }).join('') + '</div>';
+
+    const searchHtml = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">' +
+      '<input id="vtCvSearchInp" type="text" value="' + escapeAttr(state.cosmosSearchQuery) + '" placeholder="🔍 Tìm kiếm không dấu trong 162 thiên hà (VD: toan 12, ielts, hsa, giai tich)..." style="flex:1;min-width:220px;height:40px;padding:0 14px;border-radius:13px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);font-size:13px;">' +
+      '<a class="btn btn-sm" href="' + escapeAttr(C.nav ? C.nav.buildCosmosUrl({ galaxy: selGal ? selGal.id : '' }) : 'cosmos.html') + '" style="display:inline-flex;align-items:center;text-decoration:none;">🌌 Mở Vũ trụ 3D</a>' +
+    '</div>';
+
+    const galCardsHtml = matchedGalaxies.length
+      ? matchedGalaxies.map(function (g) {
+          const cnt = C.countVaultByGalaxy ? C.countVaultByGalaxy(g.id) : { total: 0 };
+          const isPinned = pinSet.has(g.id);
+          const isAct = selGal && selGal.id === g.id;
+          return '<div class="vt-cv-gal-card ' + (isAct ? 'active' : '') + '" data-cv-gal="' + escapeAttr(g.id) + '" style="--cv-spec:' + g.spectralColor + ';">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">' +
+              '<span style="font-size:10.5px;font-weight:800;color:' + g.spectralColor + ';">' + escapeHtml(g.catalogCode || g.group) + '</span>' +
+              '<button type="button" class="btn btn-sm" data-cv-pin="' + escapeAttr(g.id) + '" style="padding:1px 6px;font-size:11px;min-height:22px;" title="Ghim thiên hà">' + (isPinned ? '★' : '☆') + '</button>' +
+            '</div>' +
+            '<div style="font-weight:800;font-size:13px;line-height:1.35;">' + escapeHtml(g.title) + '</div>' +
+            '<div style="font-size:11px;color:var(--text-soft);display:flex;justify-content:space-between;">' +
+              '<span>' + g.chapterCount + ' chương · ' + g.lessonCount + ' bài</span>' +
+              '<span style="font-weight:700;color:' + (cnt.total > 0 ? '#10B981' : 'inherit') + ';">' + cnt.total + ' tệp</span>' +
+            '</div>' +
+          '</div>';
+        }).join('')
+      : '<div style="grid-column:1/-1;padding:24px;text-align:center;color:var(--text-soft);">Không tìm thấy thiên hà nào phù hợp.</div>';
+
+    let detailHtml = '<div class="vt-cv-detail-panel"><div style="padding:20px;text-align:center;color:var(--text-soft);">Chọn một thiên hà bên trái để xem và quản lí Kho học liệu 4 cấp.</div></div>';
+    if (selGal) {
+      const scopeKey = buildCurrentCosmosScopeKey();
+      const canEditVault = Boolean(C.vault && C.vault.canManage());
+      const subtreeItems = C.getVaultItems(selGal.id, { includeChildren: true }) || [];
+      const exactItems = C.getVaultItems(scopeKey, { includeChildren: false }) || [];
+      const levelLabels = { 1: 'Cấp 1 · Toàn môn / Kì thi', 2: 'Cấp 2 · Chương / Phần thi', 3: 'Cấp 3 · Bài học / Chuyên đề', 4: 'Cấp 4 · Mạch kiến thức' };
+
+      const chCount = Math.max(1, selGal.chapterCount || 1);
+      const chOpts = Array.from({ length: chCount }, function (_, i) {
+        return '<option value="' + i + '" ' + (state.cosmosChapterIdx === i ? 'selected' : '') + '>Chương ' + (i + 1) + '</option>';
+      }).join('');
+      const stOpts = Array.from({ length: 12 }, function (_, i) {
+        return '<option value="' + i + '" ' + (state.cosmosStarIdx === i ? 'selected' : '') + '>Bài ' + (i + 1) + '</option>';
+      }).join('');
+      const plOpts = Array.from({ length: 6 }, function (_, i) {
+        return '<option value="' + i + '" ' + (state.cosmosPlanetIdx === i ? 'selected' : '') + '>Mạch ' + (i + 1) + '</option>';
+      }).join('');
+
+      const deepUrl = C.nav
+        ? C.nav.buildCosmosUrl({
+            galaxy: selGal.id,
+            chapter: state.cosmosScopeLevel >= 2 ? state.cosmosChapterIdx : undefined,
+            star: state.cosmosScopeLevel >= 3 ? state.cosmosStarIdx : undefined
+          })
+        : 'cosmos.html?galaxy=' + encodeURIComponent(selGal.id);
+
+      const addBarHtml = canEditVault
+        ? '<div style="padding:12px;border-radius:14px;background:var(--surface-alt);border:1px solid var(--border);display:flex;flex-direction:column;gap:8px;">' +
+            '<div style="font-size:12px;font-weight:800;">+ Bổ sung học liệu vào cấp đang chọn (' + escapeHtml(levelLabels[state.cosmosScopeLevel]) + ')</div>' +
+            '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">' +
+              '<label class="btn btn-sm btn-primary" style="cursor:pointer;"><span>☁️ Tải tệp lên Drive</span><input id="vtCvFileInp" type="file" multiple style="display:none;"></label>' +
+              '<input id="vtCvLinkTitle" type="text" placeholder="Tiêu đề liên kết / ghi chú..." style="flex:1;min-width:140px;height:34px;padding:0 10px;border-radius:10px;border:1px solid var(--border-strong);background:var(--bg);color:var(--text);font-size:12.5px;">' +
+              '<input id="vtCvLinkUrl" type="url" placeholder="Dán liên kết https://... (bỏ trống nếu tạo ghi chú)" style="flex:1;min-width:160px;height:34px;padding:0 10px;border-radius:10px;border:1px solid var(--border-strong);background:var(--bg);color:var(--text);font-size:12.5px;">' +
+              '<button type="button" id="vtCvAddLinkNoteBtn" class="btn btn-sm">+ Lưu mục</button>' +
+            '</div>' +
+          '</div>'
+        : '<div style="font-size:12px;color:var(--text-soft);padding:6px 10px;border-radius:10px;background:var(--surface-alt);">Chế độ Học sinh: Bạn có thể xem trước trực tiếp và tải về mọi học liệu ở cả 4 cấp.</div>';
+
+      const itemsListHtml = (exactItems.length ? exactItems : subtreeItems).map(function (it) {
+        const parsed = C.parseVaultKey ? C.parseVaultKey(it.scopeKey) : { level: it.level || 1 };
+        const lvlBadge = parsed && parsed.level === 4 ? 'Mạch' : (parsed && parsed.level === 3 ? 'Bài học' : (parsed && parsed.level === 2 ? 'Chương' : 'Toàn môn'));
+        const isCurrentExact = it.scopeKey === scopeKey;
+        return '<div class="vt-cv-item-row">' +
+          '<div style="min-width:0;flex:1;">' +
+            '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' +
+              '<span class="vt-res-pill" style="font-size:10.5px;">' + escapeHtml(lvlBadge) + '</span>' +
+              '<b style="font-size:13.2px;">' + escapeHtml(it.title) + '</b>' +
+              (!isCurrentExact ? '<span style="font-size:11px;color:var(--text-soft);">(cấp con)</span>' : '') +
+            '</div>' +
+            (it.noteContent ? '<div style="font-size:12px;color:var(--text-muted);margin-top:3px;">' + escapeHtml(it.noteContent.slice(0, 140)) + '</div>' : '') +
+          '</div>' +
+          '<div style="display:flex;gap:5px;flex-wrap:wrap;">' +
+            '<button type="button" class="btn btn-sm" data-cv-preview="' + escapeAttr(it.scopeKey) + '||' + escapeAttr(it.itemId) + '">👁️ Xem nhanh</button>' +
+            (it.previewUrl || it.driveFileId ? '<button type="button" class="btn btn-sm" data-cv-slate="' + escapeAttr(it.scopeKey) + '||' + escapeAttr(it.itemId) + '">✍️ Bảng Giảng</button>' : '') +
+            (it.downloadUrl ? '<a class="btn btn-sm" href="' + escapeAttr(it.downloadUrl) + '" target="_blank" rel="noopener" style="text-decoration:none;">⬇ Tải về</a>' : '') +
+            (canEditVault ? '<button type="button" class="btn btn-sm" data-cv-rename="' + escapeAttr(it.scopeKey) + '||' + escapeAttr(it.itemId) + '">✎</button><button type="button" class="btn btn-sm" data-cv-del="' + escapeAttr(it.scopeKey) + '||' + escapeAttr(it.itemId) + '" style="color:var(--danger);">✕</button>' : '') +
+          '</div>' +
+        '</div>';
+      }).join('') || '<div style="padding:20px;text-align:center;font-size:12.5px;color:var(--text-soft);">Chưa có học liệu nào trong thiên hà này. Tệp bạn tải lên từ đây hoặc từ Vũ trụ 3D sẽ tự động đồng bộ hai chiều.</div>';
+
+      let previewBoxHtml = '';
+      if (state.cosmosPreviewItem) {
+        const pi = state.cosmosPreviewItem;
+        const isImg = /^image\//i.test(pi.mimeType || '') || /\.(png|jpe?g|webp|gif)$/i.test(pi.title || '');
+        const isNote = pi.itemType === 'NOTE' || Boolean(pi.noteContent);
+        const bodyPreview = isNote
+          ? '<div style="padding:10px;border-radius:10px;background:var(--bg);white-space:pre-wrap;font-size:13px;line-height:1.6;">' + escapeHtml(pi.noteContent || '') + '</div>'
+          : (isImg && pi.previewUrl
+            ? '<img src="' + escapeAttr(pi.previewUrl) + '" alt="' + escapeAttr(pi.title) + '" style="max-width:100%;max-height:320px;border-radius:12px;object-fit:contain;">'
+            : (pi.previewUrl
+              ? '<iframe class="vt-drive-preview-frame" style="height:300px;" src="' + escapeAttr(pi.previewUrl) + '" sandbox="allow-same-origin allow-scripts allow-popups allow-downloads"></iframe>'
+              : '<div style="font-size:12.5px;color:var(--text-soft);">Bấm Tải về để mở tài liệu này.</div>'));
+        previewBoxHtml = '<div style="padding:12px;border-radius:14px;background:var(--surface-alt);border:1px solid var(--border-strong);display:flex;flex-direction:column;gap:8px;">' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;"><b>👁️ Xem nhanh: ' + escapeHtml(pi.title) + '</b><button type="button" id="vtCvClosePreview" class="btn btn-sm">Đóng</button></div>' +
+          bodyPreview +
+        '</div>';
+      }
+
+      detailHtml = '<div class="vt-cv-detail-panel" style="--cv-spec:' + selGal.spectralColor + ';">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">' +
+          '<div>' +
+            '<div style="font-size:11.5px;font-weight:800;color:' + selGal.spectralColor + ';">' + escapeHtml(selGal.groupLabel + ' • ' + (selGal.catalogCode || '')) + '</div>' +
+            '<h3 style="margin:2px 0 0;font-family:Newsreader,Georgia,serif;font-size:21px;">' + escapeHtml(selGal.title) + '</h3>' +
+          '</div>' +
+          '<a class="btn btn-sm btn-primary" href="' + escapeAttr(deepUrl) + '" style="text-decoration:none;">🌌 Bay tới nhánh này trong Vũ trụ 3D</a>' +
+        '</div>' +
+        '<div class="vt-cv-level-row">' +
+          [1, 2, 3, 4].map(function (lv) {
+            const lbl = lv === 1 ? 'Cấp 1 · Toàn môn' : (lv === 2 ? 'Cấp 2 · Chương' : (lv === 3 ? 'Cấp 3 · Bài học' : 'Cấp 4 · Mạch'));
+            return '<button type="button" class="btn btn-sm ' + (state.cosmosScopeLevel === lv ? 'btn-primary' : '') + '" data-cv-lvl="' + lv + '">' + lbl + '</button>';
+          }).join('') +
+        '</div>' +
+        (state.cosmosScopeLevel >= 2
+          ? '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+              '<select id="vtCvChSel" style="height:34px;padding:0 10px;border-radius:10px;border:1px solid var(--border-strong);background:var(--bg);color:var(--text);font-size:12.5px;">' + chOpts + '</select>' +
+              (state.cosmosScopeLevel >= 3 ? '<select id="vtCvStSel" style="height:34px;padding:0 10px;border-radius:10px;border:1px solid var(--border-strong);background:var(--bg);color:var(--text);font-size:12.5px;">' + stOpts + '</select>' : '') +
+              (state.cosmosScopeLevel >= 4 ? '<select id="vtCvPlSel" style="height:34px;padding:0 10px;border-radius:10px;border:1px solid var(--border-strong);background:var(--bg);color:var(--text);font-size:12.5px;">' + plOpts + '</select>' : '') +
+            '</div>'
+          : '') +
+        addBarHtml +
+        previewBoxHtml +
+        '<div style="font-size:12px;font-weight:800;color:var(--text-soft);">Học liệu đã lưu (' + (exactItems.length ? (exactItems.length + ' mục ở cấp đang chọn') : (subtreeItems.length + ' mục toàn thiên hà')) + ')</div>' +
+        '<div style="display:flex;flex-direction:column;gap:7px;">' + itemsListHtml + '</div>' +
+      '</div>';
+    }
+
+    return pillsHtml + searchHtml + '<div class="vt-cv-layout"><div class="vt-cv-gal-list">' + galCardsHtml + '</div>' + detailHtml + '</div>';
+  }
+
+  function wireCosmosVaultEvents(mount) {
+    const C = getCore();
+    if (!C || !C.vault) return;
+
+    mount.querySelectorAll('[data-cv-group]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        state.cosmosGroupFilter = btn.getAttribute('data-cv-group');
+        renderResourcesHub();
+      });
+    });
+    const sInp = document.getElementById('vtCvSearchInp');
+    if (sInp) {
+      sInp.addEventListener('input', function (e) {
+        state.cosmosSearchQuery = e.target.value;
+        renderResourcesHub();
+        const nxt = document.getElementById('vtCvSearchInp');
+        if (nxt) { nxt.focus(); nxt.setSelectionRange(nxt.value.length, nxt.value.length); }
+      });
+    }
+    mount.querySelectorAll('[data-cv-pin]').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (C.prefs) C.prefs.togglePinGalaxy(btn.getAttribute('data-cv-pin'));
+        renderResourcesHub();
+      });
+    });
+    mount.querySelectorAll('[data-cv-gal]').forEach(function (card) {
+      card.addEventListener('click', function () {
+        state.cosmosSelectedGalaxyId = card.getAttribute('data-cv-gal');
+        state.cosmosScopeLevel = 1;
+        state.cosmosChapterIdx = 0;
+        state.cosmosStarIdx = 0;
+        state.cosmosPlanetIdx = 0;
+        state.cosmosPreviewItem = null;
+        if (C.prefs) C.prefs.pushRecentGalaxy(state.cosmosSelectedGalaxyId);
+        renderResourcesHub();
+      });
+    });
+    mount.querySelectorAll('[data-cv-lvl]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        state.cosmosScopeLevel = Number(btn.getAttribute('data-cv-lvl')) || 1;
+        renderResourcesHub();
+      });
+    });
+    const chSel = document.getElementById('vtCvChSel');
+    if (chSel) chSel.addEventListener('change', function (e) { state.cosmosChapterIdx = Number(e.target.value) || 0; renderResourcesHub(); });
+    const stSel = document.getElementById('vtCvStSel');
+    if (stSel) stSel.addEventListener('change', function (e) { state.cosmosStarIdx = Number(e.target.value) || 0; renderResourcesHub(); });
+    const plSel = document.getElementById('vtCvPlSel');
+    if (plSel) plSel.addEventListener('change', function (e) { state.cosmosPlanetIdx = Number(e.target.value) || 0; renderResourcesHub(); });
+
+    const fileInp = document.getElementById('vtCvFileInp');
+    if (fileInp) {
+      fileInp.addEventListener('change', async function (e) {
+        const files = Array.from(e.target.files || []);
+        e.target.value = '';
+        if (!files.length) return;
+        const scopeKey = buildCurrentCosmosScopeKey();
+        showNotice('☁️ Đang tải ' + files.length + ' tệp lên Kho 4 cấp...');
+        for (let i = 0; i < files.length; i++) {
+          const f = files[i];
+          try {
+            const up = await uploadFileToGoogleDrive(f);
+            await C.addVaultItem(scopeKey, {
+              itemType: 'FILE',
+              category: 'LECTURE',
+              title: up.name || f.name,
+              driveFileId: up.fileId || '',
+              previewUrl: up.previewUrl || '',
+              downloadUrl: up.downloadUrl || '',
+              mimeType: up.mimeType || f.type || '',
+              sizeBytes: f.size || 0
+            });
+          } catch (err) {
+            showNotice('⚠ ' + formatFriendlyError(err && err.message), true);
+          }
+        }
+        showNotice('✓ Đã lưu tệp vào Kho 4 cấp & đồng bộ Vũ trụ 3D.');
+        renderResourcesHub();
+      });
+    }
+
+    const addBtn = document.getElementById('vtCvAddLinkNoteBtn');
+    if (addBtn) {
+      addBtn.addEventListener('click', async function () {
+        const tInp = document.getElementById('vtCvLinkTitle');
+        const uInp = document.getElementById('vtCvLinkUrl');
+        const title = (tInp && tInp.value || '').trim();
+        const url = (uInp && uInp.value || '').trim();
+        if (!title) { showNotice('⚠ Vui lòng nhập tiêu đề mục học liệu.', true); return; }
+        const scopeKey = buildCurrentCosmosScopeKey();
+        const isLink = /^https?:\/\//i.test(url);
+        const res = await C.addVaultItem(scopeKey, {
+          itemType: isLink ? 'LINK' : 'NOTE',
+          category: 'LECTURE',
+          title: title,
+          url: isLink ? url : '',
+          previewUrl: isLink ? url : '',
+          downloadUrl: isLink ? url : '',
+          noteContent: isLink ? '' : (url || title)
+        });
+        if (!res || !res.ok) { showNotice('⚠ ' + formatFriendlyError(res && res.error), true); return; }
+        showNotice('✓ Đã bổ sung vào Kho 4 cấp.');
+        renderResourcesHub();
+      });
+    }
+
+    mount.querySelectorAll('[data-cv-preview]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const parts = btn.getAttribute('data-cv-preview').split('||');
+        const items = C.getVaultItems(parts[0], { includeChildren: false }) || [];
+        state.cosmosPreviewItem = items.find(function (x) { return x.itemId === parts[1]; }) || null;
+        renderResourcesHub();
+      });
+    });
+    const closePrev = document.getElementById('vtCvClosePreview');
+    if (closePrev) closePrev.addEventListener('click', function () { state.cosmosPreviewItem = null; renderResourcesHub(); });
+
+    mount.querySelectorAll('[data-cv-slate]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const parts = btn.getAttribute('data-cv-slate').split('||');
+        const items = C.getVaultItems(parts[0], { includeChildren: false }) || [];
+        const it = items.find(function (x) { return x.itemId === parts[1]; });
+        if (!it) return;
+        if (typeof window.VANTHESIS_OPEN_IN_SLATE === 'function') {
+          window.VANTHESIS_OPEN_IN_SLATE({ title: it.title, fileId: it.driveFileId || '', driveFileId: it.driveFileId || '', previewUrl: it.previewUrl || it.url || '', mimeType: it.mimeType || '' });
+        } else if (C.bus) {
+          C.bus.emit('slate-open-document', { title: it.title, fileId: it.driveFileId || '', previewUrl: it.previewUrl || it.url || '', mimeType: it.mimeType || '' });
+          if (typeof window.VANTHESIS_SWITCH_SECTOR === 'function') window.VANTHESIS_SWITCH_SECTOR('slate');
+        }
+      });
+    });
+
+    mount.querySelectorAll('[data-cv-rename]').forEach(function (btn) {
+      btn.addEventListener('click', async function () {
+        const parts = btn.getAttribute('data-cv-rename').split('||');
+        const items = C.getVaultItems(parts[0], { includeChildren: false }) || [];
+        const it = items.find(function (x) { return x.itemId === parts[1]; });
+        if (!it) return;
+        const nextName = window.prompt('Nhập tên mới cho học liệu:', it.title);
+        if (!nextName || !nextName.trim()) return;
+        const r = await C.renameVaultItem(parts[0], parts[1], nextName.trim());
+        if (!r || !r.ok) { showNotice('⚠ ' + formatFriendlyError(r && r.error), true); return; }
+        showNotice('✓ Đã đổi tên học liệu.');
+        renderResourcesHub();
+      });
+    });
+
+    mount.querySelectorAll('[data-cv-del]').forEach(function (btn) {
+      btn.addEventListener('click', async function () {
+        const parts = btn.getAttribute('data-cv-del').split('||');
+        if (!window.confirm('Xác nhận xóa mục học liệu này khỏi Kho 4 cấp?')) return;
+        const r = await C.deleteVaultItem(parts[0], parts[1]);
+        if (!r || !r.ok) { showNotice('⚠ ' + formatFriendlyError(r && r.error), true); return; }
+        if (state.cosmosPreviewItem && state.cosmosPreviewItem.itemId === parts[1]) state.cosmosPreviewItem = null;
+        showNotice('✓ Đã xóa mục học liệu.');
+        renderResourcesHub();
+      });
+    });
+  }
+
   function wireHubEvents(mount) {
+    if (state.viewMode === 'cosmos_vault') wireCosmosVaultEvents(mount);
     mount.querySelectorAll('[data-resview]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         state.viewMode = btn.getAttribute('data-resview');
@@ -4121,7 +4571,7 @@
     state.activeLabSkin = skinId || 'default';
     if (state.activeLabSkin === 'default') document.documentElement.removeAttribute('data-lab-skin');
     else document.documentElement.setAttribute('data-lab-skin', state.activeLabSkin);
-    try { localStorage.setItem('vt_lab_skin_v6', state.activeLabSkin); } catch (e) {}
+    try { if (window.VANTHESIS_CORE && window.VANTHESIS_CORE.storage) window.VANTHESIS_CORE.storage.setItem('vt_lab_skin_v6', state.activeLabSkin); else localStorage.setItem('vt_lab_skin_v6', state.activeLabSkin); } catch (e) {}
     window.dispatchEvent(new CustomEvent('vantesis:apply-lab-skin', { detail: { skinId: state.activeLabSkin } }));
   }
   applyLabSkin(state.activeLabSkin);
@@ -5192,6 +5642,12 @@
       }, { replay: false });
       C.bus.on('resources-updated', function () {
         if (isCoreSignedIn() && state.loaded) fetchHubFromServer(true);
+      }, { replay: false });
+      C.bus.on('cosmos-vault-changed', function () {
+        if (state.viewMode === 'cosmos_vault') renderResourcesHub();
+      }, { replay: false });
+      C.bus.on('cosmos-prefs-changed', function () {
+        if (state.viewMode === 'cosmos_vault') renderResourcesHub();
       }, { replay: false });
     }
     return true;
