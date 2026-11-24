@@ -360,7 +360,7 @@
 
   function readLocalBoardIndex() {
     try {
-      const raw = localStorage.getItem(LOCAL_INDEX_KEY);
+      const C = getCore(); const raw = C && C.storage ? C.storage.getItem(LOCAL_INDEX_KEY, null) : localStorage.getItem(LOCAL_INDEX_KEY);
       const arr = raw ? JSON.parse(raw) : [];
       return Array.isArray(arr) ? arr : [];
     } catch (e) { return []; }
@@ -370,14 +370,14 @@
     try {
       const list = readLocalBoardIndex().filter(function (x) { return x && x.boardId !== meta.boardId; });
       list.unshift(meta);
-      localStorage.setItem(LOCAL_INDEX_KEY, JSON.stringify(list.slice(0, 40)));
+      const C = getCore(); if (C && C.storage) C.storage.setJSON(LOCAL_INDEX_KEY, list.slice(0, 40)); else localStorage.setItem(LOCAL_INDEX_KEY, JSON.stringify(list.slice(0, 40)));
     } catch (e) {}
   }
 
   function removeLocalBoardIndex(boardId) {
     try {
       const list = readLocalBoardIndex().filter(function (x) { return x && x.boardId !== boardId; });
-      localStorage.setItem(LOCAL_INDEX_KEY, JSON.stringify(list));
+      const C = getCore(); if (C && C.storage) C.storage.setJSON(LOCAL_INDEX_KEY, list); else localStorage.setItem(LOCAL_INDEX_KEY, JSON.stringify(list));
     } catch (e) {}
   }
 
@@ -407,7 +407,7 @@
       updatedAt: nowIso,
       localOnly: !state.driveFileId
     });
-    try { localStorage.setItem(LAST_SLATE_KEY, state.boardId); } catch (e) {}
+    try { if (C && C.storage) C.storage.setItem(LAST_SLATE_KEY, state.boardId); else localStorage.setItem(LAST_SLATE_KEY, state.boardId); } catch (e) {}
     if (!state.driveSyncing) setSaveStatus('Đã lưu tại máy');
   }
 
@@ -425,7 +425,7 @@
     let targetId = optionalBoardId || state.boardId;
     if (!optionalBoardId) {
       try {
-        const last = localStorage.getItem(LAST_SLATE_KEY);
+        const last = C && C.storage ? C.storage.getItem(LAST_SLATE_KEY, null) : localStorage.getItem(LAST_SLATE_KEY);
         if (last) targetId = last;
       } catch (e) {}
     }
@@ -1271,6 +1271,7 @@
         <div class="vt-slate-menu" id="vtSlateSaveMenu">
           <button type="button" class="vt-slate-menu-item" id="vtSlateSaveCloudMenuBtn">${ICONS.cloudUp}<span>Lưu vào Thư mục trên Đám mây...</span></button>
           <button type="button" class="vt-slate-menu-item" id="vtSlateExportPdfBtn">${ICONS.download}<span>Tải tệp PDF nhiều trang về máy</span></button>
+          <button type="button" class="vt-slate-menu-item" id="vtSlateSaveVaultBtn" style="display:none;color:#059669;">${ICONS.spark}<span>Lưu bản xuất vào Kho 4 cấp (162 Thiên hà)...</span></button>
           <button type="button" class="vt-slate-menu-item" id="vtSlatePublishBtn" style="display:none;color:#2563EB;">${ICONS.send}<span>Giao lên Kho Chòm sao cho Lớp</span></button>
         </div>
 
@@ -1387,6 +1388,72 @@
                 <button type="button" class="vt-slate-btn active" id="vtSlateDriveImportBtn" style="height:38px;padding:0 14px;">Chèn ngay</button>
               </div>
             </div>
+            <div style="border-top:1px solid rgba(148,163,184,0.25);padding-top:12px;display:flex;flex-direction:column;gap:8px;">
+              <div style="font-size:12.5px;font-weight:800;">Hoặc chọn trực tiếp từ Kho 4 cấp (162 Thiên hà)</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;" id="vtSlateVaultGroupPills">
+                <button type="button" class="vt-slate-btn active" data-sv-grp="ALL" style="height:26px;font-size:11px;">Tất cả</button>
+                <button type="button" class="vt-slate-btn" data-sv-grp="THCS" style="height:26px;font-size:11px;">THCS</button>
+                <button type="button" class="vt-slate-btn" data-sv-grp="THPT" style="height:26px;font-size:11px;">THPT</button>
+                <button type="button" class="vt-slate-btn" data-sv-grp="UNI" style="height:26px;font-size:11px;">Đại học</button>
+                <button type="button" class="vt-slate-btn" data-sv-grp="EXAM" style="height:26px;font-size:11px;">Kì thi riêng</button>
+                <button type="button" class="vt-slate-btn" data-sv-grp="INTL" style="height:26px;font-size:11px;">Chứng chỉ QT</button>
+              </div>
+              <div style="display:flex;gap:6px;">
+                <input type="text" class="vt-slate-input" id="vtSlateVaultSearchInp" placeholder="Tìm nhanh môn / kì thi không dấu (VD: toan 12, hsa, ielts)..." style="flex:1;">
+                <select class="vt-slate-select" id="vtSlateVaultGalSel" style="flex:1;"></select>
+              </div>
+              <div id="vtSlateVaultPickerList" style="max-height:170px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Lưu Bản Xuất Bảng Trắng vào đúng cấp độ Kho 4 cấp (162 Thiên hà) -->
+        <div class="vt-slate-modal-backdrop" id="vtSlateVaultSaveBackdrop">
+          <div class="vt-slate-modal">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div style="font-size:16px;font-weight:800;display:flex;align-items:center;gap:8px;">${ICONS.spark}<span>Lưu bản xuất vào Kho 4 cấp (162 Thiên hà)</span></div>
+              <button type="button" class="vt-slate-btn icon-only" id="vtSlateVaultSaveClose" style="height:28px;width:28px;">${ICONS.close}</button>
+            </div>
+            <div class="vt-slate-field">
+              <label for="vtSlateVsTitle">Tiêu đề bản xuất bảng giảng (PDF)</label>
+              <input type="text" class="vt-slate-input" id="vtSlateVsTitle" placeholder="VD: Lời giải viết tay Cực trị hàm bậc ba">
+            </div>
+            <div class="vt-slate-field">
+              <label for="vtSlateVsSearch">Lọc &amp; chọn Thiên hà (Môn học / Kì thi)</label>
+              <input type="text" class="vt-slate-input" id="vtSlateVsSearch" placeholder="Gõ không dấu để lọc trong 162 thiên hà..." style="margin-bottom:6px;">
+              <select class="vt-slate-select" id="vtSlateVsGalSel"></select>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div class="vt-slate-field">
+                <label for="vtSlateVsLevel">Cấp độ lưu trữ</label>
+                <select class="vt-slate-select" id="vtSlateVsLevel">
+                  <option value="1">Cấp 1 · Toàn môn / Kì thi</option>
+                  <option value="2">Cấp 2 · Chương / Phần thi</option>
+                  <option value="3" selected>Cấp 3 · Bài học / Chuyên đề</option>
+                  <option value="4">Cấp 4 · Mạch kiến thức</option>
+                </select>
+              </div>
+              <div class="vt-slate-field">
+                <label for="vtSlateVsChapter">Chương / Phần thi</label>
+                <select class="vt-slate-select" id="vtSlateVsChapter"></select>
+              </div>
+              <div class="vt-slate-field">
+                <label for="vtSlateVsStar">Bài học / Chuyên đề</label>
+                <select class="vt-slate-select" id="vtSlateVsStar"></select>
+              </div>
+              <div class="vt-slate-field">
+                <label for="vtSlateVsPlanet">Mạch kiến thức</label>
+                <select class="vt-slate-select" id="vtSlateVsPlanet"></select>
+              </div>
+            </div>
+            <div id="vtSlateVsProgressWrap" style="display:none;flex-direction:column;gap:6px;">
+              <div id="vtSlateVsProgressText" style="font-size:12.5px;font-weight:700;color:#2563EB;">Đang đóng gói PDF...</div>
+              <div class="vt-slate-progress-bar"><div class="vt-slate-progress-fill" id="vtSlateVsProgressFill"></div></div>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;">
+              <button type="button" class="vt-slate-btn" id="vtSlateVsCancelBtn">Hủy bỏ</button>
+              <button type="button" class="vt-slate-btn primary" id="vtSlateVsSubmitBtn">${ICONS.save}<span>Lưu vào Kho 4 cấp</span></button>
+            </div>
           </div>
         </div>
 
@@ -1462,6 +1529,10 @@
   function syncRolePermissionsUI() {
     const pubBtn = document.getElementById('vtSlatePublishBtn');
     if (pubBtn) pubBtn.style.display = canPublishToConstellation() ? 'flex' : 'none';
+    const C = getCore();
+    const canVault = Boolean(C && C.vault && typeof C.vault.canManage === 'function' ? C.vault.canManage() : canPublishToConstellation());
+    const vBtn = document.getElementById('vtSlateSaveVaultBtn');
+    if (vBtn) vBtn.style.display = canVault ? 'flex' : 'none';
   }
 
   function attachStageResizeObserver() {
@@ -1857,7 +1928,48 @@
     document.getElementById('vtSlateInsertDocBtn').addEventListener('click', function () {
       closeAllMenus();
       insertBackdrop.classList.add('open');
+      refreshSlateVaultPicker('ALL', '');
     });
+    const svGrpWrap = document.getElementById('vtSlateVaultGroupPills');
+    if (svGrpWrap) {
+      svGrpWrap.querySelectorAll('[data-sv-grp]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          svGrpWrap.querySelectorAll('[data-sv-grp]').forEach(function (x) { x.classList.remove('active'); });
+          btn.classList.add('active');
+          const q = (document.getElementById('vtSlateVaultSearchInp') || {}).value || '';
+          refreshSlateVaultPicker(btn.getAttribute('data-sv-grp'), q);
+        });
+      });
+    }
+    const svSearch = document.getElementById('vtSlateVaultSearchInp');
+    if (svSearch) {
+      svSearch.addEventListener('input', function () {
+        const actBtn = svGrpWrap && svGrpWrap.querySelector('[data-sv-grp].active');
+        refreshSlateVaultPicker(actBtn ? actBtn.getAttribute('data-sv-grp') : 'ALL', svSearch.value);
+      });
+    }
+    const svGalSel = document.getElementById('vtSlateVaultGalSel');
+    if (svGalSel) {
+      svGalSel.addEventListener('change', function () { renderSlateVaultPickerItems(svGalSel.value); });
+    }
+    const saveVaultMenuBtn = document.getElementById('vtSlateSaveVaultBtn');
+    if (saveVaultMenuBtn) {
+      saveVaultMenuBtn.addEventListener('click', function () { closeAllMenus(); openSaveToVaultModal(); });
+    }
+    const vsClose = document.getElementById('vtSlateVaultSaveClose');
+    const vsCancel = document.getElementById('vtSlateVsCancelBtn');
+    const vsBd = document.getElementById('vtSlateVaultSaveBackdrop');
+    if (vsClose) vsClose.addEventListener('click', closeSaveToVaultModal);
+    if (vsCancel) vsCancel.addEventListener('click', closeSaveToVaultModal);
+    if (vsBd) vsBd.addEventListener('click', function (e) { if (e.target.id === 'vtSlateVaultSaveBackdrop') closeSaveToVaultModal(); });
+    const vsSearch = document.getElementById('vtSlateVsSearch');
+    if (vsSearch) vsSearch.addEventListener('input', function () { populateSaveVaultGalaxies(vsSearch.value); });
+    const vsGal = document.getElementById('vtSlateVsGalSel');
+    if (vsGal) vsGal.addEventListener('change', syncSaveVaultIndices);
+    const vsLvl = document.getElementById('vtSlateVsLevel');
+    if (vsLvl) vsLvl.addEventListener('change', syncSaveVaultLevelVisibility);
+    const vsSub = document.getElementById('vtSlateVsSubmitBtn');
+    if (vsSub) vsSub.addEventListener('click', submitSaveBoardToCosmosVault);
     document.getElementById('vtSlateInsertClose').addEventListener('click', function () { insertBackdrop.classList.remove('open'); });
     insertBackdrop.addEventListener('click', function (e) { if (e.target === insertBackdrop) insertBackdrop.classList.remove('open'); });
     dropzone.addEventListener('click', function () { fileInput.click(); });
@@ -4039,6 +4151,230 @@
     }
   }
 
+
+  /* ==========================================================================
+   * 13B. CHẶNG 3: CHÈN HỌC LIỆU TỪ KHO 4 CẤP (162 THIÊN HÀ) & LƯU BẢN XUẤT ĐÚNG CẤP
+   * ========================================================================== */
+
+  function refreshSlateVaultPicker(groupKey, query) {
+    const C = getCore();
+    const sel = document.getElementById('vtSlateVaultGalSel');
+    const listEl = document.getElementById('vtSlateVaultPickerList');
+    if (!C || !C.catalog || !sel || !listEl) return;
+    const gals = C.catalog.search(query || '', groupKey || 'ALL');
+    sel.innerHTML = gals.map(function (g) {
+      const cnt = C.countVaultByGalaxy ? C.countVaultByGalaxy(g.id).total : 0;
+      return '<option value="' + escapeAttr(g.id) + '">' + escapeHtml(g.title) + (cnt > 0 ? ' (' + cnt + ' tệp)' : '') + '</option>';
+    }).join('');
+    if (gals.length) {
+      renderSlateVaultPickerItems(gals[0].id);
+    } else {
+      listEl.innerHTML = '<div style="font-size:12px;opacity:0.7;padding:8px;">Không tìm thấy thiên hà phù hợp.</div>';
+    }
+  }
+
+  function renderSlateVaultPickerItems(galaxyId) {
+    const C = getCore();
+    const listEl = document.getElementById('vtSlateVaultPickerList');
+    if (!C || !C.vault || !listEl) return;
+    const items = C.getVaultItems(galaxyId, { includeChildren: true }) || [];
+    if (!items.length) {
+      listEl.innerHTML = '<div style="font-size:12px;opacity:0.72;padding:10px;text-align:center;">Thiên hà này chưa có tệp nào trong Kho 4 cấp.</div>';
+      return;
+    }
+    listEl.innerHTML = items.map(function (it, idx) {
+      const parsed = C.parseVaultKey ? C.parseVaultKey(it.scopeKey) : { level: it.level || 1 };
+      const lvlTxt = parsed && parsed.level === 4 ? 'Mạch' : (parsed && parsed.level === 3 ? 'Bài học' : (parsed && parsed.level === 2 ? 'Chương' : 'Toàn môn'));
+      return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px;border-radius:10px;border:1px solid rgba(148,163,184,0.28);font-size:12px;">' +
+        '<div style="min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><b>[' + escapeHtml(lvlTxt) + ']</b> ' + escapeHtml(it.title) + '</div>' +
+        '<button type="button" class="vt-slate-btn active" data-sv-pick="' + idx + '" style="height:26px;font-size:11px;padding:0 10px;">+ Chèn lên bảng</button>' +
+      '</div>';
+    }).join('');
+    listEl.querySelectorAll('[data-sv-pick]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const it = items[Number(btn.getAttribute('data-sv-pick'))];
+        if (!it) return;
+        const bd = document.getElementById('vtSlateInsertBackdrop');
+        if (bd) bd.classList.remove('open');
+        if (it.itemType === 'NOTE' || (!it.driveFileId && !it.previewUrl && it.noteContent)) {
+          insertNoteCardOnCurrentPage(it.title, it.noteContent || it.title);
+        } else {
+          openDocumentOnBoard({ title: it.title, fileId: it.driveFileId || '', previewUrl: it.previewUrl || it.url || '', mimeType: it.mimeType || '' });
+        }
+      });
+    });
+  }
+
+  function insertNoteCardOnCurrentPage(title, content) {
+    const off = document.createElement('canvas');
+    off.width = 760;
+    off.height = 280;
+    const ctx = off.getContext('2d');
+    ctx.fillStyle = '#FFFBEB';
+    ctx.fillRect(0, 0, off.width, off.height);
+    ctx.strokeStyle = '#D97706';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(2, 2, off.width - 4, off.height - 4);
+    ctx.fillStyle = '#92400E';
+    ctx.font = '700 22px system-ui, sans-serif';
+    ctx.fillText(String(title || 'Ghi chú học liệu').slice(0, 56), 24, 42);
+    ctx.fillStyle = '#1E293B';
+    ctx.font = '500 18px system-ui, sans-serif';
+    const lines = String(content || '').split(/\r?\n/);
+    let y = 82;
+    for (let i = 0; i < lines.length && y < off.height - 20; i++) {
+      ctx.fillText(lines[i].slice(0, 72), 24, y);
+      y += 28;
+    }
+    pushUndo();
+    const page = getCurrentPage();
+    const rec = placeImageInsidePage(page, off.toDataURL('image/png'), off.width, off.height, { caption: title || 'Ghi chú' });
+    setActiveTool('select');
+    state.selectedItem = { kind: 'image', id: rec.id };
+    syncSelectionBar();
+    renderCommittedLayer();
+    scheduleActiveRender();
+    scheduleLocalAutoSave();
+    notify('Đã chèn thẻ ghi chú từ Kho 4 cấp lên trang.', 'success');
+  }
+
+  function populateSaveVaultGalaxies(query) {
+    const C = getCore();
+    const sel = document.getElementById('vtSlateVsGalSel');
+    if (!C || !C.catalog || !sel) return;
+    const gals = C.catalog.search(query || '', 'ALL');
+    sel.innerHTML = gals.map(function (g) {
+      return '<option value="' + escapeAttr(g.id) + '">' + escapeHtml(g.title + ' (' + g.group + ')') + '</option>';
+    }).join('');
+    syncSaveVaultIndices();
+  }
+
+  function syncSaveVaultIndices() {
+    const C = getCore();
+    const sel = document.getElementById('vtSlateVsGalSel');
+    const chSel = document.getElementById('vtSlateVsChapter');
+    const stSel = document.getElementById('vtSlateVsStar');
+    const plSel = document.getElementById('vtSlateVsPlanet');
+    if (!C || !C.catalog || !sel || !chSel || !stSel || !plSel) return;
+    const g = C.catalog.get(sel.value);
+    const chCount = Math.max(1, (g && g.chapterCount) || 6);
+    chSel.innerHTML = Array.from({ length: chCount }, function (_, i) { return '<option value="' + i + '">Chương ' + (i + 1) + '</option>'; }).join('');
+    stSel.innerHTML = Array.from({ length: 12 }, function (_, i) { return '<option value="' + i + '">Bài ' + (i + 1) + '</option>'; }).join('');
+    plSel.innerHTML = Array.from({ length: 6 }, function (_, i) { return '<option value="' + i + '">Mạch ' + (i + 1) + '</option>'; }).join('');
+    syncSaveVaultLevelVisibility();
+  }
+
+  function syncSaveVaultLevelVisibility() {
+    const lv = Number((document.getElementById('vtSlateVsLevel') || {}).value) || 1;
+    const ch = document.getElementById('vtSlateVsChapter');
+    const st = document.getElementById('vtSlateVsStar');
+    const pl = document.getElementById('vtSlateVsPlanet');
+    if (ch) ch.disabled = lv < 2;
+    if (st) st.disabled = lv < 3;
+    if (pl) pl.disabled = lv < 4;
+  }
+
+  function openSaveToVaultModal() {
+    const C = getCore();
+    if (!C || !C.vault || !C.vault.canManage()) {
+      notify('Chỉ Quản trị viên và Giáo viên mới có quyền lưu học liệu vào Kho 4 cấp.', 'warning');
+      return;
+    }
+    const bd = document.getElementById('vtSlateVaultSaveBackdrop');
+    if (!bd) return;
+    const tInp = document.getElementById('vtSlateVsTitle');
+    if (tInp) tInp.value = state.title || 'Bài giảng viết tay';
+    const sInp = document.getElementById('vtSlateVsSearch');
+    if (sInp) sInp.value = '';
+    const pw = document.getElementById('vtSlateVsProgressWrap');
+    if (pw) pw.style.display = 'none';
+    populateSaveVaultGalaxies('');
+    bd.classList.add('open');
+  }
+
+  function closeSaveToVaultModal() {
+    if (state.publishing) return;
+    const bd = document.getElementById('vtSlateVaultSaveBackdrop');
+    if (bd) bd.classList.remove('open');
+  }
+
+  async function submitSaveBoardToCosmosVault() {
+    if (state.publishing) return;
+    const C = getCore();
+    if (!C || !C.vault || !C.vault.canManage()) return;
+    const title = (document.getElementById('vtSlateVsTitle').value || '').trim();
+    const gid = (document.getElementById('vtSlateVsGalSel').value || '').trim();
+    const lv = Number(document.getElementById('vtSlateVsLevel').value) || 1;
+    const cIdx = Number(document.getElementById('vtSlateVsChapter').value) || 0;
+    const sIdx = Number(document.getElementById('vtSlateVsStar').value) || 0;
+    const pIdx = Number(document.getElementById('vtSlateVsPlanet').value) || 0;
+    if (!title || !gid) { notify('Vui lòng nhập tiêu đề và chọn thiên hà đích.', 'warning'); return; }
+
+    const scopeKey = lv === 1
+      ? C.buildVaultKey(gid)
+      : (lv === 2 ? C.buildVaultKey(gid, cIdx) : (lv === 3 ? C.buildVaultKey(gid, cIdx, sIdx) : C.buildVaultKey(gid, cIdx, sIdx, pIdx)));
+
+    state.publishing = true;
+    const btn = document.getElementById('vtSlateVsSubmitBtn');
+    const pw = document.getElementById('vtSlateVsProgressWrap');
+    const pt = document.getElementById('vtSlateVsProgressText');
+    const pf = document.getElementById('vtSlateVsProgressFill');
+    if (btn) btn.disabled = true;
+    if (pw) pw.style.display = 'flex';
+    if (pt) pt.textContent = 'Đang kết xuất bản viết sang PDF nhiều trang...';
+    if (pf) pf.style.width = '20%';
+
+    try {
+      const pdfBlob = await buildMultiPagePdfBlob(function (cur, tot) {
+        if (pt) pt.textContent = 'Đang kết xuất trang ' + cur + ' / ' + tot + '...';
+        if (pf) pf.style.width = Math.round(20 + (cur / tot) * 35) + '%';
+      });
+      const fileName = sanitizeFilename(title, '.pdf');
+      let driveFileId = '', previewUrl = '', downloadUrl = '';
+      if (C.auth && C.auth.isSignedIn() && C.drive && C.auth.getAccessToken()) {
+        if (pt) pt.textContent = 'Đang tải bản PDF lên Google Drive...';
+        const up = await C.drive.uploadFile({
+          folderName: RESOURCES_FOLDER_NAME,
+          fileName: fileName,
+          mimeType: 'application/pdf',
+          fileOrBlob: pdfBlob,
+          makePublicViewer: true,
+          onProgress: function (pct) { if (pf) pf.style.width = Math.round(55 + pct * 0.30) + '%'; }
+        });
+        driveFileId = up && up.fileId ? up.fileId : '';
+        previewUrl = up && up.previewUrl ? up.previewUrl : '';
+        downloadUrl = up && up.downloadUrl ? up.downloadUrl : '';
+      } else {
+        previewUrl = URL.createObjectURL(pdfBlob);
+        downloadUrl = previewUrl;
+      }
+
+      if (pt) pt.textContent = 'Đang gắn vào Kho 4 cấp & đồng bộ Vũ trụ 3D...';
+      if (pf) pf.style.width = '92%';
+      const saved = await C.addVaultItem(scopeKey, {
+        itemType: 'FILE',
+        category: 'LECTURE',
+        title: title,
+        driveFileId: driveFileId,
+        previewUrl: previewUrl,
+        downloadUrl: downloadUrl,
+        mimeType: 'application/pdf',
+        sizeBytes: pdfBlob.size || 0
+      });
+      if (!saved || !saved.ok) throw new Error((saved && saved.error) || 'Không thể lưu vào Kho 4 cấp.');
+      if (pf) pf.style.width = '100%';
+      state.publishing = false;
+      if (btn) btn.disabled = false;
+      closeSaveToVaultModal();
+      notify('✓ Đã lưu bản xuất "' + title + '" vào đúng cấp độ Kho 4 cấp.', 'success');
+    } catch (err) {
+      state.publishing = false;
+      if (btn) btn.disabled = false;
+      if (pw) pw.style.display = 'none';
+      notify((err && err.message) || 'Chưa thể lưu bản xuất vào Kho 4 cấp.', 'error');
+    }
+  }
+
   /* ==========================================================================
    * 14. LIFECYCLE API & STICKY BUS SUBSCRIPTIONS
    * ========================================================================== */
@@ -4125,7 +4461,7 @@
   }
 
   window.VANTHESIS_SLATE = Object.freeze({
-    version: '2.0',
+    version: '3.0',
     onActivate: onActivate,
     onDeactivate: onDeactivate,
     insertLabCapture: insertLabCapture,
