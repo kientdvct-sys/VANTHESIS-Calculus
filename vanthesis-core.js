@@ -125,6 +125,10 @@
         _sessionMem.set(key, s);
         try { const ss = getSS(); if (ss) ss.setItem(key, s); } catch (e) {}
       },
+      removeSession: function (key) {
+        _sessionMem.delete(key);
+        try { const ss = getSS(); if (ss) ss.removeItem(key); } catch (e) {}
+      },
       clearAll: function () {
         _mem.clear();
         _sessionMem.clear();
@@ -261,32 +265,142 @@
     return inFlightRefreshPromise;
   }
 
+  const SESSION_PROFILE_KEY = 'vanthesis_user_profile_v1';
+  const SESSION_TOKEN_KEY = 'vanthesis_access_token_v1';
+  const SESSION_EXPIRY_KEY = 'vanthesis_token_expiry_v1';
+  const WORKSPACE_SNAPSHOT_KEY = 'vanthesis_workspace_v1_snapshot';
+  const DEFAULT_TOKEN_TTL_MS = 55 * 60 * 1000;
+
+  function persistSessionToSafeStore(sessionObj) {
+    if (!sessionObj || typeof sessionObj !== 'object') return;
+    const profile = Object.assign({}, sessionObj);
+    delete profile.accessToken;
+    SafeStore.setJSON(SESSION_PROFILE_KEY, profile);
+    if (sessionObj.accessToken) {
+      SafeStore.setItem(SESSION_TOKEN_KEY, String(sessionObj.accessToken));
+      SafeStore.setSession(SESSION_TOKEN_KEY, String(sessionObj.accessToken));
+    }
+    const exp = Number(sessionObj.tokenExpiresAt || sessionObj.expiresAt || 0);
+    if (isFinite(exp) && exp > 0) {
+      SafeStore.setItem(SESSION_EXPIRY_KEY, String(exp));
+    }
+  }
+
+  function clearPersistedSession() {
+    SafeStore.removeItem(SESSION_PROFILE_KEY);
+    SafeStore.removeItem(SESSION_TOKEN_KEY);
+    SafeStore.removeItem(SESSION_EXPIRY_KEY);
+    try { SafeStore.removeSession(SESSION_TOKEN_KEY); } catch (e) {}
+  }
+
+  function getCachedWorkspaceSnapshot() {
+    const snap = SafeStore.getJSON(WORKSPACE_SNAPSHOT_KEY, null);
+    return (snap && typeof snap === 'object') ? snap : null;
+  }
+
+  function saveWorkspaceSnapshot(partial) {
+    const prev = getCachedWorkspaceSnapshot() || {
+      workspaceFile: 'vanthesis_workspace_v1.json',
+      cosmosVault: {},
+      cosmosPrefs: { pinnedGalaxies: [], recentGalaxies: [], theme: 'night' },
+      updatedAt: ''
+    };
+    const next = Object.assign({}, prev, partial || {}, {
+      workspaceFile: 'vanthesis_workspace_v1.json',
+      updatedAt: new Date().toISOString()
+    });
+    SafeStore.setJSON(WORKSPACE_SNAPSHOT_KEY, next);
+    return next;
+  }
+
+  function restoreSessionInstant() {
+    try {
+      const existing = window.VANTHESIS_SESSION_CONTEXT;
+      const savedProfile = SafeStore.getJSON(SESSION_PROFILE_KEY, null);
+      const savedToken = SafeStore.getItem(SESSION_TOKEN_KEY, '') || SafeStore.getSession(SESSION_TOKEN_KEY, '') || '';
+      const savedExpiry = Number(SafeStore.getItem(SESSION_EXPIRY_KEY, '0') || 0);
+      const snapshot = getCachedWorkspaceSnapshot();
+
+      const base = (existing && (existing.email || existing.accessToken)) ? existing : savedProfile;
+      if (!base || (!base.email && !savedToken)) {
+        return { ok: false, restored: false, session: null, workspaceSnapshot: snapshot };
+      }
+
+      const hydrated = Object.assign({}, base, {
+        email: base.email ? String(base.email).trim().toLowerCase() : '',
+        accessToken: String(base.accessToken || savedToken || ''),
+        tokenExpiresAt: (isFinite(savedExpiry) && savedExpiry > 0) ? savedExpiry : Number(base.tokenExpiresAt || 0),
+        isSignedIn: true,
+        restoredInstant: true
+      });
+      window.VANTHESIS_SESSION_CONTEXT = hydrated;
+      bus.emit('session-changed', hydrated, { broadcast: false });
+      bus.emit('session-restored', { session: hydrated, workspaceSnapshot: snapshot }, { broadcast: false });
+
+      // Làm mới phiên và đồng bộ đám mây ngầm ở chế độ nền (không chặn giao diện 0ms)
+      setTimeout(function () {
+        const now = Date.now();
+        const needsRefresh = !hydrated.accessToken || !hydrated.tokenExpiresAt || (hydrated.tokenExpiresAt - now < 120000);
+        const refreshPromise = (needsRefresh && typeof window.VANTHESIS_REFRESH_TOKEN === 'function')
+          ? ensureValidTokenSingleFlight().catch(function () { return false; })
+          : Promise.resolve(true);
+        refreshPromise.then(function () {
+          if (typeof syncCosmosWorkspace === 'function' && checkSignedIn()) {
+            syncCosmosWorkspace().catch(function () {});
+          }
+        });
+      }, 0);
+
+      return { ok: true, restored: true, session: hydrated, workspaceSnapshot: snapshot };
+    } catch (e) {
+      return { ok: false, restored: false, session: null, workspaceSnapshot: null };
+    }
+  }
+
   const auth = Object.freeze({
     setSession: function (ctx) {
       if (!ctx || typeof ctx !== 'object') {
         auth.clearSession();
         return null;
       }
+      const rawExp = Number(ctx.tokenExpiresAt || ctx.expiresAt || 0);
+      const tokenExpiresAt = (isFinite(rawExp) && rawExp > Date.now())
+        ? rawExp
+        : (ctx.accessToken ? (Date.now() + DEFAULT_TOKEN_TTL_MS) : 0);
       const next = Object.assign({}, ctx, {
         email: ctx.email ? String(ctx.email).trim().toLowerCase() : '',
+        accessToken: String(ctx.accessToken || ''),
+        tokenExpiresAt: tokenExpiresAt,
         isSignedIn: Boolean(ctx.isSignedIn || ctx.email || ctx.accessToken)
       });
       window.VANTHESIS_SESSION_CONTEXT = next;
+      if (next.isSignedIn) {
+        persistSessionToSafeStore(next);
+      }
       bus.emit('session-changed', next);
       return next;
     },
     getSession: function () {
       const ctx = window.VANTHESIS_SESSION_CONTEXT;
-      if (!ctx || (!ctx.email && !ctx.accessToken)) return null;
-      return ctx;
+      if (ctx && (ctx.email || ctx.accessToken)) return ctx;
+      const saved = SafeStore.getJSON(SESSION_PROFILE_KEY, null);
+      if (saved && saved.email) {
+        const res = restoreSessionInstant();
+        if (res && res.session) return res.session;
+      }
+      return null;
     },
     clearSession: function () {
       window.VANTHESIS_SESSION_CONTEXT = null;
+      clearPersistedSession();
       if (typeof api !== 'undefined' && api && typeof api.stopHeartbeat === 'function') {
         api.stopHeartbeat();
       }
       bus.emit('session-changed', null);
     },
+    restoreSessionInstant: restoreSessionInstant,
+    getCachedWorkspaceSnapshot: getCachedWorkspaceSnapshot,
+    saveWorkspaceSnapshot: saveWorkspaceSnapshot,
     isSignedIn: checkSignedIn,
     isLoggedIn: checkSignedIn,
     isAuthenticated: checkSignedIn,
@@ -301,6 +415,10 @@
     getAccessToken: function () {
       const s = auth.getSession();
       return s ? String(s.accessToken || '') : '';
+    },
+    getTokenExpiry: function () {
+      const s = auth.getSession();
+      return s ? Number(s.tokenExpiresAt || 0) : 0;
     },
     ensureValidToken: ensureValidTokenSingleFlight,
     refreshToken: ensureValidTokenSingleFlight
@@ -1015,9 +1133,9 @@
         --vt-spec-exam: #F59E0B;
         --vt-spec-intl: #FB7185;
       }
-      html[data-atmosphere="deep"] {
+      html[data-theme="night"] {
         color-scheme: dark;
-        --vt-cosmos-bg: #040712;
+        --vt-cosmos-bg: #030611;
         --vt-cosmos-bg-deep: #070E24;
         --vt-cosmos-surface: rgba(10, 16, 34, 0.86);
         --vt-cosmos-surface-strong: rgba(12, 20, 44, 0.94);
@@ -1026,18 +1144,7 @@
         --vt-cosmos-border: rgba(148, 163, 184, 0.20);
         --vt-cosmos-border-top: rgba(255, 255, 255, 0.18);
       }
-      html[data-atmosphere="aurora"] {
-        color-scheme: dark;
-        --vt-cosmos-bg: #070D1F;
-        --vt-cosmos-bg-deep: #0D1B34;
-        --vt-cosmos-surface: rgba(13, 25, 48, 0.86);
-        --vt-cosmos-surface-strong: rgba(16, 30, 58, 0.94);
-        --vt-cosmos-text: #F0FDF4;
-        --vt-cosmos-text-muted: #A7F3D0;
-        --vt-cosmos-border: rgba(52, 211, 153, 0.26);
-        --vt-cosmos-border-top: rgba(167, 243, 208, 0.24);
-      }
-      html[data-atmosphere="light"] {
+      html[data-theme="day"] {
         color-scheme: only light;
         --vt-cosmos-bg: #F3F6FB;
         --vt-cosmos-bg-deep: #E8EEF7;
@@ -1109,7 +1216,7 @@
         opacity: 1;
         transform: translateY(0);
       }
-      html[data-theme="light"] .vtc-toast {
+      html[data-theme="day"] .vtc-toast, html[data-theme="light"] .vtc-toast {
         background: rgba(255, 253, 248, 0.96);
         color: #0F172A;
         border-color: rgba(15, 23, 42, 0.14);
@@ -1630,13 +1737,13 @@
 
   /* ==========================================================================
    * 5D. CHẶNG 1 (v3.0): SHARED 162-GALAXY CATALOG, 4-LEVEL COSMOS VAULT,
-   *     PERSONALIZATION PREFS (PINS · TOP 5 RECENT · 3 ATMOSPHERES) & DEEP LINKS
+   *     PERSONALIZATION PREFS (PINS · TOP 5 RECENT · DAY/NIGHT THEME) & DEEP LINKS
    * ========================================================================== */
 
   const COSMOS_WORKSPACE_FILE = 'vanthesis_workspace_v1.json';
   const COSMOS_VAULT_KEY = 'vanthesis_cosmos_vault_v1';
   const COSMOS_PREFS_KEY = 'vanthesis_cosmos_prefs_v1';
-  const COSMOS_ATMO_KEY = 'vanthesis_atmosphere_v1';
+  const SYSTEM_THEME_KEY = 'vanthesis_system_theme_v1';
   const COSMOS_PIN_KEY = 'vanthesis_pinned_galaxies_v1';
   const COSMOS_RECENT_KEY = 'vanthesis_recent_galaxies_v1';
 
@@ -1750,6 +1857,7 @@
 
   function writeLocalVaultMap(mapObj) {
     SafeStore.setJSON(COSMOS_VAULT_KEY, mapObj);
+    saveWorkspaceSnapshot({ cosmosVault: mapObj });
   }
 
   function getVaultItems(scopeKey, opts) {
@@ -1909,95 +2017,106 @@
     return { ok: true, deletedItemId: id, scopeKey: key, synced: false };
   }
 
-  /* ---- Personalization Preferences (cosmosPrefs: Pins, Top 5 Recent, 3 Atmospheres) ---- */
+  /* ---- Personalization Preferences (cosmosPrefs: Pins, Top 5 Recent, Day/Night Theme) ---- */
+
+  function normalizeSystemTheme(mode) {
+    const m = String(mode || '').trim().toLowerCase();
+    if (m === 'day' || m === 'light') return 'day';
+    return 'night';
+  }
 
   function getPrefs() {
     const unified = SafeStore.getJSON(COSMOS_PREFS_KEY, null);
     const legacyPins = SafeStore.getJSON(COSMOS_PIN_KEY, []);
     const legacyRecent = SafeStore.getJSON(COSMOS_RECENT_KEY, []);
-    const legacyAtmo = SafeStore.getItem(COSMOS_ATMO_KEY, 'deep');
+    const savedTheme = SafeStore.getItem(SYSTEM_THEME_KEY, 'night');
     const pinned = Array.isArray(unified && unified.pinnedGalaxies) ? unified.pinnedGalaxies : (Array.isArray(legacyPins) ? legacyPins : []);
     const recent = Array.isArray(unified && unified.recentGalaxies) ? unified.recentGalaxies : (Array.isArray(legacyRecent) ? legacyRecent : []);
-    const rawAtmo = String((unified && unified.atmosphere) || legacyAtmo || 'deep').toLowerCase();
-    const atmosphere = (rawAtmo === 'aurora' || rawAtmo === 'light') ? rawAtmo : 'deep';
+    const theme = normalizeSystemTheme((unified && unified.theme) || savedTheme);
     return {
       pinnedGalaxies: pinned.slice(0, 60),
       recentGalaxies: recent.slice(0, 5),
-      atmosphere: atmosphere
+      theme: theme
     };
   }
 
   function persistPrefsLocally(nextPrefs) {
-    SafeStore.setJSON(COSMOS_PREFS_KEY, nextPrefs);
-    SafeStore.setJSON(COSMOS_PIN_KEY, nextPrefs.pinnedGalaxies);
-    SafeStore.setJSON(COSMOS_RECENT_KEY, nextPrefs.recentGalaxies);
-    SafeStore.setItem(COSMOS_ATMO_KEY, nextPrefs.atmosphere);
+    const clean = {
+      pinnedGalaxies: Array.isArray(nextPrefs.pinnedGalaxies) ? nextPrefs.pinnedGalaxies.slice(0, 60) : [],
+      recentGalaxies: Array.isArray(nextPrefs.recentGalaxies) ? nextPrefs.recentGalaxies.slice(0, 5) : [],
+      theme: normalizeSystemTheme(nextPrefs.theme)
+    };
+    SafeStore.setJSON(COSMOS_PREFS_KEY, clean);
+    SafeStore.setJSON(COSMOS_PIN_KEY, clean.pinnedGalaxies);
+    SafeStore.setJSON(COSMOS_RECENT_KEY, clean.recentGalaxies);
+    SafeStore.setItem(SYSTEM_THEME_KEY, clean.theme);
+    saveWorkspaceSnapshot({ cosmosPrefs: clean });
+    return clean;
   }
 
-  function applyAtmosphereToDom(mode) {
-    const clean = (mode === 'aurora' || mode === 'light') ? mode : 'deep';
+  function applySystemThemeToDom(mode) {
+    const clean = normalizeSystemTheme(mode);
     if (typeof document !== 'undefined' && document.documentElement) {
-      document.documentElement.setAttribute('data-atmosphere', clean);
-      document.documentElement.setAttribute('data-theme', clean === 'light' ? 'light' : 'dark');
+      document.documentElement.setAttribute('data-theme', clean);
+      document.documentElement.removeAttribute('data-atmosphere');
     }
     return clean;
   }
 
+  function setSystemTheme(mode, skipCloud) {
+    const clean = applySystemThemeToDom(mode);
+    const cur = getPrefs();
+    const next = persistPrefsLocally(Object.assign({}, cur, { theme: clean }));
+    bus.emit('theme-changed', { theme: clean }, { broadcast: true });
+    bus.emit('cosmos-prefs-changed', next, { broadcast: true });
+    if (!skipCloud && auth.isSignedIn()) {
+      api.post('cosmos_prefs_save', { payload: next }, { silent: true, dedupe: false }).catch(function () {});
+    }
+    return next;
+  }
+
+  function togglePinnedGalaxy(galaxyId) {
+    const gid = String(galaxyId || '').trim();
+    if (!gid) return getPrefs();
+    const cur = getPrefs();
+    const exists = cur.pinnedGalaxies.indexOf(gid) !== -1;
+    const nextPins = exists
+      ? cur.pinnedGalaxies.filter(function (id) { return id !== gid; })
+      : [gid].concat(cur.pinnedGalaxies).slice(0, 60);
+    const next = persistPrefsLocally(Object.assign({}, cur, { pinnedGalaxies: nextPins }));
+    bus.emit('cosmos-prefs-changed', next, { broadcast: true });
+    if (auth.isSignedIn()) {
+      api.post('cosmos_prefs_save', { payload: next }, { silent: true, dedupe: false }).catch(function () {});
+    }
+    return next;
+  }
+
+  function recordRecentGalaxy(galaxyId) {
+    const gid = String(galaxyId || '').trim();
+    if (!gid) return getPrefs();
+    const cur = getPrefs();
+    const nextRecent = [gid].concat(cur.recentGalaxies.filter(function (id) { return id !== gid; })).slice(0, 5);
+    const next = persistPrefsLocally(Object.assign({}, cur, { recentGalaxies: nextRecent }));
+    bus.emit('cosmos-prefs-changed', next, { broadcast: true });
+    if (auth.isSignedIn()) {
+      api.post('cosmos_prefs_save', { payload: next }, { silent: true, dedupe: false }).catch(function () {});
+    }
+    return next;
+  }
+
   const prefs = Object.freeze({
     get: getPrefs,
-    getAtmosphereLabel: function (mode) {
-      const m = mode || getPrefs().atmosphere;
-      if (m === 'aurora') return 'Cực Quang';
-      if (m === 'light') return 'Ánh Sáng';
-      return 'Thâm Không';
+    getThemeLabel: function (mode) {
+      return normalizeSystemTheme(mode || getPrefs().theme) === 'day' ? 'Ban ngày' : 'Ban đêm';
     },
-    setAtmosphere: function (mode, skipCloud) {
-      const clean = applyAtmosphereToDom(mode);
-      const cur = getPrefs();
-      const next = Object.assign({}, cur, { atmosphere: clean });
-      persistPrefsLocally(next);
-      bus.emit('atmosphere-changed', { atmosphere: clean }, { broadcast: true });
-      bus.emit('cosmos-prefs-changed', next, { broadcast: true });
-      if (!skipCloud && auth.isSignedIn()) {
-        api.post('cosmos_prefs_save', { payload: next }, { silent: true, dedupe: false }).catch(function () {});
-      }
-      return next;
+    setSystemTheme: setSystemTheme,
+    toggleSystemTheme: function () {
+      return setSystemTheme(getPrefs().theme === 'day' ? 'night' : 'day');
     },
-    cycleAtmosphere: function () {
-      const order = ['deep', 'aurora', 'light'];
-      const cur = getPrefs().atmosphere;
-      const next = order[(order.indexOf(cur) + 1) % order.length];
-      return prefs.setAtmosphere(next);
-    },
-    togglePinGalaxy: function (galaxyId) {
-      const gid = String(galaxyId || '').trim();
-      if (!gid) return getPrefs();
-      const cur = getPrefs();
-      const exists = cur.pinnedGalaxies.indexOf(gid) !== -1;
-      const nextPins = exists
-        ? cur.pinnedGalaxies.filter(function (id) { return id !== gid; })
-        : [gid].concat(cur.pinnedGalaxies).slice(0, 60);
-      const next = Object.assign({}, cur, { pinnedGalaxies: nextPins });
-      persistPrefsLocally(next);
-      bus.emit('cosmos-prefs-changed', next, { broadcast: true });
-      if (auth.isSignedIn()) {
-        api.post('cosmos_prefs_save', { payload: next }, { silent: true, dedupe: false }).catch(function () {});
-      }
-      return next;
-    },
-    pushRecentGalaxy: function (galaxyId) {
-      const gid = String(galaxyId || '').trim();
-      if (!gid) return getPrefs();
-      const cur = getPrefs();
-      const nextRecent = [gid].concat(cur.recentGalaxies.filter(function (id) { return id !== gid; })).slice(0, 5);
-      const next = Object.assign({}, cur, { recentGalaxies: nextRecent });
-      persistPrefsLocally(next);
-      bus.emit('cosmos-prefs-changed', next, { broadcast: true });
-      if (auth.isSignedIn()) {
-        api.post('cosmos_prefs_save', { payload: next }, { silent: true, dedupe: false }).catch(function () {});
-      }
-      return next;
-    }
+    togglePinnedGalaxy: togglePinnedGalaxy,
+    togglePinGalaxy: togglePinnedGalaxy,
+    recordRecentGalaxy: recordRecentGalaxy,
+    pushRecentGalaxy: recordRecentGalaxy
   });
 
   async function syncCosmosWorkspace() {
@@ -2011,13 +2130,12 @@
         bus.emit('cosmos-vault-changed', { action: 'sync', cosmosVault: res.cosmosVault }, { broadcast: false });
       }
       if (res.cosmosPrefs && typeof res.cosmosPrefs === 'object') {
-        const merged = {
+        const merged = persistPrefsLocally({
           pinnedGalaxies: Array.isArray(res.cosmosPrefs.pinnedGalaxies) ? res.cosmosPrefs.pinnedGalaxies : getPrefs().pinnedGalaxies,
           recentGalaxies: Array.isArray(res.cosmosPrefs.recentGalaxies) ? res.cosmosPrefs.recentGalaxies.slice(0, 5) : getPrefs().recentGalaxies,
-          atmosphere: res.cosmosPrefs.atmosphere || getPrefs().atmosphere
-        };
-        persistPrefsLocally(merged);
-        applyAtmosphereToDom(merged.atmosphere);
+          theme: normalizeSystemTheme(res.cosmosPrefs.theme || getPrefs().theme)
+        });
+        applySystemThemeToDom(merged.theme);
         bus.emit('cosmos-prefs-changed', merged, { broadcast: false });
       }
     }
@@ -2075,23 +2193,26 @@
     }
   });
 
-  // Apply persisted atmosphere on boot & listen for cross-tab atmosphere updates
-  applyAtmosphereToDom(getPrefs().atmosphere);
-  bus.on('atmosphere-changed', function (detail) {
-    if (detail && detail.atmosphere) applyAtmosphereToDom(detail.atmosphere);
+  // Áp dụng chế độ Ban ngày / Ban đêm đã lưu & lắng nghe đồng bộ liên thẻ
+  applySystemThemeToDom(getPrefs().theme);
+  bus.on('theme-changed', function (detail) {
+    if (detail && detail.theme) applySystemThemeToDom(detail.theme);
   }, { replay: false });
   bus.on('session-changed', function (s) {
-    if (s && auth.isSignedIn()) {
+    if (s && !s.restoredInstant && auth.isSignedIn()) {
       syncCosmosWorkspace().catch(function () {});
     }
   }, { replay: false });
+
+  // Khôi phục phiên đăng nhập tức thì (0ms) ngay khi tải trang
+  restoreSessionInstant();
 
   /* ==========================================================================
    * 6. PUBLIC EXPORT (window.VANTHESIS_CORE)
    * ========================================================================== */
 
   window.VANTHESIS_CORE = Object.freeze({
-    version: '3.0',
+    version: '3.1',
     bus: bus,
     auth: auth,
     api: api,
@@ -2100,11 +2221,13 @@
     drive: drive,
     ui: ui,
     storage: SafeStore,
+    SafeStore: SafeStore,
     catalog: catalog,
     vault: vault,
     prefs: prefs,
     nav: nav,
-    // Phương thức chuẩn quản lí Kho học liệu 4 cấp dùng chung toàn hệ thống
+    // Khôi phục phiên tức thì & phương thức chuẩn quản lí Kho học liệu 4 cấp / Cá nhân hóa
+    restoreSessionInstant: restoreSessionInstant,
     buildVaultKey: buildVaultKey,
     parseVaultKey: parseVaultKey,
     getVaultItems: getVaultItems,
@@ -2112,6 +2235,9 @@
     renameVaultItem: renameVaultItem,
     deleteVaultItem: deleteVaultItem,
     countVaultByGalaxy: countVaultByGalaxy,
+    togglePinnedGalaxy: togglePinnedGalaxy,
+    recordRecentGalaxy: recordRecentGalaxy,
+    setSystemTheme: setSystemTheme,
     registerSector: registerSector,
     activateSector: activateSector,
     diagnose: openDiagnosticsModal,
