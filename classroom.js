@@ -28,7 +28,7 @@
   const state = {
     isOpen: false,
     cosmicDark: false,
-    atmosphere: 'light',     // 'deep' | 'aurora' | 'light'
+    systemTheme: 'day',      // 'day' | 'night'
     drawerOpen: false,
     cosmosGroup: 'ALL',
     cosmosSearch: '',
@@ -642,21 +642,23 @@
         background: linear-gradient(135deg, #047857 0%, #059669 100%);
         border-color: transparent; color: #FFFFFF;
       }
-      #vtClassroomModal[data-atmosphere="deep"] {
-        --cr-bg: #040814;
-        --cr-surface: rgba(12, 18, 34, 0.84);
-        --cr-surface-strong: rgba(15, 23, 42, 0.94);
-        --cr-border: rgba(148, 163, 184, 0.18);
+      #vtClassroomModal[data-theme="night"],
+      #vtClassroomModal[data-theme="dark"] {
+        --cr-bg: #030611;
+        --cr-surface: rgba(12, 18, 34, 0.86);
+        --cr-surface-strong: rgba(15, 23, 42, 0.95);
+        --cr-border: rgba(148, 163, 184, 0.20);
         --cr-text: #F1F5F9;
         --cr-muted: #94A3B8;
       }
-      #vtClassroomModal[data-atmosphere="aurora"] {
-        --cr-bg: #061320;
-        --cr-surface: rgba(10, 28, 44, 0.82);
-        --cr-surface-strong: rgba(12, 34, 52, 0.94);
-        --cr-border: rgba(56, 189, 248, 0.24);
-        --cr-text: #ECFEFF;
-        --cr-muted: #99D5E8;
+      #vtClassroomModal[data-theme="day"],
+      #vtClassroomModal[data-theme="light"] {
+        --cr-bg: #F8FAFC;
+        --cr-surface: rgba(255, 255, 255, 0.90);
+        --cr-surface-strong: #FFFFFF;
+        --cr-border: rgba(15, 23, 42, 0.12);
+        --cr-text: #0F172A;
+        --cr-muted: #475569;
       }
       .vt-cosmos-pill-bar { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
       .vt-cosmos-pill {
@@ -4497,7 +4499,7 @@
                 <div style="font-size:12px;color:var(--cr-muted);">${esc(info.breadcrumb)}</div>
                 ${item.note ? `<div style="font-size:12px;color:var(--cr-text);opacity:0.86;">${esc(item.note)}</div>` : ''}
                 <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:4px;">
-                  <a href="${esc(href3D)}" class="vt-cr-btn vt-cr-btn-sm vt-cr-btn-primary" style="text-decoration:none;">🌌 Mở trong 3D</a>
+                  <button type="button" class="vt-cr-btn vt-cr-btn-sm vt-cr-btn-primary" data-cr-open3d="${esc(item.scopeKey || item.galaxyId || '')}">🌌 Khám phá trên Vũ trụ 3D</button>
                   ${item.url ? `<a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer" class="vt-cr-btn vt-cr-btn-sm" style="text-decoration:none;">↗ Mở tệp</a>` : ''}
                   ${canAssign ? `<button type="button" class="vt-cr-btn vt-cr-btn-sm vt-cr-btn-danger" data-unassign-idx="${idx}">Gỡ</button>` : ''}
                 </div>
@@ -4515,7 +4517,7 @@
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
             <div>
               <h3 style="margin:0;font-size:16px;">🌌 Học liệu &amp; Lộ trình 3D được giao cho lớp ${esc(cls.className)}</h3>
-              <p style="margin:3px 0 0;font-size:12.5px;color:var(--cr-muted);">Bấm "Mở trong 3D" để bay thẳng tới đúng chương, bài học và mạch kiến thức trong Không gian 162 Thiên hà.</p>
+              <p style="margin:3px 0 0;font-size:12.5px;color:var(--cr-muted);">Bấm "Khám phá trên Vũ trụ 3D" để mở tức thì Không gian 3D và bay thẳng tới đúng chương, bài học và mạch kiến thức.</p>
             </div>
             ${renderClassBannerCosmosBtn(cls)}
           </div>
@@ -5036,40 +5038,82 @@
       });
     }
 
-    // Quick Toggle: 3 Spatial Atmospheres (Thâm Không | Cực Quang | Ánh Sáng) synced with VANTHESIS_CORE
-    function syncClassroomAtmosphere(mode) {
-      const m = (mode === 'deep' || mode === 'aurora' || mode === 'light') ? mode : 'light';
-      state.atmosphere = m;
-      state.cosmicDark = (m !== 'light');
-      root.setAttribute('data-atmosphere', m);
+    // Đồng bộ 2 chế độ giao diện duy nhất: Ban ngày ('day') / Ban đêm ('night')
+    function normalizeCrTheme(mode) {
+      const v = String(mode || '').trim().toLowerCase();
+      return (v === 'night' || v === 'dark') ? 'night' : 'day';
+    }
+    function syncClassroomTheme(mode) {
+      const m = normalizeCrTheme(mode);
+      state.systemTheme = m;
+      state.cosmicDark = (m === 'night');
+      root.setAttribute('data-theme', m);
       root.classList.toggle('vt-cosmic-dark', state.cosmicDark);
       const btn = document.getElementById('vtCrThemeToggle');
       if (btn) {
-        const labels = { deep: '🌌 Thâm Không', aurora: '✨ Cực Quang', light: '☀ Ánh Sáng' };
-        btn.textContent = labels[m] || '☀ Ánh Sáng';
+        btn.textContent = m === 'night' ? '🌙 Ban đêm' : '☀ Ban ngày';
       }
     }
     const initCore = window.VANTHESIS_CORE;
     if (initCore && initCore.prefs && typeof initCore.prefs.get === 'function') {
-      syncClassroomAtmosphere(initCore.prefs.get().atmosphere || 'light');
+      syncClassroomTheme(initCore.prefs.get().theme || 'day');
+    } else {
+      syncClassroomTheme(document.documentElement.getAttribute('data-theme') || 'day');
     }
     if (initCore && initCore.bus && typeof initCore.bus.on === 'function') {
-      initCore.bus.on('atmosphere-changed', function (ev) {
-        if (ev && ev.atmosphere) syncClassroomAtmosphere(ev.atmosphere);
+      initCore.bus.on('theme-changed', function (ev) {
+        if (ev && ev.theme) syncClassroomTheme(ev.theme);
       });
       initCore.bus.on('cosmos-vault-changed', function () {
         if (state.isOpen && state.activeTab === 'cosmos_vault') renderMain();
       });
     }
     document.getElementById('vtCrThemeToggle').addEventListener('click', function () {
+      const next = state.systemTheme === 'night' ? 'day' : 'night';
       const C = window.VANTHESIS_CORE;
-      if (C && C.prefs && typeof C.prefs.cycleAtmosphere === 'function') {
-        const nextMode = C.prefs.cycleAtmosphere();
-        syncClassroomAtmosphere(nextMode);
-      } else {
-        const order = ['deep', 'aurora', 'light'];
-        const next = order[(order.indexOf(state.atmosphere) + 1) % order.length];
-        syncClassroomAtmosphere(next);
+      if (C && typeof C.setSystemTheme === 'function') {
+        C.setSystemTheme(next);
+      } else if (window.VANTHESIS_THEME && typeof window.VANTHESIS_THEME.set === 'function') {
+        window.VANTHESIS_THEME.set(next);
+      }
+      syncClassroomTheme(next);
+    });
+
+    // Mở tức thì lớp Vũ trụ 3D nhúng (0ms) từ nút 'Khám phá trên Vũ trụ 3D'
+    root.addEventListener('click', function (e) {
+      const btn3d = e.target.closest('[data-cr-open3d]');
+      if (btn3d) {
+        e.preventDefault();
+        const rawKey = String(btn3d.getAttribute('data-cr-open3d') || '').trim();
+        const C = window.VANTHESIS_CORE;
+        const parsed = (C && C.parseVaultKey && rawKey) ? C.parseVaultKey(rawKey) : null;
+        const deepLink = parsed ? {
+          galaxyId: parsed.galaxyId,
+          chapterIdx: parsed.chapterIdx,
+          starIdx: parsed.starIdx,
+          planetIdx: parsed.planetIdx
+        } : { galaxyId: rawKey };
+        if (typeof window.VANTHESIS_OPEN_COSMOS === 'function') {
+          window.VANTHESIS_OPEN_COSMOS(deepLink);
+        } else if (C && C.nav && typeof C.nav.openInCosmos === 'function') {
+          C.nav.openInCosmos({ galaxy: deepLink.galaxyId, chapter: deepLink.chapterIdx, star: deepLink.starIdx, planet: deepLink.planetIdx });
+        }
+        return;
+      }
+      const cosmosLink = e.target.closest('a[href*="cosmos.html"]');
+      if (cosmosLink && typeof window.VANTHESIS_OPEN_COSMOS === 'function') {
+        e.preventDefault();
+        try {
+          const u = new URL(cosmosLink.getAttribute('href'), window.location.href);
+          window.VANTHESIS_OPEN_COSMOS({
+            galaxyId: u.searchParams.get('galaxy') || '',
+            chapterIdx: u.searchParams.get('chapter'),
+            starIdx: u.searchParams.get('star'),
+            planetIdx: u.searchParams.get('planet')
+          });
+        } catch (_) {
+          window.VANTHESIS_OPEN_COSMOS();
+        }
       }
     });
 
