@@ -2268,7 +2268,7 @@
     ctx.save();
     // Sheet shadow on desk (screen only)
     if (!isExport) {
-      ctx.shadowColor = document.documentElement.getAttribute('data-theme') === 'dark'
+      ctx.shadowColor = (document.documentElement.getAttribute('data-theme') === 'dark' || document.documentElement.getAttribute('data-theme') === 'night')
         ? 'rgba(2, 6, 23, 0.65)'
         : 'rgba(15, 23, 42, 0.16)';
       ctx.shadowBlur = 24;
@@ -4458,6 +4458,12 @@
       if (!state.mounted) { window.__VT_PENDING_SLATE_DOC__ = payload; return; }
       openDocumentOnBoard(payload);
     });
+  }
+
+  if (window.VANTHESIS_CORE && window.VANTHESIS_CORE.bus && typeof window.VANTHESIS_CORE.bus.on === 'function') {
+    window.VANTHESIS_CORE.bus.on('theme-changed', function () {
+      try { if (typeof requestRender === 'function') requestRender(); } catch (e) {}
+    }, { replay: false });
   }
 
   window.VANTHESIS_SLATE = Object.freeze({
