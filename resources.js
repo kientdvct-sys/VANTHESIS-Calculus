@@ -2364,7 +2364,7 @@
   }
 
   function renderResourcesHub() {
-    const mount = document.getElementById('vtResourcesMount');
+    const mount = document.querySelector('#view-constellations #vtResourcesMount, #sectorResources #vtResourcesMount, [data-view="view-constellations"] #vtResourcesMount, #view-constellations, #vtResourcesMount');
     if (!mount) return;
 
     const canManage = canUploadResource();
@@ -2580,7 +2580,7 @@
 
     const searchHtml = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">' +
       '<input id="vtCvSearchInp" type="text" value="' + escapeAttr(state.cosmosSearchQuery) + '" placeholder="🔍 Tìm kiếm không dấu trong 162 thiên hà (VD: toan 12, ielts, hsa, giai tich)..." style="flex:1;min-width:220px;height:40px;padding:0 14px;border-radius:13px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);font-size:13px;">' +
-      '<a class="btn btn-sm" href="' + escapeAttr(C.nav ? C.nav.buildCosmosUrl({ galaxy: selGal ? selGal.id : '' }) : 'cosmos.html') + '" style="display:inline-flex;align-items:center;text-decoration:none;">🌌 Mở Vũ trụ 3D</a>' +
+      '<button type="button" class="btn btn-sm" data-cv-open3d="' + escapeAttr(selGal ? selGal.id : '') + '">🌌 Mở trong Vũ trụ 3D</button>' +
     '</div>';
 
     const galCardsHtml = matchedGalaxies.length
@@ -2655,6 +2655,7 @@
             (it.noteContent ? '<div style="font-size:12px;color:var(--text-muted);margin-top:3px;">' + escapeHtml(it.noteContent.slice(0, 140)) + '</div>' : '') +
           '</div>' +
           '<div style="display:flex;gap:5px;flex-wrap:wrap;">' +
+            '<button type="button" class="btn btn-sm" data-cv-open3d="' + escapeAttr(it.scopeKey || (selGal ? selGal.id : '')) + '">🌌 Mở trong Vũ trụ 3D</button>' +
             '<button type="button" class="btn btn-sm" data-cv-preview="' + escapeAttr(it.scopeKey) + '||' + escapeAttr(it.itemId) + '">👁️ Xem nhanh</button>' +
             (it.previewUrl || it.driveFileId ? '<button type="button" class="btn btn-sm" data-cv-slate="' + escapeAttr(it.scopeKey) + '||' + escapeAttr(it.itemId) + '">✍️ Bảng Giảng</button>' : '') +
             (it.downloadUrl ? '<a class="btn btn-sm" href="' + escapeAttr(it.downloadUrl) + '" target="_blank" rel="noopener" style="text-decoration:none;">⬇ Tải về</a>' : '') +
@@ -2818,6 +2819,24 @@
         renderResourcesHub();
       });
     }
+
+    mount.querySelectorAll('[data-cv-open3d]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const rawKey = String(btn.getAttribute('data-cv-open3d') || '').trim();
+        const parsed = (C && C.parseVaultKey && rawKey) ? C.parseVaultKey(rawKey) : null;
+        const deepLink = parsed ? {
+          galaxyId: parsed.galaxyId,
+          chapterIdx: parsed.chapterIdx,
+          starIdx: parsed.starIdx,
+          planetIdx: parsed.planetIdx
+        } : { galaxyId: rawKey || (selGal ? selGal.id : '') };
+        if (typeof window.VANTHESIS_OPEN_COSMOS === 'function') {
+          window.VANTHESIS_OPEN_COSMOS(deepLink);
+        } else if (C && C.nav && typeof C.nav.openInCosmos === 'function') {
+          C.nav.openInCosmos({ galaxy: deepLink.galaxyId, chapter: deepLink.chapterIdx, star: deepLink.starIdx, planet: deepLink.planetIdx });
+        }
+      });
+    });
 
     mount.querySelectorAll('[data-cv-preview]').forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -3413,13 +3432,13 @@
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.lineWidth = 2.4;
-    let inkColor = document.documentElement.getAttribute('data-theme') === 'dark' ? '#F8FAFC' : '#0F172A';
+    let inkColor = (document.documentElement.getAttribute('data-theme') === 'dark' || document.documentElement.getAttribute('data-theme') === 'night') ? '#F8FAFC' : '#0F172A';
     let drawing = false;
 
     wrap.querySelectorAll('[data-scratch-color]').forEach(function (b) {
       b.addEventListener('click', function () {
         inkColor = b.getAttribute('data-scratch-color');
-        if (inkColor === '#0F172A' && document.documentElement.getAttribute('data-theme') === 'dark') inkColor = '#F8FAFC';
+        if (inkColor === '#0F172A' && (document.documentElement.getAttribute('data-theme') === 'dark' || document.documentElement.getAttribute('data-theme') === 'night')) inkColor = '#F8FAFC';
       });
     });
     const clrBtn = wrap.querySelector('[data-scratch-clear]');
