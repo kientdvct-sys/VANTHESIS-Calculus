@@ -7120,9 +7120,9 @@
         </div>
       </section>
     </div>
-    <!-- Embedded 0ms 3D Cosmos Observatory Viewport (kept alive in DOM) -->
-    <div id="cosmosFeatureContainer" class="vt-cosmos-embed-overlay" hidden aria-hidden="true" aria-label="Đài Thiên Văn Tri Thức 3D">
-      <iframe id="cosmosViewport" src="./cosmos.html?embed=1" title="Đài Thiên Văn Tri Thức 3D VANTHESIS" allow="fullscreen"></iframe>
+    <!-- Embedded 0ms 3D Cosmos Observatory Viewport (nạp 1 lần duy nhất, giữ sống trong DOM) -->
+    <div id="cosmosFeatureContainer" class="vt-cosmos-embed-overlay" style="display:none;" aria-hidden="true" aria-label="Đài Thiên Văn Tri Thức 3D">
+      <iframe id="cosmosViewport" data-src="./cosmos.html?embed=1" title="Đài Thiên Văn Tri Thức 3D VANTHESIS" allow="fullscreen"></iframe>
     </div>
   </div>
 
@@ -19118,17 +19118,21 @@
         const wrap = $('cosmosFeatureContainer');
         const frame = $('cosmosViewport');
         if (!wrap || !frame) return;
-        wrap.hidden = false;
+        // Chỉ nạp src 1 lần duy nhất và giữ sống khung 3D trong DOM suốt phiên
+        if (!frame.getAttribute('src')) {
+          frame.setAttribute('src', frame.getAttribute('data-src') || './cosmos.html?embed=1');
+        }
+        wrap.style.display = 'block';
         wrap.setAttribute('aria-hidden', 'false');
         pushStateToCosmosViewport();
         try {
-          frame.contentWindow.postMessage({ type: 'VANTHESIS_SET_ACTIVE', active: true }, '*');
-          if (deepLink && (deepLink.galaxyId || deepLink.galaxy)) {
-            if (cosmosReady) {
+          if (cosmosReady && frame.contentWindow) {
+            frame.contentWindow.postMessage({ type: 'VANTHESIS_SET_ACTIVE', active: true }, '*');
+            if (deepLink && (deepLink.galaxyId || deepLink.galaxy)) {
               frame.contentWindow.postMessage({ type: 'VANTHESIS_DEEP_LINK', payload: deepLink }, '*');
-            } else {
-              pendingCosmosDeepLink = deepLink;
             }
+          } else if (deepLink && (deepLink.galaxyId || deepLink.galaxy)) {
+            pendingCosmosDeepLink = deepLink;
           }
         } catch {}
       };
@@ -19137,7 +19141,7 @@
         const wrap = $('cosmosFeatureContainer');
         const frame = $('cosmosViewport');
         if (wrap) {
-          wrap.hidden = true;
+          wrap.style.display = 'none';
           wrap.setAttribute('aria-hidden', 'true');
         }
         try {
@@ -19145,7 +19149,9 @@
             frame.contentWindow.postMessage({ type: 'VANTHESIS_SET_ACTIVE', active: false }, '*');
           }
         } catch {}
-        renderDashboardCosmosHub();
+        if (vtCurrentActiveSector === 'dashboard') {
+          try { renderDashboardCosmosHub(); } catch {}
+        }
       };
 
       window.addEventListener('message', (ev) => {
@@ -19156,7 +19162,7 @@
           cosmosReady = true;
           pushStateToCosmosViewport();
           const wrap = $('cosmosFeatureContainer');
-          const isOpen = wrap && !wrap.hidden;
+          const isOpen = Boolean(wrap && wrap.style.display !== 'none');
           const frame = $('cosmosViewport');
           try {
             if (frame && frame.contentWindow) {
