@@ -12,7 +12,7 @@
 
   const STYLE_ID = 'vanthesis-classroom-styles';
   const MODAL_ID = 'vtClassroomModal';
-  const EXPECTED_BACKEND_VERSION = '6.6';
+  const EXPECTED_BACKEND_VERSION = '7.0';
   const MAX_BULK_IMPORT = 60;
   const HEARTBEAT_MS = 8000;
   const PERM_META = [
@@ -28,7 +28,14 @@
   const state = {
     isOpen: false,
     cosmicDark: false,
+    atmosphere: 'light',     // 'deep' | 'aurora' | 'light'
     drawerOpen: false,
+    cosmosGroup: 'ALL',
+    cosmosSearch: '',
+    cosmosSelectedGalaxy: '',
+    cosmosChapterIdx: '',
+    cosmosStarIdx: '',
+    cosmosPlanetIdx: '',
     backendVersion: '',
     backendWarning: '',
     localSyncRev: 0,
@@ -635,6 +642,48 @@
         background: linear-gradient(135deg, #047857 0%, #059669 100%);
         border-color: transparent; color: #FFFFFF;
       }
+      #vtClassroomModal[data-atmosphere="deep"] {
+        --cr-bg: #040814;
+        --cr-surface: rgba(12, 18, 34, 0.84);
+        --cr-surface-strong: rgba(15, 23, 42, 0.94);
+        --cr-border: rgba(148, 163, 184, 0.18);
+        --cr-text: #F1F5F9;
+        --cr-muted: #94A3B8;
+      }
+      #vtClassroomModal[data-atmosphere="aurora"] {
+        --cr-bg: #061320;
+        --cr-surface: rgba(10, 28, 44, 0.82);
+        --cr-surface-strong: rgba(12, 34, 52, 0.94);
+        --cr-border: rgba(56, 189, 248, 0.24);
+        --cr-text: #ECFEFF;
+        --cr-muted: #99D5E8;
+      }
+      .vt-cosmos-pill-bar { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+      .vt-cosmos-pill {
+        border:1px solid var(--cr-border, rgba(148,163,184,0.28));
+        background:var(--cr-surface, rgba(255,255,255,0.65));
+        color:var(--cr-text, #0F172A);
+        padding:6px 12px; border-radius:999px; font-size:12px; font-weight:600;
+        cursor:pointer; transition:all .18s ease;
+      }
+      .vt-cosmos-pill.active {
+        background:linear-gradient(135deg,#1D4ED8,#4F46E5); color:#fff; border-color:transparent;
+        box-shadow:0 4px 12px rgba(29,78,216,0.28);
+      }
+      .vt-cosmos-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:12px; margin-top:10px; }
+      .vt-cosmos-item-card {
+        background:var(--cr-surface, rgba(255,255,255,0.72));
+        border:1px solid var(--cr-border, rgba(148,163,184,0.25));
+        border-radius:16px; padding:13px 14px; display:flex; flex-direction:column; gap:8px;
+        transition:transform .16s ease, box-shadow .16s ease;
+      }
+      .vt-cosmos-item-card:hover { transform:translateY(-1px); box-shadow:0 8px 20px rgba(15,23,42,0.09); }
+      .vt-cosmos-badge {
+        display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700;
+        padding:3px 9px; border-radius:999px; width:fit-content;
+      }
+      .vt-cosmos-scope-row { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:8px; margin-bottom:10px; }
+      @media (max-width: 720px) { .vt-cosmos-scope-row { grid-template-columns:1fr 1fr; } }
       .vt-cr-btn-emerald:hover { filter: brightness(1.06); color: #FFFFFF; }
       .vt-cr-btn-glass-dark {
         background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.22); color: #F8FAFC;
@@ -1877,9 +1926,13 @@
             <div class="vt-cr-field">
               <label for="vtClsGradeSelect">Khối học *</label>
               <select id="vtClsGradeSelect">
+                <option value="THCS (Khối 6-9)">THCS (Khối 6–9)</option>
                 <option value="Khối 10">Khối 10</option>
                 <option value="Khối 11">Khối 11</option>
                 <option value="Khối 12">Khối 12</option>
+                <option value="Đại học & CNTT">Đại học &amp; CNTT</option>
+                <option value="Luyện thi ĐGNL & Riêng">Luyện thi ĐGNL &amp; Riêng</option>
+                <option value="Chứng chỉ Quốc tế">Chứng chỉ Quốc tế</option>
                 <option value="__custom__">+ Nhập tên khối khác...</option>
               </select>
             </div>
@@ -1901,8 +1954,14 @@
               <datalist id="vtCrTeacherDatalist"></datalist>
             </div>
             <div class="vt-cr-field full">
+              <label for="vtClsGalaxySelect">🌌 Thiên hà Môn học / Lộ trình Khảo thí (162 Thiên hà)</label>
+              <select id="vtClsGalaxySelect">
+                <option value="">— Chọn thiên hà liên kết 3D (không bắt buộc) —</option>
+              </select>
+            </div>
+            <div class="vt-cr-field full">
               <label for="vtClsNotes">Ghi chú lớp học</label>
-              <input id="vtClsNotes" type="text" placeholder="VD: Lớp chuyên Toán - Tin">
+              <input id="vtClsNotes" type="text" placeholder="VD: Lớp chuyên Toán - Tin hoặc Lộ trình ĐGNL">
             </div>
             <div class="vt-cr-field full vt-cr-modal-foot">
               <button class="vt-cr-btn" type="button" data-close-sub="vtCrClassModal">Hủy</button>
@@ -2299,7 +2358,7 @@
     }
 
     state.backendVersion = String(res.version || '');
-    state.backendWarning = (state.backendVersion !== EXPECTED_BACKEND_VERSION)
+    state.backendWarning = (state.backendVersion && state.backendVersion !== EXPECTED_BACKEND_VERSION && state.backendVersion !== '6.6')
       ? 'Máy chủ dữ liệu đang chạy bản cũ. Quản trị viên nên xuất bản phiên bản mới nhất để đồng bộ trọn vẹn mọi tính năng.'
       : '';
     state.bootstrap = res;
@@ -3652,27 +3711,33 @@
       : '';
 
     let tabsHtml = '';
+    const assignedCountForTab = getClassAssignedCosmosItems(cls.classId).length;
+    const cosmosTabBtn = `<button class="vt-cr-tab ${state.activeTab === 'cosmos_vault' ? 'active' : ''}" data-crtab="cosmos_vault" type="button">🌌 Học liệu 4 cấp (${assignedCountForTab})</button>`;
     if (state.role === 'STUDENT') {
       tabsHtml = `
         <button class="vt-cr-tab ${state.activeTab === 'roster' ? 'active' : ''}" data-crtab="roster" type="button">👥 Thành viên cùng lớp (${state.roster.length})</button>
         <button class="vt-cr-tab ${state.activeTab === 'mygrades' ? 'active' : ''}" data-crtab="mygrades" type="button">📊 Bảng điểm Cá nhân</button>
+        ${cosmosTabBtn}
       `;
     } else if (state.role === 'SUBJECT_TEACHER') {
       tabsHtml = `
         <button class="vt-cr-tab ${state.activeTab === 'roster' ? 'active' : ''}" data-crtab="roster" type="button">👥 Danh sách Thành viên (${state.roster.length})</button>
         <button class="vt-cr-tab ${state.activeTab === 'gradebook' ? 'active' : ''}" data-crtab="gradebook" type="button">📊 Sổ điểm Bộ môn (${esc(state.selectedSubject)})</button>
+        ${cosmosTabBtn}
       `;
     } else if (state.role === 'HOMEROOM_TEACHER') {
       tabsHtml = `
         <button class="vt-cr-tab ${state.activeTab === 'roster' ? 'active' : ''}" data-crtab="roster" type="button">👥 Thành viên Lớp (${state.roster.length})</button>
         <button class="vt-cr-tab ${state.activeTab === 'summary' ? 'active' : ''}" data-crtab="summary" type="button">🏆 Tổng hợp Toàn lớp</button>
         <button class="vt-cr-tab ${state.activeTab === 'tracking_view' ? 'active' : ''}" data-crtab="tracking_view" type="button">📋 Theo dõi Lớp</button>
+        ${cosmosTabBtn}
       `;
     } else {
       tabsHtml = `
         <button class="vt-cr-tab ${state.activeTab === 'roster' ? 'active' : ''}" data-crtab="roster" type="button">👥 Thành viên Lớp (${state.roster.length})</button>
         <button class="vt-cr-tab ${state.activeTab === 'gradebook' ? 'active' : ''}" data-crtab="gradebook" type="button">📊 Sổ điểm Kép</button>
         <button class="vt-cr-tab ${state.activeTab === 'summary' ? 'active' : ''}" data-crtab="summary" type="button">🏆 Tổng hợp Toàn lớp</button>
+        ${cosmosTabBtn}
       `;
     }
 
@@ -3681,6 +3746,7 @@
     else if (state.activeTab === 'gradebook' || state.activeTab === 'tracking_view') bodyHtml = renderDualGradebookTabHtml();
     else if (state.activeTab === 'summary') bodyHtml = renderSummaryMatrixHtml();
     else if (state.activeTab === 'mygrades') bodyHtml = renderStudentPersonalGradesHtml();
+    else if (state.activeTab === 'cosmos_vault') bodyHtml = renderCosmosVaultTabHtml(cls);
 
     let diagBannerHtml = '';
     if (state.backendWarning) {
@@ -3745,7 +3811,10 @@
               <span>GVCN: ${esc(cls.homeroomTeacherEmail || 'Chưa phân công')}</span>
             </div>
           </div>
-          ${adminActionsHtml}
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            ${renderClassBannerCosmosBtn(cls)}
+            ${adminActionsHtml}
+          </div>
         </div>
         <div class="vt-cr-banner-kpis">
           <div class="vt-cr-banner-kpi"><span>Sĩ số hiện tại</span><b>${state.roster.length} học sinh</b></div>
@@ -3885,6 +3954,12 @@
       });
     }
     ['Toán học', 'Vật lý', 'Hóa học', 'Ngữ văn', 'Tiếng Anh', 'Tin học'].forEach(function (s) { set[s] = true; });
+    const C = window.VANTHESIS_CORE;
+    if (C && C.catalog && Array.isArray(C.catalog.list)) {
+      C.catalog.list.forEach(function (g) {
+        if (g && g.name) set[g.name] = true;
+      });
+    }
     return Object.keys(set);
   }
 
@@ -4233,6 +4308,455 @@
     return semBar + kpiHtml + block1 + `<div style="font-weight:700;font-size:13.5px;margin-bottom:8px;color:var(--cr-ink);">2. Bảng điểm Theo dõi Quá trình theo môn</div>` + trackCards;
   }
 
+
+  /* ==========================================================================
+   * 6B. 162-GALAXY & 4-LEVEL COSMOS VAULT INTEGRATION (CHẶNG 4)
+   * ========================================================================== */
+
+  const CLASS_GALAXY_STORE_KEY = 'vanthesis_class_galaxy_map_v1';
+  const CLASS_ASSIGNED_STORE_KEY = 'vanthesis_class_cosmos_assigned_v1';
+
+  function crSafeGetJSON(key, fallback) {
+    const C = window.VANTHESIS_CORE;
+    if (C && C.storage && typeof C.storage.getJSON === 'function') {
+      return C.storage.getJSON(key, fallback);
+    }
+    try {
+      const raw = window.localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch { return fallback; }
+  }
+
+  function crSafeSetJSON(key, val) {
+    const C = window.VANTHESIS_CORE;
+    if (C && C.storage && typeof C.storage.setJSON === 'function') {
+      C.storage.setJSON(key, val);
+      return;
+    }
+    try { window.localStorage.setItem(key, JSON.stringify(val)); } catch {}
+  }
+
+  function getClassLinkedGalaxyId(classId) {
+    if (!classId) return '';
+    const map = crSafeGetJSON(CLASS_GALAXY_STORE_KEY, {});
+    return (map && map[classId]) ? String(map[classId]) : '';
+  }
+
+  function setClassLinkedGalaxyId(classId, galaxyId) {
+    if (!classId) return;
+    const map = crSafeGetJSON(CLASS_GALAXY_STORE_KEY, {});
+    if (galaxyId) map[classId] = String(galaxyId);
+    else delete map[classId];
+    crSafeSetJSON(CLASS_GALAXY_STORE_KEY, map);
+  }
+
+  function getClassAssignedCosmosItems(classId) {
+    if (!classId) return [];
+    const all = crSafeGetJSON(CLASS_ASSIGNED_STORE_KEY, {});
+    return Array.isArray(all[classId]) ? all[classId] : [];
+  }
+
+  function saveClassAssignedCosmosItems(classId, items) {
+    if (!classId) return;
+    const all = crSafeGetJSON(CLASS_ASSIGNED_STORE_KEY, {});
+    all[classId] = Array.isArray(items) ? items : [];
+    crSafeSetJSON(CLASS_ASSIGNED_STORE_KEY, all);
+  }
+
+  function buildCosmosDeepLink(params) {
+    const C = window.VANTHESIS_CORE;
+    if (C && C.nav && typeof C.nav.buildCosmosUrl === 'function') {
+      return C.nav.buildCosmosUrl(params || {});
+    }
+    const q = [];
+    if (params && params.galaxy) q.push('galaxy=' + encodeURIComponent(params.galaxy));
+    if (params && params.chapter !== '' && params.chapter !== undefined && params.chapter !== null) q.push('chapter=' + encodeURIComponent(params.chapter));
+    if (params && params.star !== '' && params.star !== undefined && params.star !== null) q.push('star=' + encodeURIComponent(params.star));
+    if (params && params.planet !== '' && params.planet !== undefined && params.planet !== null) q.push('planet=' + encodeURIComponent(params.planet));
+    return './cosmos.html' + (q.length ? ('?' + q.join('&')) : '');
+  }
+
+  function populateClassGalaxySelect(selectedId) {
+    const sel = document.getElementById('vtClsGalaxySelect');
+    if (!sel) return;
+    const C = window.VANTHESIS_CORE;
+    const list = (C && C.catalog && Array.isArray(C.catalog.list)) ? C.catalog.list : [];
+    const groupsMeta = [
+      { id: 'THCS', label: 'THCS (Lớp 6–9)' },
+      { id: 'THPT', label: 'THPT (Lớp 10–12)' },
+      { id: 'UNI', label: 'Đại học & CNTT' },
+      { id: 'EXAM', label: 'Kì thi riêng & ĐGNL' },
+      { id: 'INTL', label: 'Chứng chỉ Quốc tế' }
+    ];
+    let html = '<option value="">— Chọn thiên hà liên kết 3D (không bắt buộc) —</option>';
+    groupsMeta.forEach(function (gm) {
+      const items = list.filter(function (g) { return g.group === gm.id; });
+      if (!items.length) return;
+      html += `<optgroup label="${esc(gm.label)} (${items.length})">`;
+      items.forEach(function (g) {
+        html += `<option value="${esc(g.id)}" ${g.id === selectedId ? 'selected' : ''}>${esc(g.name)}</option>`;
+      });
+      html += '</optgroup>';
+    });
+    sel.innerHTML = html;
+  }
+
+  function renderClassBannerCosmosBtn(cls) {
+    const linkedGid = getClassLinkedGalaxyId(cls && cls.classId);
+    const C = window.VANTHESIS_CORE;
+    const gObj = (linkedGid && C && C.catalog && typeof C.catalog.get === 'function') ? C.catalog.get(linkedGid) : null;
+    const href = buildCosmosDeepLink(linkedGid ? { galaxy: linkedGid } : {});
+    const label = gObj ? ('🌌 Bay tới ' + gObj.name) : '🌌 Mở Vũ trụ 3D';
+    return `<a href="${esc(href)}" class="vt-cr-btn vt-cr-btn-sm vt-cr-btn-glass-dark" style="text-decoration:none;" title="Mở trực tiếp trong Không gian 3D (162 Thiên hà)">${esc(label)}</a>`;
+  }
+
+  function getSpectralMeta(groupId) {
+    const map = {
+      THCS: { label: 'THCS', color: '#10B981', bg: 'rgba(16,185,129,0.14)' },
+      THPT: { label: 'THPT', color: '#38BDF8', bg: 'rgba(56,189,248,0.14)' },
+      UNI:  { label: 'Đại học & CNTT', color: '#A78BFA', bg: 'rgba(167,139,250,0.15)' },
+      EXAM: { label: 'Kì thi riêng & ĐGNL', color: '#F59E0B', bg: 'rgba(245,158,11,0.16)' },
+      INTL: { label: 'Chứng chỉ Quốc tế', color: '#FB7185', bg: 'rgba(251,113,133,0.16)' }
+    };
+    return map[groupId] || { label: groupId || 'Tri thức', color: '#38BDF8', bg: 'rgba(56,189,248,0.14)' };
+  }
+
+  function collectVaultItemsForGalaxy(galaxyId) {
+    const C = window.VANTHESIS_CORE;
+    if (!C || !C.vault) return [];
+    const results = [];
+    if (typeof C.vault.getVaultItems === 'function') {
+      // Exact galaxy-level items plus prefix scan from storage if exposed
+      const direct = C.vault.getVaultItems(galaxyId) || [];
+      direct.forEach(function (it) {
+        results.push(Object.assign({ scopeKey: galaxyId }, it));
+      });
+    }
+    // Also inspect full vault map if available via SafeStore key used by vanthesis-core.js
+    const rawVault = crSafeGetJSON('vanthesis_cosmos_vault_v1', null) || crSafeGetJSON('vanthesis_cosmos_vault', null);
+    if (rawVault && typeof rawVault === 'object') {
+      const seenIds = {};
+      results.forEach(function (r) { if (r && r.id) seenIds[r.id + '@' + r.scopeKey] = true; });
+      Object.keys(rawVault).forEach(function (k) {
+        if (k === galaxyId || k.indexOf(galaxyId + '::') === 0) {
+          const arr = Array.isArray(rawVault[k]) ? rawVault[k] : [];
+          arr.forEach(function (it) {
+            const sig = (it && it.id ? it.id : JSON.stringify(it)) + '@' + k;
+            if (!seenIds[sig]) {
+              seenIds[sig] = true;
+              results.push(Object.assign({ scopeKey: k }, it));
+            }
+          });
+        }
+      });
+    }
+    return results;
+  }
+
+  function parseScopeBreadcrumb(scopeKey) {
+    const C = window.VANTHESIS_CORE;
+    const parsed = (C && C.vault && typeof C.vault.parseKey === 'function')
+      ? C.vault.parseKey(scopeKey)
+      : { galaxyId: String(scopeKey || '').split('::')[0], chapter: null, star: null, planet: null };
+    const gObj = (C && C.catalog && typeof C.catalog.get === 'function') ? C.catalog.get(parsed.galaxyId) : null;
+    const parts = [gObj ? gObj.name : (parsed.galaxyId || 'Thiên hà')];
+    if (parsed.chapter !== null && parsed.chapter !== undefined && parsed.chapter !== '') parts.push('Chương ' + (Number(parsed.chapter) + 1));
+    if (parsed.star !== null && parsed.star !== undefined && parsed.star !== '') parts.push('Bài ' + (Number(parsed.star) + 1));
+    if (parsed.planet !== null && parsed.planet !== undefined && parsed.planet !== '') parts.push('Mạch ' + (Number(parsed.planet) + 1));
+    return { parsed: parsed, galaxy: gObj, breadcrumb: parts.join(' › ') };
+  }
+
+  function renderCosmosVaultTabHtml(cls) {
+    const C = window.VANTHESIS_CORE;
+    const catalogList = (C && C.catalog && Array.isArray(C.catalog.list)) ? C.catalog.list : [];
+    const canAssign = state.role !== 'STUDENT';
+    const linkedGid = getClassLinkedGalaxyId(cls.classId);
+    if (!state.cosmosSelectedGalaxy) {
+      state.cosmosSelectedGalaxy = linkedGid || (catalogList[0] ? catalogList[0].id : '');
+    }
+
+    const assigned = getClassAssignedCosmosItems(cls.classId);
+    const assignedHtml = assigned.length
+      ? `<div class="vt-cosmos-grid">
+          ${assigned.map(function (item, idx) {
+            const info = parseScopeBreadcrumb(item.scopeKey || item.galaxyId);
+            const sp = getSpectralMeta(info.galaxy ? info.galaxy.group : item.group);
+            const href3D = buildCosmosDeepLink({
+              galaxy: info.parsed.galaxyId,
+              chapter: info.parsed.chapter,
+              star: info.parsed.star,
+              planet: info.parsed.planet
+            });
+            return `
+              <div class="vt-cosmos-item-card" style="border-left:3px solid ${sp.color};">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
+                  <span class="vt-cosmos-badge" style="color:${sp.color};background:${sp.bg};">✦ ${esc(sp.label)}</span>
+                  <span style="font-size:11px;color:var(--cr-muted);">${esc(item.kind || 'Tài liệu')}</span>
+                </div>
+                <div style="font-weight:700;font-size:14px;line-height:1.35;">${esc(item.title || 'Học liệu không tiêu đề')}</div>
+                <div style="font-size:12px;color:var(--cr-muted);">${esc(info.breadcrumb)}</div>
+                ${item.note ? `<div style="font-size:12px;color:var(--cr-text);opacity:0.86;">${esc(item.note)}</div>` : ''}
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:4px;">
+                  <a href="${esc(href3D)}" class="vt-cr-btn vt-cr-btn-sm vt-cr-btn-primary" style="text-decoration:none;">🌌 Mở trong 3D</a>
+                  ${item.url ? `<a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer" class="vt-cr-btn vt-cr-btn-sm" style="text-decoration:none;">↗ Mở tệp</a>` : ''}
+                  ${canAssign ? `<button type="button" class="vt-cr-btn vt-cr-btn-sm vt-cr-btn-danger" data-unassign-idx="${idx}">Gỡ</button>` : ''}
+                </div>
+              </div>`;
+          }).join('')}
+        </div>`
+      : `<div style="padding:18px;border:1px dashed var(--cr-border);border-radius:14px;text-align:center;color:var(--cr-muted);font-size:13px;">
+           Chưa có học liệu 4 cấp nào được giao cho lớp <b>${esc(cls.className)}</b>.
+           ${canAssign ? 'Hãy chọn thiên hà bên dưới để giao tài liệu hoặc đính kèm học liệu mới.' : 'Giáo viên sẽ cập nhật học liệu và lộ trình tại đây.'}
+         </div>`;
+
+    if (!canAssign) {
+      return `
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <div>
+              <h3 style="margin:0;font-size:16px;">🌌 Học liệu &amp; Lộ trình 3D được giao cho lớp ${esc(cls.className)}</h3>
+              <p style="margin:3px 0 0;font-size:12.5px;color:var(--cr-muted);">Bấm "Mở trong 3D" để bay thẳng tới đúng chương, bài học và mạch kiến thức trong Không gian 162 Thiên hà.</p>
+            </div>
+            ${renderClassBannerCosmosBtn(cls)}
+          </div>
+          ${assignedHtml}
+        </div>`;
+    }
+
+    const groups = [
+      { id: 'ALL', label: 'Tất cả (' + catalogList.length + ')' },
+      { id: 'THCS', label: 'THCS' },
+      { id: 'THPT', label: 'THPT' },
+      { id: 'UNI', label: 'Đại học & CNTT' },
+      { id: 'EXAM', label: 'Kì thi riêng & ĐGNL' },
+      { id: 'INTL', label: 'Chứng chỉ Quốc tế' }
+    ];
+    const normFn = (C && C.catalog && typeof C.catalog.normVi === 'function')
+      ? C.catalog.normVi
+      : function (s) { return String(s || '').toLowerCase(); };
+    const qNorm = normFn(state.cosmosSearch || '');
+    const filteredGalaxies = catalogList.filter(function (g) {
+      if (state.cosmosGroup !== 'ALL' && g.group !== state.cosmosGroup) return false;
+      if (!qNorm) return true;
+      return normFn(g.name + ' ' + g.id + ' ' + (g.group || '')).indexOf(qNorm) !== -1;
+    });
+    if (filteredGalaxies.length && !filteredGalaxies.some(function (g) { return g.id === state.cosmosSelectedGalaxy; })) {
+      state.cosmosSelectedGalaxy = filteredGalaxies[0].id;
+    }
+    const selGalaxyObj = catalogList.find(function (g) { return g.id === state.cosmosSelectedGalaxy; }) || null;
+    const vaultItems = state.cosmosSelectedGalaxy ? collectVaultItemsForGalaxy(state.cosmosSelectedGalaxy) : [];
+    const curScopeKey = (C && C.vault && typeof C.vault.buildKey === 'function')
+      ? C.vault.buildKey(state.cosmosSelectedGalaxy, state.cosmosChapterIdx === '' ? null : Number(state.cosmosChapterIdx), state.cosmosStarIdx === '' ? null : Number(state.cosmosStarIdx), state.cosmosPlanetIdx === '' ? null : Number(state.cosmosPlanetIdx))
+      : state.cosmosSelectedGalaxy;
+    const jump3DUrl = buildCosmosDeepLink({
+      galaxy: state.cosmosSelectedGalaxy,
+      chapter: state.cosmosChapterIdx,
+      star: state.cosmosStarIdx,
+      planet: state.cosmosPlanetIdx
+    });
+
+    return `
+      <div style="display:flex;flex-direction:column;gap:18px;">
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+            <h3 style="margin:0;font-size:15.5px;">📌 Học liệu đang giao cho lớp ${esc(cls.className)} (${assigned.length})</h3>
+            <a href="${esc(jump3DUrl)}" class="vt-cr-btn vt-cr-btn-sm vt-cr-btn-primary" style="text-decoration:none;">🌌 Bay tới nhánh đang chọn (3D)</a>
+          </div>
+          ${assignedHtml}
+        </div>
+
+        <div style="border-top:1px solid var(--cr-border);padding-top:16px;">
+          <h3 style="margin:0 0 8px;font-size:15.5px;">🪐 Duyệt &amp; Giao Học liệu từ Kho 162 Thiên hà (4 cấp)</h3>
+          <div class="vt-cosmos-pill-bar">
+            ${groups.map(function (gr) {
+              return `<button type="button" class="vt-cosmos-pill ${state.cosmosGroup === gr.id ? 'active' : ''}" data-cosmos-group="${gr.id}">${esc(gr.label)}</button>`;
+            }).join('')}
+          </div>
+          <div class="vt-cosmos-scope-row">
+            <input id="vtCosmosSearchInput" class="vt-cr-input" type="search" value="${esc(state.cosmosSearch)}" placeholder="Tìm nhanh trong 162 thiên hà (không dấu)...">
+            <input id="vtCosmosChapInput" class="vt-cr-input" type="number" min="0" value="${esc(state.cosmosChapterIdx)}" placeholder="Chương (0..)">
+            <input id="vtCosmosStarInput" class="vt-cr-input" type="number" min="0" value="${esc(state.cosmosStarIdx)}" placeholder="Bài (0..)">
+            <input id="vtCosmosPlanetInput" class="vt-cr-input" type="number" min="0" value="${esc(state.cosmosPlanetIdx)}" placeholder="Mạch (0..)">
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+            <select id="vtCosmosGalaxyPicker" class="vt-cr-select" style="flex:1;min-width:240px;">
+              ${filteredGalaxies.map(function (g) {
+                const cnt = (C && C.vault && typeof C.vault.countVaultByGalaxy === 'function') ? C.vault.countVaultByGalaxy(g.id) : 0;
+                return `<option value="${esc(g.id)}" ${g.id === state.cosmosSelectedGalaxy ? 'selected' : ''}>[${esc(g.group)}] ${esc(g.name)}${cnt ? (' (' + cnt + ' tệp)') : ''}</option>`;
+              }).join('')}
+            </select>
+            <button id="vtCosmosAssignQuickBtn" type="button" class="vt-cr-btn vt-cr-btn-emerald">+ Giao nhánh này (3D)</button>
+          </div>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 12px;border-radius:12px;background:var(--cr-surface);border:1px solid var(--cr-border);margin-bottom:12px;">
+            <input id="vtCosmosNewTitle" class="vt-cr-input" style="flex:1.4;min-width:170px;" type="text" placeholder="Tên học liệu / đề thi mới...">
+            <input id="vtCosmosNewUrl" class="vt-cr-input" style="flex:1.4;min-width:170px;" type="url" placeholder="Liên kết tài liệu (Google Drive / PDF / Web)...">
+            <button id="vtCosmosAddAndAssignBtn" type="button" class="vt-cr-btn vt-cr-btn-primary">+ Lưu vào Kho 4 cấp &amp; Giao lớp</button>
+          </div>
+
+          <div style="font-size:12.5px;color:var(--cr-muted);margin-bottom:6px;">
+            Học liệu hiện có trong <b>${esc(selGalaxyObj ? selGalaxyObj.name : 'Thiên hà')}</b> (${vaultItems.length} mục — Khóa nhánh hiện tại: <code>${esc(curScopeKey)}</code>):
+          </div>
+          ${vaultItems.length ? `
+            <div class="vt-cosmos-grid">
+              ${vaultItems.map(function (vi, vIdx) {
+                const info = parseScopeBreadcrumb(vi.scopeKey || state.cosmosSelectedGalaxy);
+                const sp = getSpectralMeta(info.galaxy ? info.galaxy.group : '');
+                const href3D = buildCosmosDeepLink({
+                  galaxy: info.parsed.galaxyId,
+                  chapter: info.parsed.chapter,
+                  star: info.parsed.star,
+                  planet: info.parsed.planet
+                });
+                return `
+                  <div class="vt-cosmos-item-card">
+                    <div style="font-weight:700;font-size:13.5px;">${esc(vi.title || vi.name || 'Tài liệu')}</div>
+                    <div style="font-size:11.5px;color:${sp.color};">${esc(info.breadcrumb)}</div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;">
+                      <button type="button" class="vt-cr-btn vt-cr-btn-sm vt-cr-btn-emerald" data-assign-vidx="${vIdx}">+ Giao cho lớp</button>
+                      <a href="${esc(href3D)}" class="vt-cr-btn vt-cr-btn-sm" style="text-decoration:none;">🌌 Xem 3D</a>
+                    </div>
+                  </div>`;
+              }).join('')}
+            </div>
+          ` : `<div style="font-size:12.5px;color:var(--cr-muted);padding:10px 0;">Thiên hà này chưa có tệp trong Kho 4 cấp — bạn có thể thêm liên kết ở thanh trên hoặc tải tệp từ Vũ trụ 3D / Kho Chòm sao.</div>`}
+        </div>
+      </div>`;
+  }
+
+  function wireCosmosVaultTabEvents(cls) {
+    document.querySelectorAll('#vtClassroomModal [data-cosmos-group]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        state.cosmosGroup = btn.getAttribute('data-cosmos-group') || 'ALL';
+        renderMain();
+      });
+    });
+    const searchInp = document.getElementById('vtCosmosSearchInput');
+    if (searchInp) {
+      searchInp.addEventListener('input', function (e) {
+        state.cosmosSearch = e.target.value;
+        renderMain();
+        const again = document.getElementById('vtCosmosSearchInput');
+        if (again) { again.focus(); try { again.setSelectionRange(again.value.length, again.value.length); } catch {} }
+      });
+    }
+    const picker = document.getElementById('vtCosmosGalaxyPicker');
+    if (picker) {
+      picker.addEventListener('change', function (e) {
+        state.cosmosSelectedGalaxy = e.target.value;
+        renderMain();
+      });
+    }
+    ['vtCosmosChapInput', 'vtCosmosStarInput', 'vtCosmosPlanetInput'].forEach(function (id, idx) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('change', function (e) {
+        if (idx === 0) state.cosmosChapterIdx = e.target.value;
+        else if (idx === 1) state.cosmosStarIdx = e.target.value;
+        else state.cosmosPlanetIdx = e.target.value;
+        renderMain();
+      });
+    });
+
+    const assignQuickBtn = document.getElementById('vtCosmosAssignQuickBtn');
+    if (assignQuickBtn) {
+      assignQuickBtn.addEventListener('click', function () {
+        const C = window.VANTHESIS_CORE;
+        const scopeKey = (C && C.vault && typeof C.vault.buildKey === 'function')
+          ? C.vault.buildKey(state.cosmosSelectedGalaxy, state.cosmosChapterIdx === '' ? null : Number(state.cosmosChapterIdx), state.cosmosStarIdx === '' ? null : Number(state.cosmosStarIdx), state.cosmosPlanetIdx === '' ? null : Number(state.cosmosPlanetIdx))
+          : state.cosmosSelectedGalaxy;
+        const info = parseScopeBreadcrumb(scopeKey);
+        const list = getClassAssignedCosmosItems(cls.classId);
+        list.unshift({
+          id: 'cr_cos_' + Date.now(),
+          scopeKey: scopeKey,
+          galaxyId: state.cosmosSelectedGalaxy,
+          group: info.galaxy ? info.galaxy.group : '',
+          title: 'Lộ trình 3D: ' + info.breadcrumb,
+          kind: 'Lộ trình 3D',
+          url: '',
+          assignedAt: new Date().toISOString()
+        });
+        saveClassAssignedCosmosItems(cls.classId, list);
+        showToast('✓ Đã giao lộ trình 3D cho lớp ' + cls.className);
+        renderMain();
+      });
+    }
+
+    const addAndAssignBtn = document.getElementById('vtCosmosAddAndAssignBtn');
+    if (addAndAssignBtn) {
+      addAndAssignBtn.addEventListener('click', async function () {
+        const titleEl = document.getElementById('vtCosmosNewTitle');
+        const urlEl = document.getElementById('vtCosmosNewUrl');
+        const title = titleEl ? titleEl.value.trim() : '';
+        const url = urlEl ? urlEl.value.trim() : '';
+        if (!title) { showToast('⚠ Vui lòng nhập tên học liệu trước khi lưu.', true); return; }
+        const C = window.VANTHESIS_CORE;
+        const scopeKey = (C && C.vault && typeof C.vault.buildKey === 'function')
+          ? C.vault.buildKey(state.cosmosSelectedGalaxy, state.cosmosChapterIdx === '' ? null : Number(state.cosmosChapterIdx), state.cosmosStarIdx === '' ? null : Number(state.cosmosStarIdx), state.cosmosPlanetIdx === '' ? null : Number(state.cosmosPlanetIdx))
+          : state.cosmosSelectedGalaxy;
+        const info = parseScopeBreadcrumb(scopeKey);
+        if (C && C.vault && typeof C.vault.addVaultItem === 'function') {
+          try {
+            await C.vault.addVaultItem(scopeKey, { title: title, url: url, kind: url ? 'link' : 'note' });
+          } catch {}
+        }
+        const list = getClassAssignedCosmosItems(cls.classId);
+        list.unshift({
+          id: 'cr_cos_' + Date.now(),
+          scopeKey: scopeKey,
+          galaxyId: state.cosmosSelectedGalaxy,
+          group: info.galaxy ? info.galaxy.group : '',
+          title: title,
+          kind: url ? 'Liên kết' : 'Ghi chú',
+          url: url,
+          assignedAt: new Date().toISOString()
+        });
+        saveClassAssignedCosmosItems(cls.classId, list);
+        showToast('✓ Đã lưu vào Kho 4 cấp và giao cho lớp ' + cls.className);
+        renderMain();
+      });
+    }
+
+    const vaultItems = state.cosmosSelectedGalaxy ? collectVaultItemsForGalaxy(state.cosmosSelectedGalaxy) : [];
+    document.querySelectorAll('#vtClassroomModal [data-assign-vidx]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const idx = Number(btn.getAttribute('data-assign-vidx'));
+        const vi = vaultItems[idx];
+        if (!vi) return;
+        const info = parseScopeBreadcrumb(vi.scopeKey || state.cosmosSelectedGalaxy);
+        const list = getClassAssignedCosmosItems(cls.classId);
+        list.unshift({
+          id: 'cr_cos_' + Date.now(),
+          scopeKey: vi.scopeKey || state.cosmosSelectedGalaxy,
+          galaxyId: info.parsed.galaxyId,
+          group: info.galaxy ? info.galaxy.group : '',
+          title: vi.title || vi.name || 'Học liệu',
+          kind: vi.kind || vi.type || 'Tài liệu',
+          url: vi.url || vi.driveUrl || '',
+          note: vi.note || '',
+          assignedAt: new Date().toISOString()
+        });
+        saveClassAssignedCosmosItems(cls.classId, list);
+        showToast('✓ Đã giao "' + (vi.title || vi.name || 'học liệu') + '" cho lớp ' + cls.className);
+        renderMain();
+      });
+    });
+
+    document.querySelectorAll('#vtClassroomModal [data-unassign-idx]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const idx = Number(btn.getAttribute('data-unassign-idx'));
+        const list = getClassAssignedCosmosItems(cls.classId);
+        if (idx >= 0 && idx < list.length) {
+          list.splice(idx, 1);
+          saveClassAssignedCosmosItems(cls.classId, list);
+          showToast('Đã gỡ học liệu khỏi lớp.');
+          renderMain();
+        }
+      });
+    });
+  }
+
   /* ==========================================================================
    * 7. SUB-MODAL CONTROLLERS & KEYBOARD / DIRTY-TRACKING EVENTS
    * ========================================================================== */
@@ -4248,12 +4772,14 @@
     const customWrap = document.getElementById('vtClsGradeCustomWrap');
     const customInput = document.getElementById('vtClsGradeCustom');
     const gb = existingClass ? existingClass.gradeBlock : 'Khối 10';
-    if (['Khối 10', 'Khối 11', 'Khối 12'].indexOf(gb) !== -1) {
+    const presetGrades = ['THCS (Khối 6-9)', 'Khối 10', 'Khối 11', 'Khối 12', 'Đại học & CNTT', 'Luyện thi ĐGNL & Riêng', 'Chứng chỉ Quốc tế'];
+    if (presetGrades.indexOf(gb) !== -1) {
       sel.value = gb; customWrap.style.display = 'none'; customInput.value = '';
     } else {
       sel.value = '__custom__'; customWrap.style.display = 'flex'; customInput.value = gb;
     }
 
+    populateClassGalaxySelect(existingClass ? getClassLinkedGalaxyId(existingClass.classId) : '');
     document.getElementById('vtClsName').value = existingClass ? existingClass.className : '';
     document.getElementById('vtClsYear').value = existingClass ? (existingClass.schoolYear || '2026-2027') : '2026-2027';
     document.getElementById('vtClsHomeroomEmail').value = existingClass ? (existingClass.homeroomTeacherEmail || '') : '';
@@ -4510,12 +5036,41 @@
       });
     }
 
-    // Quick Toggle: Daylight Observatory / Cosmic Night Mode
-    document.getElementById('vtCrThemeToggle').addEventListener('click', function () {
-      state.cosmicDark = !state.cosmicDark;
+    // Quick Toggle: 3 Spatial Atmospheres (Thâm Không | Cực Quang | Ánh Sáng) synced with VANTHESIS_CORE
+    function syncClassroomAtmosphere(mode) {
+      const m = (mode === 'deep' || mode === 'aurora' || mode === 'light') ? mode : 'light';
+      state.atmosphere = m;
+      state.cosmicDark = (m !== 'light');
+      root.setAttribute('data-atmosphere', m);
       root.classList.toggle('vt-cosmic-dark', state.cosmicDark);
       const btn = document.getElementById('vtCrThemeToggle');
-      if (btn) btn.textContent = state.cosmicDark ? '☀️ Sáng Học thuật' : '🌙 Đêm Vũ trụ';
+      if (btn) {
+        const labels = { deep: '🌌 Thâm Không', aurora: '✨ Cực Quang', light: '☀ Ánh Sáng' };
+        btn.textContent = labels[m] || '☀ Ánh Sáng';
+      }
+    }
+    const initCore = window.VANTHESIS_CORE;
+    if (initCore && initCore.prefs && typeof initCore.prefs.get === 'function') {
+      syncClassroomAtmosphere(initCore.prefs.get().atmosphere || 'light');
+    }
+    if (initCore && initCore.bus && typeof initCore.bus.on === 'function') {
+      initCore.bus.on('atmosphere-changed', function (ev) {
+        if (ev && ev.atmosphere) syncClassroomAtmosphere(ev.atmosphere);
+      });
+      initCore.bus.on('cosmos-vault-changed', function () {
+        if (state.isOpen && state.activeTab === 'cosmos_vault') renderMain();
+      });
+    }
+    document.getElementById('vtCrThemeToggle').addEventListener('click', function () {
+      const C = window.VANTHESIS_CORE;
+      if (C && C.prefs && typeof C.prefs.cycleAtmosphere === 'function') {
+        const nextMode = C.prefs.cycleAtmosphere();
+        syncClassroomAtmosphere(nextMode);
+      } else {
+        const order = ['deep', 'aurora', 'light'];
+        const next = order[(order.indexOf(state.atmosphere) + 1) % order.length];
+        syncClassroomAtmosphere(next);
+      }
     });
 
     root.querySelectorAll('[data-close-sub]').forEach(function (btn) {
@@ -4545,6 +5100,10 @@
           }
         });
         if (!res || !res.ok) { showToast('⚠ ' + formatFriendlyError((res && res.error) || 'Không thể lưu lớp học.'), true); return; }
+        const chosenGalaxyEl = document.getElementById('vtClsGalaxySelect');
+        if (chosenGalaxyEl && res.classInfo && res.classInfo.classId) {
+          setClassLinkedGalaxyId(res.classInfo.classId, chosenGalaxyEl.value || '');
+        }
         closeSubModal('vtCrClassModal');
         state.sidebarMode = 'classes';
         state.selectedClassId = res.classInfo.classId;
@@ -4659,6 +5218,9 @@
         state.trackingIncompleteOnly = !state.trackingIncompleteOnly;
         renderMain();
       });
+    }
+    if (state.activeTab === 'cosmos_vault') {
+      wireCosmosVaultTabEvents(cls);
     }
     const retryBanner = document.getElementById('vtCrBtnRetryBanner');
     if (retryBanner) retryBanner.addEventListener('click', loadBootstrap);
