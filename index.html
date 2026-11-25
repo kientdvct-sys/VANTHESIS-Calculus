@@ -6097,6 +6097,158 @@
     to { opacity: 1; transform: translateY(0); }
   }
 </style>
+<style id="vtSpatialAtmosphere162Styles">
+  /* 3 Spatial Atmospheres: Thâm Không (deep) | Cực Quang (aurora) | Ánh Sáng (light) */
+  html[data-atmosphere="deep"] body,
+  html[data-atmosphere="deep"] .vt-sector-host {
+    background: radial-gradient(circle at 18% 12%, rgba(56, 189, 248, 0.08), transparent 42%),
+                radial-gradient(circle at 82% 88%, rgba(251, 191, 36, 0.06), transparent 44%),
+                #03060E !important;
+  }
+  html[data-atmosphere="aurora"] body,
+  html[data-atmosphere="aurora"] .vt-sector-host {
+    background: radial-gradient(circle at 15% 15%, rgba(16, 185, 129, 0.16), transparent 46%),
+                radial-gradient(circle at 85% 20%, rgba(167, 139, 250, 0.15), transparent 48%),
+                radial-gradient(circle at 50% 90%, rgba(56, 189, 248, 0.12), transparent 50%),
+                #05111E !important;
+  }
+  html[data-atmosphere="aurora"] #appShell .topbar,
+  html[data-atmosphere="aurora"] .vt-sector-rail,
+  html[data-atmosphere="aurora"] .lcms-glass-tile,
+  html[data-atmosphere="aurora"] .vt-cosmos-hub-card {
+    background: rgba(10, 28, 46, 0.72) !important;
+    border-color: rgba(56, 189, 248, 0.24) !important;
+    backdrop-filter: blur(22px) saturate(145%);
+  }
+  html[data-atmosphere="deep"] .vt-cosmos-hub-card {
+    background: rgba(10, 16, 30, 0.74);
+    border-color: rgba(148, 163, 184, 0.18);
+    backdrop-filter: blur(22px) saturate(140%);
+  }
+  html[data-atmosphere="light"] .vt-cosmos-hub-card {
+    background: rgba(255, 255, 255, 0.80);
+    border-color: rgba(15, 23, 42, 0.10);
+    backdrop-filter: blur(18px) saturate(130%);
+  }
+
+  /* 162-Galaxy Dashboard Command Strip */
+  .vt-cosmos-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .vt-cosmos-hub-card {
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 18px;
+    padding: 15px 16px;
+    box-shadow: 0 10px 28px rgba(2, 6, 23, 0.08);
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  }
+  .vt-cosmos-hub-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 32px rgba(2, 6, 23, 0.14);
+  }
+  .vt-cosmos-kpi-num {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin: 4px 0 3px;
+  }
+  .vt-cosmos-kpi-lbl {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted, #64748B);
+  }
+  .vt-cosmos-kpi-sub {
+    font-size: 12px;
+    color: var(--text-muted, #64748B);
+  }
+  .vt-cosmos-strip-section {
+    margin-top: 14px;
+  }
+  .vt-cosmos-strip-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .vt-cosmos-strip-head h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .vt-galaxy-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .vt-galaxy-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 13px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    background: rgba(148, 163, 184, 0.09);
+    transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+  }
+  .vt-galaxy-chip:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(2, 6, 23, 0.14);
+  }
+  .vt-galaxy-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .vt-spectral-launcher-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .vt-spectral-launcher {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    background: rgba(148, 163, 184, 0.07);
+    transition: transform .16s ease, border-color .16s ease;
+  }
+  .vt-spectral-launcher:hover { transform: translateY(-2px); }
+  .vt-sector-cosmos-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    margin: 6px 8px 4px;
+    border-radius: 13px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff !important;
+    background: linear-gradient(135deg, #1D4ED8 0%, #6D28D9 60%, #0EA5E9 100%);
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.28);
+    transition: transform .16s ease, filter .16s ease;
+  }
+  .vt-sector-cosmos-link:hover { transform: translateY(-1px); filter: brightness(1.08); }
+  .vt-sector-rail.is-collapsed .vt-sector-cosmos-link .vt-sector-lbl { display: none; }
+</style>
 </head>
 <body data-theme="light" data-projector="false">
 <div class="app-shell" id="appShell" data-active-sector="resources" data-ipad-tab="funcs" data-mobile-view="graph" hidden inert aria-hidden="true">
@@ -6201,6 +6353,7 @@
       <button class="vt-sector-btn" type="button" data-sector="lab"><span class="vt-sector-ico">∫</span><span class="vt-sector-lbl">Phòng Thí nghiệm</span></button>
       <button class="vt-sector-btn" type="button" data-sector="slate"><span class="vt-sector-ico">✒️</span><span class="vt-sector-lbl">Bảng Giảng</span></button>
       <button class="vt-sector-btn" type="button" data-sector="classroom"><span class="vt-sector-ico">🏫</span><span class="vt-sector-lbl">Lớp học &amp; 360°</span></button>
+      <a class="vt-sector-cosmos-link" href="./cosmos.html" title="Mở Vũ trụ Tri thức 3D (162 Thiên hà)"><span class="vt-sector-ico">🌌</span><span class="vt-sector-lbl">Vũ trụ 3D</span></a>
       <button class="vt-rail-collapse-btn" id="vtRailCollapseBtn" type="button" title="Thu gọn / mở rộng thanh điều hướng"><span>⇄</span><span class="vt-sector-lbl">Thu gọn</span></button>
     </aside>
 
@@ -6225,15 +6378,60 @@
         <div class="lcms-mount-wrap" id="vtDashboardMount">
           <div class="lcms-welcome-banner">
             <div>
-              <h2>Trạm Quan trắc Tiến độ &amp; Lộ trình</h2>
-              <p>Theo dõi tiến độ chinh phục các Chòm sao Tri thức, lịch kiểm tra và tín hiệu học vụ cá nhân hóa.</p>
+              <h2>Trạm Quan trắc Tiến độ &amp; Vũ trụ Tri thức</h2>
+              <p>Đồng bộ 162 thiên hà học tập (THCS, THPT, Đại học, Kì thi riêng &amp; Chứng chỉ Quốc tế) cùng Kho học liệu 4 cấp.</p>
             </div>
-            <button class="btn btn-primary" type="button" onclick="window.VANTHESIS_SWITCH_SECTOR('resources')">✦ Vào Kho Chòm sao →</button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <a class="btn btn-primary" href="./cosmos.html" style="text-decoration:none;">🌌 Khám phá Vũ trụ 3D →</a>
+              <button class="btn" type="button" onclick="window.VANTHESIS_SWITCH_SECTOR('resources')">✦ Kho Chòm sao</button>
+            </div>
           </div>
-          <div class="lcms-placeholder-grid">
-            <div class="lcms-glass-tile"><b>✦ Chòm sao đang học</b><span style="color:var(--text-muted);font-size:13px;">Tự động đồng bộ từ Kho Chòm sao &amp; Học liệu.</span></div>
-            <div class="lcms-glass-tile"><b>🏆 Đề thi sắp tới</b><span style="color:var(--text-muted);font-size:13px;">Hiển thị bài luyện tập và đề kiểm tra được giao cho lớp.</span></div>
-            <div class="lcms-glass-tile"><b>📊 Tín hiệu Học vụ</b><span style="color:var(--text-muted);font-size:13px;">Liên thông trực tiếp với Hồ sơ Học sinh 360°.</span></div>
+
+          <div class="vt-cosmos-kpi-grid" id="vtDashCosmosKpis" aria-label="Bộ đếm tổng quan toàn hệ thống">
+            <div class="vt-cosmos-hub-card">
+              <div class="vt-cosmos-kpi-lbl">🌌 Thiên hà Tri thức</div>
+              <div class="vt-cosmos-kpi-num" id="vtDashTotalGalaxies">162</div>
+              <div class="vt-cosmos-kpi-sub">5 phân nhóm quang phổ đồng bộ</div>
+            </div>
+            <div class="vt-cosmos-hub-card">
+              <div class="vt-cosmos-kpi-lbl">📚 Kho Học liệu 4 cấp</div>
+              <div class="vt-cosmos-kpi-num" id="vtDashTotalVault">0</div>
+              <div class="vt-cosmos-kpi-sub" id="vtDashSyncBadge">Đồng bộ trực tiếp với Vũ trụ 3D</div>
+            </div>
+            <div class="vt-cosmos-hub-card">
+              <div class="vt-cosmos-kpi-lbl">★ Thiên hà đang ghim</div>
+              <div class="vt-cosmos-kpi-num" id="vtDashPinnedCount">0</div>
+              <div class="vt-cosmos-kpi-sub">Mở nhanh 1 chạm tới đúng mục tiêu</div>
+            </div>
+            <div class="vt-cosmos-hub-card">
+              <div class="vt-cosmos-kpi-lbl">🧭 Sắc thái Không gian</div>
+              <div class="vt-cosmos-kpi-num" id="vtDashAtmosphereLabel" style="font-size:21px;padding-top:4px;">☀ Ánh Sáng</div>
+              <div class="vt-cosmos-kpi-sub"><button type="button" id="vtDashCycleAtmoBtn" class="btn btn-sm" style="margin-top:4px;padding:3px 9px;font-size:11.5px;">Đổi sắc thái ↻</button></div>
+            </div>
+          </div>
+
+          <div class="vt-cosmos-hub-card vt-cosmos-strip-section">
+            <div class="vt-cosmos-strip-head">
+              <h3>★ Thiên hà đang ghim</h3>
+              <a href="./cosmos.html" style="font-size:12.5px;font-weight:600;text-decoration:none;">Mở toàn bộ 162 thiên hà →</a>
+            </div>
+            <div class="vt-galaxy-chip-row" id="vtDashPinnedStrip"></div>
+          </div>
+
+          <div class="vt-cosmos-hub-card vt-cosmos-strip-section">
+            <div class="vt-cosmos-strip-head">
+              <h3>🕘 Vừa khám phá gần đây</h3>
+              <span style="font-size:12px;color:var(--text-muted);">5 thiên hà gần nhất — bấm để bay thẳng vào 3D</span>
+            </div>
+            <div class="vt-galaxy-chip-row" id="vtDashRecentStrip"></div>
+          </div>
+
+          <div class="vt-cosmos-hub-card vt-cosmos-strip-section">
+            <div class="vt-cosmos-strip-head">
+              <h3>✦ 5 Phân nhóm Quang phổ</h3>
+              <span style="font-size:12px;color:var(--text-muted);">Chọn phân nhóm để khám phá trong Vũ trụ 3D</span>
+            </div>
+            <div class="vt-spectral-launcher-grid" id="vtDashSpectralGrid"></div>
           </div>
         </div>
       </section>
@@ -7100,7 +7298,7 @@
           <div>
             <div class="bento-kicker">01 • Đạo hàm &amp; Bảng biến thiên</div>
             <h3>Đồ thị &amp; Đạo hàm Biểu thức</h3>
-            <p>Vẽ hàm hiện, phương trình ẩn, cực, tham số cùng bộ tính đạo hàm ký hiệu tự động và bảng biến thiên chuẩn SGK.</p>
+            <p>Vẽ hàm hiện, phương trình ẩn, cực, tham số cùng bộ tính đạo hàm ký hiệu tự động và bảng biến thiên chuẩn chương trình phổ thông.</p>
           </div>
         </article>
 
@@ -13020,43 +13218,82 @@
     redrawAll(); renderVariationTableAndCards();
     showToast(state.projector ? 'Đã bật Chế độ Máy chiếu (nét 3.5px)' : 'Đã tắt Chế độ Máy chiếu');
   });
-  function applyGlobalTheme(nextMode, persist = true) {
-    const mode = nextMode === 'dark' ? 'dark' : 'light';
+  const ATMO_META = {
+    deep:   { theme: 'dark',  icon: '🌌', label: 'Thâm Không', metaColor: '#03060E' },
+    aurora: { theme: 'dark',  icon: '✨', label: 'Cực Quang',  metaColor: '#05111E' },
+    light:  { theme: 'light', icon: '☀',  label: 'Ánh Sáng',   metaColor: '#FAF9F6' }
+  };
+  function resolveAtmosphere(input) {
+    if (input === 'deep' || input === 'aurora' || input === 'light') return input;
+    if (input === 'dark') return 'deep';
+    return 'light';
+  }
+  function applySpatialAtmosphere(nextAtmo, persist = true, skipCore = false) {
+    const atmo = resolveAtmosphere(nextAtmo);
+    const info = ATMO_META[atmo] || ATMO_META.light;
+    const mode = info.theme;
     state.theme = mode;
+    state.atmosphere = atmo;
     document.documentElement.setAttribute('data-theme', mode);
     document.body.setAttribute('data-theme', mode);
+    document.documentElement.setAttribute('data-atmosphere', atmo);
+    document.body.setAttribute('data-atmosphere', atmo);
     const landingEl = $('publicLandingView');
     if (landingEl) landingEl.setAttribute('data-cosmic', mode === 'dark' ? 'night' : 'day');
     const metaScheme = document.getElementById('vtColorSchemeMeta') || document.querySelector('meta[name="color-scheme"]');
     if (metaScheme) metaScheme.setAttribute('content', mode === 'dark' ? 'dark' : 'only light');
     const metaThemeColor = $('metaThemeColor');
-    if (metaThemeColor) metaThemeColor.setAttribute('content', mode === 'dark' ? '#060B19' : '#FAF9F6');
+    if (metaThemeColor) metaThemeColor.setAttribute('content', info.metaColor);
     const btnT = $('btnTheme');
     if (btnT) {
       btnT.classList.toggle('active', mode === 'dark');
-      btnT.textContent = mode === 'dark' ? 'Sáng' : 'Tối';
+      btnT.textContent = info.label;
     }
     const mToolT = $('mToolTheme');
     if (mToolT) {
       mToolT.classList.toggle('active', mode === 'dark');
-      mToolT.textContent = mode === 'dark' ? '☀ Chế độ Sáng' : '◑ Chế độ Tối';
+      mToolT.textContent = info.icon + ' ' + info.label;
     }
     const icoT = $('landingThemeIcon');
     const lblT = $('landingThemeLabel');
-    if (icoT) icoT.textContent = mode === 'dark' ? '☀️' : '🌙';
-    if (lblT) lblT.textContent = mode === 'dark' ? 'Ban ngày' : 'Đêm Vũ trụ';
+    if (icoT) icoT.textContent = info.icon;
+    if (lblT) lblT.textContent = info.label;
     const topQuickT = $('btnTopbarThemeQuick');
-    if (topQuickT) topQuickT.textContent = mode === 'dark' ? '☀️ Ban ngày' : '🌙 Đêm Vũ trụ';
+    if (topQuickT) {
+      topQuickT.textContent = info.icon + ' ' + info.label;
+      topQuickT.title = 'Sắc thái Không gian: Thâm Không · Cực Quang · Ánh Sáng (Bấm để đổi)';
+    }
+    const dashAtmo = $('vtDashAtmosphereLabel');
+    if (dashAtmo) dashAtmo.textContent = info.icon + ' ' + info.label;
     if (persist) {
       try { localStorage.setItem('vanthesis_theme_v1', mode); } catch {}
+      try { localStorage.setItem('vanthesis_atmosphere_v1', atmo); } catch {}
+      if (!skipCore && window.VANTHESIS_CORE && window.VANTHESIS_CORE.prefs && typeof window.VANTHESIS_CORE.prefs.setAtmosphere === 'function') {
+        try { window.VANTHESIS_CORE.prefs.setAtmosphere(atmo); } catch {}
+      }
     }
-    window.dispatchEvent(new CustomEvent('vanthesis:themechange', { detail: { theme: mode } }));
+    window.dispatchEvent(new CustomEvent('vanthesis:themechange', { detail: { theme: mode, atmosphere: atmo } }));
     try { redrawAll(); renderVariationTableAndCards(); } catch {}
+  }
+  function applyGlobalTheme(nextMode, persist = true) {
+    applySpatialAtmosphere(nextMode, persist, false);
   }
   window.VANTHESIS_THEME = {
     get: () => state.theme || 'light',
-    set: (mode) => applyGlobalTheme(mode, true),
-    toggle: () => applyGlobalTheme(state.theme === 'dark' ? 'light' : 'dark', true)
+    getAtmosphere: () => state.atmosphere || 'light',
+    set: (mode) => applySpatialAtmosphere(mode, true, false),
+    cycleAtmosphere: () => {
+      const order = ['deep', 'aurora', 'light'];
+      const next = order[(order.indexOf(state.atmosphere || 'light') + 1) % order.length];
+      applySpatialAtmosphere(next, true, false);
+      return next;
+    },
+    toggle: () => {
+      const order = ['deep', 'aurora', 'light'];
+      const next = order[(order.indexOf(state.atmosphere || 'light') + 1) % order.length];
+      applySpatialAtmosphere(next, true, false);
+      return next;
+    }
   };
   window.applyTheme = (theme) => applyGlobalTheme(theme, true);
   applyGlobalTheme('light', false);
@@ -18678,9 +18915,109 @@
         refresh: () => { if (window.VANTHESIS_CLASSROOM && typeof window.VANTHESIS_CLASSROOM.open === 'function') window.VANTHESIS_CLASSROOM.open(); },
         unmount: () => {}
       });
-      window.VANTHESIS_CORE.bus.on('sector-activated', (ev) => {
-        if (ev && ev.sectorId) syncSectorShellChrome(ev.sectorId);
+      function renderDashboardCosmosHub() {
+        const C = window.VANTHESIS_CORE;
+        const list = (C && C.catalog && Array.isArray(C.catalog.list)) ? C.catalog.list : [];
+        const totalEl = $('vtDashTotalGalaxies');
+        if (totalEl) totalEl.textContent = String(list.length || 162);
+
+        // Count total 4-level vault items across all galaxies
+        let totalVault = 0;
+        if (C && C.vault && typeof C.vault.countVaultByGalaxy === 'function') {
+          list.forEach(g => { totalVault += Number(C.vault.countVaultByGalaxy(g.id) || 0); });
+        }
+        const vaultEl = $('vtDashTotalVault');
+        if (vaultEl) vaultEl.textContent = String(totalVault);
+
+        const prefs = (C && C.prefs && typeof C.prefs.get === 'function')
+          ? C.prefs.get()
+          : { pinnedGalaxies: [], recentGalaxies: [], atmosphere: state.atmosphere || 'light' };
+
+        const pinnedIds = Array.isArray(prefs.pinnedGalaxies) ? prefs.pinnedGalaxies : [];
+        const recentIds = Array.isArray(prefs.recentGalaxies) ? prefs.recentGalaxies.slice(0, 5) : [];
+
+        const pinCntEl = $('vtDashPinnedCount');
+        if (pinCntEl) pinCntEl.textContent = String(pinnedIds.length);
+
+        const spectralColors = { THCS: '#10B981', THPT: '#38BDF8', UNI: '#A78BFA', EXAM: '#F59E0B', INTL: '#FB7185' };
+        const buildChip = (gid, isStar) => {
+          const g = (C && C.catalog && typeof C.catalog.get === 'function') ? C.catalog.get(gid) : null;
+          if (!g) return '';
+          const col = spectralColors[g.group] || '#38BDF8';
+          const url = (C && C.nav && typeof C.nav.buildCosmosUrl === 'function')
+            ? C.nav.buildCosmosUrl({ galaxy: g.id })
+            : ('./cosmos.html?galaxy=' + encodeURIComponent(g.id));
+          return `<a class="vt-galaxy-chip" href="${url}" style="border-color:${col}55;">`
+            + `<span class="vt-galaxy-dot" style="background:${col};box-shadow:0 0 8px ${col};"></span>`
+            + `<span>${isStar ? '★ ' : ''}${g.name}</span>`
+            + `<span style="font-size:11px;opacity:0.72;">${g.group}</span></a>`;
+        };
+
+        const pinStrip = $('vtDashPinnedStrip');
+        if (pinStrip) {
+          const html = pinnedIds.map(id => buildChip(id, true)).filter(Boolean).join('');
+          if (html) {
+            pinStrip.innerHTML = html;
+          } else {
+            const suggestions = ['toan12', 'dgnl_hn', 'ielts'].map(id => buildChip(id, false)).filter(Boolean).join('');
+            pinStrip.innerHTML = `<span style="font-size:12.5px;color:var(--text-muted);width:100%;margin-bottom:4px;">Chưa có thiên hà nào được ghim ★ — bấm chọn nhanh gợi ý bên dưới hoặc ghim sao trong Vũ trụ 3D:</span>${suggestions}`;
+          }
+        }
+
+        const recStrip = $('vtDashRecentStrip');
+        if (recStrip) {
+          const html = recentIds.map(id => buildChip(id, false)).filter(Boolean).join('');
+          recStrip.innerHTML = html || '<span style="font-size:12.5px;color:var(--text-muted);">Chưa có lịch sử khám phá — mở Vũ trụ 3D để bắt đầu hành trình qua 162 thiên hà.</span>';
+        }
+
+        const specGrid = $('vtDashSpectralGrid');
+        if (specGrid) {
+          const specs = [
+            { id: 'THCS', name: 'THCS (Lớp 6–9)', col: '#10B981', def: 'toan9' },
+            { id: 'THPT', name: 'THPT (Lớp 10–12)', col: '#38BDF8', def: 'toan12' },
+            { id: 'UNI',  name: 'Đại học & CNTT', col: '#A78BFA', def: 'gt1' },
+            { id: 'EXAM', name: 'Kì thi riêng & ĐGNL', col: '#F59E0B', def: 'dgnl_hn' },
+            { id: 'INTL', name: 'Chứng chỉ Quốc tế', col: '#FB7185', def: 'ielts' }
+          ];
+          specGrid.innerHTML = specs.map(sp => {
+            const cnt = list.filter(g => g.group === sp.id).length;
+            const firstG = list.find(g => g.group === sp.id);
+            const targetId = firstG ? firstG.id : sp.def;
+            const url = (C && C.nav && typeof C.nav.buildCosmosUrl === 'function')
+              ? C.nav.buildCosmosUrl({ galaxy: targetId })
+              : ('./cosmos.html?galaxy=' + encodeURIComponent(targetId));
+            return `<a class="vt-spectral-launcher" href="${url}" style="border-left:3px solid ${sp.col};">`
+              + `<strong style="font-size:13.5px;">${sp.name}</strong>`
+              + `<span style="font-size:12px;color:${sp.col};font-weight:700;">${cnt} thiên hà →</span></a>`;
+          }).join('');
+        }
+      }
+
+      if ($('vtDashCycleAtmoBtn')) {
+        $('vtDashCycleAtmoBtn').addEventListener('click', () => {
+          if (window.VANTHESIS_THEME) window.VANTHESIS_THEME.cycleAtmosphere();
+        });
+      }
+
+      if (window.VANTHESIS_CORE.prefs && typeof window.VANTHESIS_CORE.prefs.get === 'function') {
+        const savedAtmo = window.VANTHESIS_CORE.prefs.get().atmosphere;
+        if (savedAtmo) applySpatialAtmosphere(savedAtmo, false, true);
+      }
+      window.VANTHESIS_CORE.bus.on('atmosphere-changed', (ev) => {
+        if (ev && ev.atmosphere && ev.atmosphere !== state.atmosphere) {
+          applySpatialAtmosphere(ev.atmosphere, false, true);
+        }
       });
+      window.VANTHESIS_CORE.bus.on('cosmos-prefs-changed', renderDashboardCosmosHub);
+      window.VANTHESIS_CORE.bus.on('cosmos-vault-changed', renderDashboardCosmosHub);
+      window.VANTHESIS_CORE.bus.on('session-changed', renderDashboardCosmosHub);
+      window.VANTHESIS_CORE.bus.on('sector-activated', (ev) => {
+        if (ev && ev.sectorId) {
+          syncSectorShellChrome(ev.sectorId);
+          if (ev.sectorId === 'dashboard') renderDashboardCosmosHub();
+        }
+      });
+      renderDashboardCosmosHub();
       window.VANTHESIS_CORE.activateSector(vtCurrentActiveSector);
     }
   });
